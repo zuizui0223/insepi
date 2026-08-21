@@ -88,41 +88,6 @@ jobs:
                   risky = sum(row.observability_state in {'confounded','audit_priority','unobservable'} for row in family_rows)
                   print("INSEPI_V4_TEST_FAMILY", family, f"risk_recall={risky/len(family_rows):.3f}")
           PY
-      - name: V6 observer-portfolio development screening
-        if: matrix.python-version == '3.11'
-        run: |
-          python - <<'PY'
-          from collections import Counter
-          from interaction_sensing.simulation.portfolio_screening_v6 import run_v6_screening
-
-          report = run_v6_screening(
-              'benchmarks/pollipi_factorial_v4_5541201.tsv',
-              fit_world_windows=400,
-              fit_replicates=3,
-              eval_world_windows=1200,
-              eval_replicates=20,
-              seed=20260821,
-          )
-          print('V6_POLLIPI_SOURCE', report.pollipi_source_commit)
-          print('V6_WORLD', report.world_fingerprint)
-          print('V6_FIT', report.fit.to_dict())
-          counts = Counter()
-          for row in report.results:
-              if row.pareto:
-                  counts[row.method] += 1
-              print(
-                  'V6_DEV',
-                  f'p={row.prevalence:.2f}',
-                  f'b={row.budget_fraction:.2f}',
-                  row.method,
-                  f'event={row.true_event_recall:.3f}',
-                  f'error={row.hidden_error_recall:.3f}',
-                  f'cpe={row.captures_per_hidden_error:.3f}',
-                  f'tv={row.disturbance_tv_distance:.3f}',
-                  f'pareto={int(row.pareto)}',
-              )
-          print('V6_PARETO_COUNTS', dict(sorted(counts.items())))
-          PY
       - name: Upload pytest output
         if: always()
         uses: actions/upload-artifact@v4
