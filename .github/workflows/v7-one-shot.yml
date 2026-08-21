@@ -1,0 +1,206 @@
+name: V7 one-shot locked validation
+
+on:
+  pull_request:
+    paths:
+      - "benchmarks/v7_lock_manifest.json"
+      - ".github/workflows/v7-one-shot.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  EXPECTED_POLLIPI_SHA: d58d0a86034a6c2d53f90efbe4245370fd7cd2e9
+  EXPECTED_INSEPI_SHA: 980813bab996909020140fad5bd83b055eb3db9c
+  FROZEN_ALLOCATOR_SHA: a8ac75991ab28fd74a3f3a5482304a2b127a97bc
+  FROZEN_GENERATOR_SHA: 1c4c5ffc214ebdfb71ddabe170a071352acd4879
+  FROZEN_EVALUATOR_SHA: 6860fa973ce8f25b25028f49723710e8a920709c
+  FROZEN_MATERIALIZER_SHA: b41501b0b0b3e24ed58a01e0f40d4e683474f489
+  POLLIPI_FROZEN_BRANCH: frozen/v5-method
+  INSEPI_FROZEN_BRANCH: frozen/v5-method
+
+jobs:
+  locked-validation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install orchestrator
+        run: python -m pip install -e ".[dev]"
+
+      - name: Read lock state without deriving seed
+        id: lock
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          manifest = json.loads(Path('benchmarks/v7_lock_manifest.json').read_text())
+          status = manifest.get('status')
+          if status == 'blocked':
+              forbidden = ('master_seed_hex', 'world_fingerprint', 'pollipi_trace_sha256', 'cross_report_sha256')
+              present = [key for key in forbidden if manifest.get(key) not in (None, '')]
+              if present:
+                  raise SystemExit(f'blocked manifest already contains V7 evidence: {present}')
+              print('V7_ONE_SHOT BLOCKED_SAFE')
+              print('V7_BLOCKERS', manifest.get('blockers'))
+              ready = 'false'
+          elif status == 'ready':
+              ready = 'true'
+              print('V7_ONE_SHOT READY_FOR_EXTERNAL_REACHABILITY_CHECK')
+          else:
+              raise SystemExit(f'unknown V7 lock status: {status}')
+          with open(os.environ['GITHUB_OUTPUT'], 'a', encoding='utf-8') as handle:
+              handle.write(f'ready={ready}\n')
+          PY
+
+      - name: Verify exact frozen branches are publicly reachable
+        if: steps.lock.outputs.ready == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          pollipi_tip="$(git ls-remote https://github.com/zuizui0223/pollipi.git "refs/heads/${POLLIPI_FROZEN_BRANCH}" | awk '{print $1}')"
+          insepi_tip="$(git ls-remote https://github.com/zuizui0223/insepi.git "refs/heads/${INSEPI_FROZEN_BRANCH}" | awk '{print $1}')"
+          test "$pollipi_tip" = "$EXPECTED_POLLIPI_SHA" || {
+            echo "PolliPi frozen branch mismatch: $pollipi_tip"; exit 1;
+          }
+          test "$insepi_tip" = "$EXPECTED_INSEPI_SHA" || {
+            echo "InsePi frozen branch mismatch: $insepi_tip"; exit 1;
+          }
+          echo "V7_REACHABLE_POLLIPI $pollipi_tip"
+          echo "V7_REACHABLE_INSEPI $insepi_tip"
+
+      - name: Checkout exact frozen observers
+        if: steps.lock.outputs.ready == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          git clone --depth=1 --branch "$POLLIPI_FROZEN_BRANCH" https://github.com/zuizui0223/pollipi.git .v7/pollipi-frozen
+          git clone --depth=1 --branch "$INSEPI_FROZEN_BRANCH" https://github.com/zuizui0223/insepi.git .v7/insepi-frozen
+          test "$(git -C .v7/pollipi-frozen rev-parse HEAD)" = "$EXPECTED_POLLIPI_SHA"
+          test "$(git -C .v7/insepi-frozen rev-parse HEAD)" = "$EXPECTED_INSEPI_SHA"
+
+      - name: Install frozen PolliPi runtime dependencies
+        if: steps.lock.outputs.ready == 'true'
+        run: python -m pip install -e ".v7/pollipi-frozen/packages/analysis"
+
+      - name: Smoke-test both exact frozen observer APIs before V7 materialisation
+        if: steps.lock.outputs.ready == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/v7_run_pollipi_frozen.py \
+            --source-root .v7/pollipi-frozen \
+            --smoke-test
+          python scripts/v7_run_insepi_frozen.py \
+            --source-root .v7/insepi-frozen \
+            --smoke-test
+          echo "V7_FROZEN_OBSERVER_SMOKE PASS"
+
+      - name: Materialise canonical V7 pixels exactly once in this execution
+        if: steps.lock.outputs.ready == 'true'
+        run: |
+          mkdir -p .v7/run
+          python - <<'PY'
+          from interaction_sensing.simulation.v7_materialization import materialise_locked_v7
+
+          receipt = materialise_locked_v7(
+              lock_manifest_path='benchmarks/v7_lock_manifest.json',
+              baseline_registry_path='benchmarks/v7_baseline_registry.json',
+              npz_path='.v7/run/v7_pixels.npz',
+              artifact_manifest_path='.v7/run/v7_pixels_manifest.json',
+              receipt_path='.v7/run/v7_materialisation_receipt.json',
+              reachable_shas={
+                  'pollipi_method_sha': 'd58d0a86034a6c2d53f90efbe4245370fd7cd2e9',
+                  'insepi_method_sha': '980813bab996909020140fad5bd83b055eb3db9c',
+              },
+              current_allocator_sha='a8ac75991ab28fd74a3f3a5482304a2b127a97bc',
+              current_generator_sha='1c4c5ffc214ebdfb71ddabe170a071352acd4879',
+          )
+          print('V7_MATERIALISED_WORLD', receipt['world_fingerprint'])
+          print('V7_MATERIALISED_PIXELS', receipt['pixel_artifact_sha256'])
+          print('V7_CONDITIONS', receipt['condition_count'])
+          PY
+
+      - name: Run exact frozen PolliPi observer
+        if: steps.lock.outputs.ready == 'true'
+        run: |
+          python scripts/v7_run_pollipi_frozen.py \
+            --source-root .v7/pollipi-frozen \
+            --source-commit "$EXPECTED_POLLIPI_SHA" \
+            --npz .v7/run/v7_pixels.npz \
+            --manifest .v7/run/v7_pixels_manifest.json \
+            --output .v7/run/pollipi_v7_trace.jsonl
+
+      - name: Run exact frozen InsePi observer
+        if: steps.lock.outputs.ready == 'true'
+        run: |
+          python scripts/v7_run_insepi_frozen.py \
+            --source-root .v7/insepi-frozen \
+            --source-commit "$EXPECTED_INSEPI_SHA" \
+            --npz .v7/run/v7_pixels.npz \
+            --manifest .v7/run/v7_pixels_manifest.json \
+            --output .v7/run/insepi_v7_trace.jsonl
+
+      - name: Evaluate locked policies and assign pre-registered claim ceiling
+        if: steps.lock.outputs.ready == 'true'
+        shell: bash
+        run: |
+          orchestrator_sha="$(git rev-parse HEAD)"
+          python scripts/v7_evaluate_locked.py \
+            --receipt .v7/run/v7_materialisation_receipt.json \
+            --pollipi-trace .v7/run/pollipi_v7_trace.jsonl \
+            --insepi-trace .v7/run/insepi_v7_trace.jsonl \
+            --baseline-registry benchmarks/v7_baseline_registry.json \
+            --report .v7/run/v7_report.json \
+            --ledger .v7/run/v7_execution_ledger.json \
+            --orchestrator-sha "$orchestrator_sha" \
+            --evaluator-freeze-sha "$FROZEN_EVALUATOR_SHA" \
+            --materializer-freeze-sha "$FROZEN_MATERIALIZER_SHA" | tee .v7/run/v7_console_summary.txt
+
+      - name: Write scientific result summary
+        if: steps.lock.outputs.ready == 'true'
+        run: |
+          python - <<'PY' >> "$GITHUB_STEP_SUMMARY"
+          import json
+          from pathlib import Path
+          ledger = json.loads(Path('.v7/run/v7_execution_ledger.json').read_text())
+          print('# V7 locked validation')
+          print()
+          print(f"- Scientific gate: **{'PASS' if ledger['gate_passed'] else 'FAIL'}**")
+          print(f"- Pre-registered claim level: **{ledger['claim_level']}**")
+          print(f"- Worst joint ratio: `{ledger['v6_robustness']['worst_joint_ratio']:.6f}`")
+          print(f"- Mean joint ratio: `{ledger['v6_robustness']['mean_joint_ratio']:.6f}`")
+          print(f"- Maximum TV: `{ledger['v6_robustness']['max_tv']:.6f}`")
+          print(f"- World fingerprint: `{ledger['world_fingerprint']}`")
+          print(f"- Report SHA-256: `{ledger['report_sha256']}`")
+          if ledger['gate_failures']:
+              print('- Locked failures:')
+              for failure in ledger['gate_failures']:
+                  print(f"  - `{failure}`")
+          PY
+
+      - name: Upload immutable V7 execution evidence
+        if: steps.lock.outputs.ready == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: v7-locked-validation-evidence
+          path: .v7/run/
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Confirm blocked execution did not materialise V7
+        if: steps.lock.outputs.ready != 'true'
+        run: |
+          test ! -e .v7/run/v7_pixels.npz
+          echo "V7_ONE_SHOT REMAINS_BLOCKED_NO_SEED_NO_PIXELS"
