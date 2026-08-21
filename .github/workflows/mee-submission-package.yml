@@ -9,8 +9,10 @@ on:
       - "scripts/build_pre_v7_figures.py"
       - "scripts/polish_pre_v7_figures.py"
       - "scripts/finalize_submission_from_v7.py"
+      - "scripts/finalize_cover_letter_from_v7.py"
       - "tests/test_mee_submission_package.py"
       - "tests/test_v7_submission_finalizer.py"
+      - "tests/test_v7_cover_letter_finalizer.py"
       - ".github/workflows/mee-submission-package.yml"
   workflow_dispatch:
 
@@ -33,7 +35,8 @@ jobs:
             tests/test_mee_submission_package.py \
             tests/test_pre_v7_figures.py \
             tests/test_pre_v7_figure_polish.py \
-            tests/test_v7_submission_finalizer.py
+            tests/test_v7_submission_finalizer.py \
+            tests/test_v7_cover_letter_finalizer.py
       - name: Build MEE-format pre-V7 manuscript
         run: python scripts/build_mee_submission_manuscript.py
       - name: Build and polish pre-V7 figures
@@ -78,6 +81,7 @@ jobs:
           with zipfile.ZipFile('.peer-review/mee-anonymous-peer-review.zip') as archive:
               names = archive.namelist()
               assert 'manuscript/TITLE_PAGE_TEMPLATE.md' not in names
+              assert 'manuscript/EDITOR_COVER_LETTER_TEMPLATE.md' not in names
               assert all('pollipi' not in name.lower() for name in names)
               assert all('insepi' not in name.lower() for name in names)
           PY
@@ -91,10 +95,12 @@ jobs:
             .peer-review/anonymous/ANONYMOUS_BUNDLE_MANIFEST.json
           if-no-files-found: error
           retention-days: 90
-      - name: Upload separate title-page template
+      - name: Upload separate editor-only templates
         uses: actions/upload-artifact@v4
         with:
-          name: mee-title-page-template-not-for-review
-          path: manuscript/TITLE_PAGE_TEMPLATE.md
+          name: mee-editor-only-templates-not-for-review
+          path: |
+            manuscript/TITLE_PAGE_TEMPLATE.md
+            manuscript/EDITOR_COVER_LETTER_TEMPLATE.md
           if-no-files-found: error
           retention-days: 90
