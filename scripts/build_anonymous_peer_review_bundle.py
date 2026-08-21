@@ -21,6 +21,7 @@ import zipfile
 INCLUDE_DIRS = ("src", "tests", "benchmarks", "scripts", "docs", "manuscript")
 INCLUDE_FILES = ("pyproject.toml", "README.md")
 EXCLUDE_PARTS = {"__pycache__", ".pytest_cache", ".ruff_cache", ".git"}
+EXCLUDE_RELATIVE = {"manuscript/TITLE_PAGE_TEMPLATE.md"}
 TEXT_SUFFIXES = {".py", ".md", ".toml", ".json", ".tsv", ".csv", ".txt", ".yml", ".yaml", ".svg"}
 GIT_SHA_RE = re.compile(r"(?<![0-9a-fA-F])[0-9a-fA-F]{40}(?![0-9a-fA-F])")
 EMAIL_RE = re.compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}")
@@ -41,6 +42,8 @@ def sanitise_text(text: str) -> str:
 
 def should_copy(path: Path, root: Path) -> bool:
     rel = path.relative_to(root)
+    if rel.as_posix() in EXCLUDE_RELATIVE:
+        return False
     if any(part in EXCLUDE_PARTS for part in rel.parts):
         return False
     if path.suffix.lower() in {".zip", ".png", ".jpg", ".jpeg", ".pyc"}:
@@ -92,7 +95,7 @@ def build(root: Path, staging: Path, zip_path: Path) -> dict[str, object]:
         copy_sanitised(license_path, staging / license_path.name)
         copied.append(license_path.name)
 
-    readme = """# Anonymous peer-review code bundle\n\nThis bundle accompanies a double-anonymous methods-paper submission. Repository ownership, email addresses and Git commit identifiers have been anonymised for review. Scientific 64-character SHA-256 evidence fingerprints are retained.\n\nThe final public archive will restore canonical repository provenance after peer review.\n"""
+    readme = """# Anonymous peer-review code bundle\n\nThis bundle accompanies a double-anonymous methods-paper submission. Repository ownership, email addresses and Git commit identifiers have been anonymised for review. Scientific 64-character SHA-256 evidence fingerprints are retained. The separate title-page file is intentionally excluded.\n\nThe final public archive will restore canonical repository provenance after peer review.\n"""
     if not license_ready:
         readme += "\n**Packaging blocker:** no open-source software licence has yet been selected. This bundle is suitable for internal anonymous QA but must not be submitted until an explicit licence is chosen by the copyright holder.\n"
     (staging / "ANONYMOUS_REVIEW_README.md").write_text(readme, encoding="utf-8")
@@ -109,6 +112,7 @@ def build(root: Path, staging: Path, zip_path: Path) -> dict[str, object]:
     manifest: dict[str, object] = {
         "schema": "mee-anonymous-peer-review-bundle-v1",
         "double_anonymous": True,
+        "title_page_excluded": True,
         "license_ready": license_ready,
         "v7_materialised": False,
         "files": sorted(set(copied + ["ANONYMOUS_REVIEW_README.md"])),
