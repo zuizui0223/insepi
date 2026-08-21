@@ -1,9 +1,6 @@
 name: V6 high-resolution development
 
 on:
-  pull_request:
-    paths:
-      - ".github/workflows/v6-highres-development.yml"
   workflow_dispatch:
 
 permissions:
