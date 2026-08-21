@@ -20,8 +20,8 @@ import zipfile
 
 INCLUDE_DIRS = ("src", "tests", "benchmarks", "scripts", "docs", "manuscript")
 INCLUDE_FILES = ("pyproject.toml", "README.md")
-EXCLUDE_PARTS = {"generated", "__pycache__", ".pytest_cache", ".ruff_cache", ".git"}
-TEXT_SUFFIXES = {".py", ".md", ".toml", ".json", ".tsv", ".csv", ".txt", ".yml", ".yaml"}
+EXCLUDE_PARTS = {"__pycache__", ".pytest_cache", ".ruff_cache", ".git"}
+TEXT_SUFFIXES = {".py", ".md", ".toml", ".json", ".tsv", ".csv", ".txt", ".yml", ".yaml", ".svg"}
 GIT_SHA_RE = re.compile(r"(?<![0-9a-fA-F])[0-9a-fA-F]{40}(?![0-9a-fA-F])")
 EMAIL_RE = re.compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}")
 
