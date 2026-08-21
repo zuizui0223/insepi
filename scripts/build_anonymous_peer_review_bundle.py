@@ -25,6 +25,8 @@ EXCLUDE_RELATIVE = {"manuscript/TITLE_PAGE_TEMPLATE.md"}
 TEXT_SUFFIXES = {".py", ".md", ".toml", ".json", ".jsonl", ".tsv", ".csv", ".txt", ".yml", ".yaml", ".svg"}
 GIT_SHA_RE = re.compile(r"(?<![0-9a-fA-F])[0-9a-fA-F]{40}(?![0-9a-fA-F])")
 EMAIL_RE = re.compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}")
+POLLIPI_RE = re.compile(r"pollipi", re.IGNORECASE)
+INSEPI_RE = re.compile(r"insepi", re.IGNORECASE)
 
 
 def pseudo_sha(original: str) -> str:
@@ -32,14 +34,13 @@ def pseudo_sha(original: str) -> str:
 
 
 def sanitise_text(text: str) -> str:
-    text = text.replace("zuizui0223", "anonymous-review")
+    text = re.sub(r"zuizui0223", "anonymous-review", text, flags=re.IGNORECASE)
     text = text.replace("ZHANG Ruiqi", "Anonymous Author")
     text = text.replace("張瑞琪", "Anonymous Author")
-    # Project names are unique/searchable, so reviewer-facing copies use role labels.
-    text = text.replace("PolliPi", "ObserverE")
-    text = text.replace("InsePi", "ObserverO")
-    text = text.replace("pollipi", "observer_e")
-    text = text.replace("insepi", "observer_o")
+    # Project names are unique/searchable. Replace every case variant so Python
+    # constants, JSONL schemas, log labels and prose are all scrubbed consistently.
+    text = POLLIPI_RE.sub("observer_e", text)
+    text = INSEPI_RE.sub("observer_o", text)
     text = EMAIL_RE.sub("anonymous@example.invalid", text)
     text = GIT_SHA_RE.sub(lambda match: pseudo_sha(match.group(0)), text)
     return text
@@ -48,8 +49,9 @@ def sanitise_text(text: str) -> str:
 def anonymous_relpath(rel: Path) -> Path:
     parts = []
     for part in rel.parts:
-        part = part.replace("PolliPi", "ObserverE").replace("InsePi", "ObserverO")
-        part = part.replace("pollipi", "observer_e").replace("insepi", "observer_o")
+        part = POLLIPI_RE.sub("observer_e", part)
+        part = INSEPI_RE.sub("observer_o", part)
+        part = re.sub(r"zuizui0223", "anonymous-review", part, flags=re.IGNORECASE)
         parts.append(part)
     return Path(*parts)
 
@@ -111,28 +113,21 @@ def build(root: Path, staging: Path, zip_path: Path) -> dict[str, object]:
         copy_sanitised(license_path, staging / license_path.name)
         copied.append(license_path.name)
 
-    readme = """# Anonymous peer-review code bundle\n\nThis bundle accompanies a double-anonymous methods-paper submission. Repository ownership, email addresses, project-facing observer names and Git commit identifiers have been anonymised for review. Scientific 64-character SHA-256 evidence fingerprints are retained. The separate title-page file is intentionally excluded.\n\nReviewer-facing observer labels are `ObserverE` (biological evidence) and `ObserverO` (observability risk). Public project names and canonical git provenance are restored only after double-anonymous review.\n\nThe final public archive will restore canonical repository provenance after peer review.\n"""
+    readme = """# Anonymous peer-review code bundle\n\nThis bundle accompanies a double-anonymous methods-paper submission. Repository ownership, email addresses, project-facing observer names and Git commit identifiers have been anonymised for review. Scientific 64-character SHA-256 evidence fingerprints are retained. The separate title-page file is intentionally excluded.\n\nReviewer-facing observer labels are `observer_e` (biological evidence) and `observer_o` (observability risk). Public project names and canonical git provenance are restored only after double-anonymous review.\n\nThe final public archive will restore canonical repository provenance after peer review.\n"""
     if not license_ready:
         readme += "\n**Packaging blocker:** no open-source software licence has yet been selected. This bundle is suitable for internal anonymous QA but must not be submitted until an explicit licence is chosen by the copyright holder.\n"
     (staging / "ANONYMOUS_REVIEW_README.md").write_text(readme, encoding="utf-8")
 
-    identity_tokens = (
-        "zuizui0223",
-        "github.com/zuizui0223",
-        "PolliPi",
-        "InsePi",
-        "pollipi",
-        "insepi",
-    )
+    identity_tokens = ("zuizui0223", "github.com/zuizui0223", "pollipi", "insepi")
     leaks: list[str] = []
     for path in sorted(p for p in staging.rglob("*") if p.is_file() and p.suffix.lower() in TEXT_SUFFIXES):
-        text = path.read_text(encoding="utf-8")
-        if any(token in text for token in identity_tokens):
+        text_lower = path.read_text(encoding="utf-8").lower()
+        if any(token in text_lower for token in identity_tokens):
             leaks.append(path.relative_to(staging).as_posix())
     path_leaks = [
         path.relative_to(staging).as_posix()
         for path in staging.rglob("*")
-        if any(token.lower() in path.name.lower() for token in ("pollipi", "insepi", "zuizui0223"))
+        if any(token in path.name.lower() for token in ("pollipi", "insepi", "zuizui0223"))
     ]
     if leaks or path_leaks:
         raise ValueError(f"identity tokens remain in anonymous bundle: text={leaks}, paths={path_leaks}")
