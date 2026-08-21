@@ -8,7 +8,9 @@ on:
       - "scripts/build_anonymous_peer_review_bundle.py"
       - "scripts/build_pre_v7_figures.py"
       - "scripts/polish_pre_v7_figures.py"
+      - "scripts/finalize_submission_from_v7.py"
       - "tests/test_mee_submission_package.py"
+      - "tests/test_v7_submission_finalizer.py"
       - ".github/workflows/mee-submission-package.yml"
   workflow_dispatch:
 
@@ -25,8 +27,13 @@ jobs:
           python-version: "3.11"
       - name: Install test tools
         run: python -m pip install pytest
-      - name: Test journal-format and anonymisation contracts
-        run: pytest -q tests/test_mee_submission_package.py tests/test_pre_v7_figures.py tests/test_pre_v7_figure_polish.py
+      - name: Test journal-format, anonymisation, and post-V7 finalization contracts
+        run: |
+          pytest -q \
+            tests/test_mee_submission_package.py \
+            tests/test_pre_v7_figures.py \
+            tests/test_pre_v7_figure_polish.py \
+            tests/test_v7_submission_finalizer.py
       - name: Build MEE-format pre-V7 manuscript
         run: python scripts/build_mee_submission_manuscript.py
       - name: Build and polish pre-V7 figures
@@ -43,7 +50,14 @@ jobs:
           import zipfile
 
           manuscript = Path('manuscript/generated/MEE_PRE_V7_SUBMISSION.md').read_text(encoding='utf-8')
-          assert '[[V7_LOCKED_RESULT]]' in manuscript
+          for marker in (
+              '[[V7_LOCKED_RESULT:ABSTRACT]]',
+              '[[V7_LOCKED_RESULT:TABLE]]',
+              '[[V7_LOCKED_RESULT:RESULTS]]',
+              '[[V7_LOCKED_RESULT:DISCUSSION]]',
+              '[[V7_LOCKED_RESULT:REPRODUCIBILITY_LEDGER]]',
+          ):
+              assert manuscript.count(marker) == 1
           assert '## Data/Code for peer review' in manuscript
           assert '### 2.13. AI-assisted software and manuscript development' in manuscript
           assert 'PolliPi' not in manuscript and 'InsePi' not in manuscript
