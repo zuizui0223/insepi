@@ -6,11 +6,10 @@ hard methodological constraint for the simulation-only paper.
 """
 from __future__ import annotations
 
+from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import asdict, dataclass
 from random import Random
 from statistics import mean
-from typing import Iterable, Mapping, Sequence
-
 
 POLLIPI_CANDIDATE = {"strong_visitation_candidate", "uncertain_local_activity"}
 CORE_POLICIES = (
@@ -136,7 +135,7 @@ def _latent_error_types(pollipi: Mapping[str, object], insepi: Mapping[str, obje
         errors.add("missed_event")
     if not true_visit and candidate:
         errors.add("false_event")
-    if true_visit and ({"occlusion", "blur"} & tokens or "blur_or_focus_loss" in noise_source):
+    if true_visit and ({"occlusion", "blur", "smear"} & tokens or "blur_or_focus_loss" in noise_source):
         errors.add("missed_event")
     if candidate and ("clutter" in tokens or "multi_object_clutter" in noise_source):
         errors.add("attribution")

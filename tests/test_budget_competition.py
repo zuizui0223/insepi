@@ -60,3 +60,28 @@ def test_single_view_ablations_remove_the_other_observer():
         seed=11,
     )
     assert {row.policy for row in results} >= set(SINGLE_VIEW_ABLATIONS)
+
+
+def test_anisotropic_smear_is_scored_as_a_hidden_missed_event():
+    pollipi = [{
+        "condition_id": "smear-visit",
+        "true_visit": True,
+        "disturbance_family": "occlusion+smear",
+        "pollipi_state": "no_activity",
+    }]
+    insepi = [{
+        "condition_id": "smear-visit",
+        "true_visit": True,
+        "disturbance_family": "occlusion+smear",
+        "observability_state": "clean",
+    }]
+    result = run_budget_competition(
+        pollipi,
+        insepi,
+        policies=("uniform",),
+        budget_fraction=1.0,
+        world_windows=20,
+        replicates=1,
+    )[0]
+    assert result.hidden_error_recall == 1.0
+    assert result.missed_event_audit_yield == 1.0

@@ -22,6 +22,10 @@ digest = SHA256(material)
 
 Successive 8-byte chunks of the digest (and SHA256 counter extensions when more entropy is required) become the V5 seeds. The commits therefore determine the validation worlds; the developer cannot choose favourable seeds after seeing outcomes.
 
+The allocation-competition seed is domain-separated as
+`SHA256(material + "\ncompetition")`; it is not reused from any world or
+prevalence-schedule seed.
+
 ## Freeze rule
 
 Before V5 is generated:
@@ -33,7 +37,23 @@ Before V5 is generated:
 5. V5 renderer rules are frozen.
 6. Both commit SHAs are recorded in the manuscript ledger.
 
+Formal artifact generation additionally requires the declared repository SHA
+to equal the checkout `HEAD` and all tracked files to be clean. Untracked report
+and graph directories do not affect the executable checkout.
+
 After V5 is run, **no method parameter may be changed in response to V5**. A failure narrows or falsifies the manuscript claim; it does not trigger another V5 tuning cycle.
+
+The formal sequence is exactly one PolliPi trace command followed by one InsePi
+cross-evaluation command, both from their frozen checkouts:
+
+```text
+python -m pollipi_analysis.simulation.locked_benchmark_v5 TRACE.jsonl \
+  --pollipi-commit POLLIPI_SHA --insepi-commit INSEPI_SHA
+python -m interaction_sensing.simulation.locked_cross_v5 TRACE.jsonl REPORT.json
+```
+
+The CLI exposes no tuning parameters. Both output writers use exclusive create
+and refuse to overwrite an existing locked artifact.
 
 ## Renderer shift relative to V4
 
@@ -52,6 +72,11 @@ V5 must not merely resample V4. It should use a distinct but mechanistically rel
 - altered event prevalence.
 
 The two repositories may share V5 rendered pixels and truth manifests, but they must not share decision logic.
+
+The frozen suite contains 180 conditions: 12 disturbance families with five
+replicates in each of three exact prevalence regimes (20%, 50%, and 80% true
+events). Event placement, condition parameters, pixels, and the final suite
+fingerprint are all derived from the frozen commit pair.
 
 ## Pre-registered V5 comparisons
 
@@ -85,7 +110,20 @@ The claim is supported only if, at the locked 10% and 25% V5 budgets, structured
 - lies on the true-event / hidden-error / recovery-cost Pareto frontier;
 - improves hidden-error discovery over both single-view removals;
 - provides a missed-event recovery pattern not reproduced by simple OR or AND;
-- keeps its disturbance-distribution distortion visible and scientifically interpretable across prevalence shifts.
+- has disturbance-distribution total-variation distance no greater than **0.80**.
+
+Every condition above must hold independently in each of the 20%, 50%, and 80%
+prevalence regimes and at both scarce budgets. A pooled average cannot rescue a
+failed regime or budget. The 0.80 distortion ceiling is deliberately permissive
+but numeric: V4 exposed large selection distortion, so V5 must report it and
+must fail rather than silently accepting near-complete collapse onto a single
+disturbance distribution.
+
+In addition, each prevalence regime must contain hidden-error conditions from
+at least **two disturbance families** for which the joint disagreement score is
+strictly higher than both single-view removal scores. This condition-level
+support diagnostic is computed from the frozen trace after allocation scoring;
+truth is used only for evaluation, never for priority assignment.
 
 The 50% budget is a preregistered crossover control. Union may remain preferable there; disagreement is not required to dominate it.
 
@@ -103,3 +141,8 @@ The strong claim is narrowed or rejected if:
 - either repository fails pixel/world provenance checks.
 
 V5 is intentionally one-shot. Its scientific value comes from being able to reject the architecture after development, not from being another tuning benchmark.
+
+The family-support diagnostic cannot upgrade a failed numeric gate. If support
+is confined to one family in any prevalence regime, the locked claim fails and
+the manuscript must narrow the finding to that family rather than presenting it
+as general disagreement-aware sensing.
