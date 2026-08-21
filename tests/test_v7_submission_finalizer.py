@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import importlib.util
 import json
 from pathlib import Path
 import subprocess
@@ -8,10 +9,17 @@ import sys
 
 import pytest
 
-from scripts.finalize_submission_from_v7 import VerifiedV7, claim_texts, verify_v7
-
 
 ROOT = Path(__file__).resolve().parents[1]
+FINALIZER_PATH = ROOT / "scripts" / "finalize_submission_from_v7.py"
+SPEC = importlib.util.spec_from_file_location("v7_submission_finalizer", FINALIZER_PATH)
+assert SPEC is not None and SPEC.loader is not None
+FINALIZER = importlib.util.module_from_spec(SPEC)
+sys.modules[SPEC.name] = FINALIZER
+SPEC.loader.exec_module(FINALIZER)
+VerifiedV7 = FINALIZER.VerifiedV7
+claim_texts = FINALIZER.claim_texts
+verify_v7 = FINALIZER.verify_v7
 
 
 def _sha256(path: Path) -> str:
