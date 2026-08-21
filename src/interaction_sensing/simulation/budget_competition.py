@@ -37,6 +37,15 @@ def _risk(row: Mapping[str, object], key: str) -> float:
     return float(row.get(key, 0.0) or 0.0)
 
 
+def _noise_source(pollipi: Mapping[str, object], insepi: Mapping[str, object]) -> str:
+    return str(
+        pollipi.get(
+            "noise_source",
+            insepi.get("noise_source", insepi.get("inferred_noise_source", "unknown")),
+        )
+    )
+
+
 def allocation_score(
     policy: str,
     pollipi: Mapping[str, object],
@@ -64,7 +73,6 @@ def allocation_score(
     if policy == "intersection":
         return min(1.0 if candidate else 0.0, max_risk)
     if policy == "disagreement":
-        # Structured conflict gets priority over simple unusualness.
         if candidate and max_risk >= 0.60:
             return 1.00
         if not candidate and missed_risk >= 0.60:
@@ -95,7 +103,7 @@ def _latent_error_types(pollipi: Mapping[str, object], insepi: Mapping[str, obje
 
     true_visit = bool(pollipi["true_visit"])
     candidate = str(pollipi["pollipi_state"]) in POLLIPI_CANDIDATE
-    noise_source = str(pollipi.get("noise_source", insepi.get("noise_source", "unknown")))
+    noise_source = _noise_source(pollipi, insepi)
     errors: set[str] = set()
     if true_visit and not candidate:
         errors.add("missed_event")
@@ -154,19 +162,12 @@ def evaluate_budget_once(
     def recall(indices: set[int]) -> float:
         return len(indices & selected_indices) / len(indices) if indices else 1.0
 
-    missed = {idx for idx, kinds in hidden_errors.items() if "missed_event" in kinds}
-    false = {idx for idx, kinds in hidden_errors.items() if "false_event" in kinds}
-    attribution = {idx for idx, kinds in hidden_errors.items() if "attribution" in kinds}
-
     def audit_yield(kind: str) -> float:
         count = sum(kind in kinds for kinds in selected_errors.values())
         return count / selected_n
 
-    full_sources = [str(p.get("noise_source", i.get("noise_source", "unknown"))) for p, i in world]
-    selected_sources = [
-        str(world[idx][0].get("noise_source", world[idx][1].get("noise_source", "unknown")))
-        for idx in selected_indices
-    ]
+    full_sources = [_noise_source(p, i) for p, i in world]
+    selected_sources = [_noise_source(*world[idx]) for idx in selected_indices]
     recovered_errors = len(selected_errors)
     return BudgetResult(
         policy=policy,
