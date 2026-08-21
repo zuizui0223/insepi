@@ -7,6 +7,7 @@ versions can replace individual proxies without changing the benchmark contract.
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass
+from datetime import datetime, timezone
 import json
 from pathlib import Path
 
@@ -73,7 +74,8 @@ def infer_noise_observation(background: np.ndarray, frame: np.ndarray, frame_ind
     local_motion = float(np.mean(local) / 64.0)
     ref_values = [float(np.mean(residual[ys, xs]) / 64.0) for ys, xs in refs]
     background_motion = float(np.mean(ref_values))
-    blur_loss = max(0.0, min(1.0, (_gradient_energy(base) - _gradient_energy(aligned)) / max(_gradient_energy(base), 1e-6)))
+    base_gradient = _gradient_energy(base)
+    blur_loss = max(0.0, min(1.0, (base_gradient - _gradient_energy(aligned)) / max(base_gradient, 1e-6)))
     shift_mag = float((shift_y**2 + shift_x**2) ** 0.5)
 
     source = NoiseSource.STABLE_SCENE
@@ -110,7 +112,7 @@ def infer_noise_observation(background: np.ndarray, frame: np.ndarray, frame_ind
         confidence = 0.60
 
     return NoiseObservation(
-        timestamp=__import__("datetime").datetime.datetime(2026, 1, 1, tzinfo=__import__("datetime").datetime.timezone.utc),
+        timestamp=datetime(2026, 1, 1, tzinfo=timezone.utc),
         source=source,
         confidence=confidence,
         frame_index=frame_index,
