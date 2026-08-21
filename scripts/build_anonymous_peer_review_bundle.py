@@ -35,9 +35,23 @@ def sanitise_text(text: str) -> str:
     text = text.replace("zuizui0223", "anonymous-review")
     text = text.replace("ZHANG Ruiqi", "Anonymous Author")
     text = text.replace("張瑞琪", "Anonymous Author")
+    # Project names are unique/searchable, so reviewer-facing copies use role labels.
+    text = text.replace("PolliPi", "ObserverE")
+    text = text.replace("InsePi", "ObserverO")
+    text = text.replace("pollipi", "observer_e")
+    text = text.replace("insepi", "observer_o")
     text = EMAIL_RE.sub("anonymous@example.invalid", text)
     text = GIT_SHA_RE.sub(lambda match: pseudo_sha(match.group(0)), text)
     return text
+
+
+def anonymous_relpath(rel: Path) -> Path:
+    parts = []
+    for part in rel.parts:
+        part = part.replace("PolliPi", "ObserverE").replace("InsePi", "ObserverO")
+        part = part.replace("pollipi", "observer_e").replace("insepi", "observer_o")
+        parts.append(part)
+    return Path(*parts)
 
 
 def should_copy(path: Path, root: Path) -> bool:
@@ -81,13 +95,15 @@ def build(root: Path, staging: Path, zip_path: Path) -> dict[str, object]:
             if not should_copy(source, root):
                 continue
             rel = source.relative_to(root)
-            copy_sanitised(source, staging / rel)
-            copied.append(rel.as_posix())
+            anonymous_rel = anonymous_relpath(rel)
+            copy_sanitised(source, staging / anonymous_rel)
+            copied.append(anonymous_rel.as_posix())
     for filename in INCLUDE_FILES:
         source = root / filename
         if source.exists():
-            copy_sanitised(source, staging / filename)
-            copied.append(filename)
+            anonymous_rel = anonymous_relpath(Path(filename))
+            copy_sanitised(source, staging / anonymous_rel)
+            copied.append(anonymous_rel.as_posix())
 
     license_path = find_license(root)
     license_ready = license_path is not None
@@ -95,23 +111,36 @@ def build(root: Path, staging: Path, zip_path: Path) -> dict[str, object]:
         copy_sanitised(license_path, staging / license_path.name)
         copied.append(license_path.name)
 
-    readme = """# Anonymous peer-review code bundle\n\nThis bundle accompanies a double-anonymous methods-paper submission. Repository ownership, email addresses and Git commit identifiers have been anonymised for review. Scientific 64-character SHA-256 evidence fingerprints are retained. The separate title-page file is intentionally excluded.\n\nThe final public archive will restore canonical repository provenance after peer review.\n"""
+    readme = """# Anonymous peer-review code bundle\n\nThis bundle accompanies a double-anonymous methods-paper submission. Repository ownership, email addresses, project-facing observer names and Git commit identifiers have been anonymised for review. Scientific 64-character SHA-256 evidence fingerprints are retained. The separate title-page file is intentionally excluded.\n\nReviewer-facing observer labels are `ObserverE` (biological evidence) and `ObserverO` (observability risk). Public project names and canonical git provenance are restored only after double-anonymous review.\n\nThe final public archive will restore canonical repository provenance after peer review.\n"""
     if not license_ready:
         readme += "\n**Packaging blocker:** no open-source software licence has yet been selected. This bundle is suitable for internal anonymous QA but must not be submitted until an explicit licence is chosen by the copyright holder.\n"
     (staging / "ANONYMOUS_REVIEW_README.md").write_text(readme, encoding="utf-8")
 
-    identity_tokens = ("zuizui0223", "github.com/zuizui0223")
+    identity_tokens = (
+        "zuizui0223",
+        "github.com/zuizui0223",
+        "PolliPi",
+        "InsePi",
+        "pollipi",
+        "insepi",
+    )
     leaks: list[str] = []
     for path in sorted(p for p in staging.rglob("*") if p.is_file() and p.suffix.lower() in TEXT_SUFFIXES):
         text = path.read_text(encoding="utf-8")
         if any(token in text for token in identity_tokens):
             leaks.append(path.relative_to(staging).as_posix())
-    if leaks:
-        raise ValueError(f"identity tokens remain in anonymous bundle: {leaks}")
+    path_leaks = [
+        path.relative_to(staging).as_posix()
+        for path in staging.rglob("*")
+        if any(token.lower() in path.name.lower() for token in ("pollipi", "insepi", "zuizui0223"))
+    ]
+    if leaks or path_leaks:
+        raise ValueError(f"identity tokens remain in anonymous bundle: text={leaks}, paths={path_leaks}")
 
     manifest: dict[str, object] = {
         "schema": "mee-anonymous-peer-review-bundle-v1",
         "double_anonymous": True,
+        "observer_names_anonymised": True,
         "title_page_excluded": True,
         "license_ready": license_ready,
         "v7_materialised": False,
