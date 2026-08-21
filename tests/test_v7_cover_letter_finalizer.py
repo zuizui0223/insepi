@@ -25,7 +25,7 @@ def test_cover_letter_uses_same_preregistered_claim_wording() -> None:
         mean_joint=1.03,
         max_tv=0.20,
     )
-    template = (ROOT / "manuscript" / "EDITOR_COVER_LETTER_TEMPLATE.md").read_text(encoding="utf-8")
+    template = (ROOT / "editor" / "EDITOR_COVER_LETTER_TEMPLATE.md").read_text(encoding="utf-8")
     final = MODULE.finalize_cover(template, v7)
     assert "[[V7_EDITOR_RESULT_SUMMARY]]" not in final
     assert "conditional rather than generally robust" in final
