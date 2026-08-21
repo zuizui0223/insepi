@@ -7,9 +7,13 @@ on:
       - "src/interaction_sensing/simulation/v7_lock.py"
       - "src/interaction_sensing/simulation/v7_artifact.py"
       - "src/interaction_sensing/simulation/v7_evaluator.py"
+      - "src/interaction_sensing/simulation/v7_insepi_adapter.py"
+      - "src/interaction_sensing/simulation/v7_materialization.py"
       - "tests/test_v7_lock.py"
       - "tests/test_v7_artifact.py"
       - "tests/test_v7_evaluator.py"
+      - "tests/test_v7_insepi_adapter.py"
+      - "tests/test_v7_materialization.py"
       - "benchmarks/v7_lock_manifest.json"
       - "benchmarks/v7_baseline_registry.json"
       - "docs/V7_LOCKED_VALIDATION_PROTOCOL.md"
@@ -29,12 +33,14 @@ jobs:
           python-version: "3.11"
       - name: Install package
         run: python -m pip install -e ".[dev]"
-      - name: Test seed lock, artifact, and evaluator contracts
+      - name: Test seed lock, adapters, artifact, evaluator, and materializer
         run: |
           pytest -q \
             tests/test_v7_lock.py \
             tests/test_v7_artifact.py \
-            tests/test_v7_evaluator.py
+            tests/test_v7_evaluator.py \
+            tests/test_v7_insepi_adapter.py \
+            tests/test_v7_materialization.py
       - name: Assert final V7 remains unmaterialised
         run: |
           python - <<'PY'
