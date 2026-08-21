@@ -57,7 +57,9 @@ Primary endpoints:
 
 **Status: V3 IMPLEMENTED BUT NOT PASSED.** At a 25% budget on the first V2-derived competition, structured disagreement did not outperform the strongest alternatives. Hidden-error recall was about 0.251 for uniform, InsePi-only, and disagreement-priority. This negative result is retained; disagreement weights were not tuned to force a win.
 
-**V4 cross-budget bridge now exists.** PolliPi emits a source-commit/world-fingerprint trace artifact and InsePi has a provenance-checked cross-repo V4 runner. The next comparison uses the improved gradient-structure observability observer.
+**V4 cross-budget result: DEVELOPMENT CONDITIONAL PASS.** The first cross-runner mixed calibration and test conditions and is not admissible evidence. The corrected fail-closed runner evaluates the 68 test conditions only and rejects duplicate/divergent cross-repository traces. With 4,800 windows and 200 replicates, disagreement is on the central Pareto frontier at 10% and 25% budgets, but simple union is the only central Pareto policy at 50%. See `docs/V4_CROSS_BUDGET_RESULT.md` and `analysis/v4_cross_budget_report.json`.
+
+The strong claim is therefore narrowed before V5: disagreement is a scarce-budget audit policy, not a universally optimal policy. Its large disturbance-distribution distortion at 10% and 25% remains an explicit guardrail rather than being hidden by the headline recovery metric.
 
 ### G5 — Held-out generalisation
 
@@ -76,7 +78,7 @@ Required comparisons:
 - learned/tuned combined score, if introduced;
 - full independent disagreement policy.
 
-**Status: PARTIAL.** Union and intersection are already implemented. Single-view removals and any learned-score ablation remain.
+**Status: PASS for the current fixed rule.** Union, intersection, PolliPi-only removal, InsePi-only removal, and the full independent rule are implemented. No learned or tuned combined score is used. V4 shows a meaningful full-vs-single-view gain at 10%, a small gain at 25%, and no gain at 50%; this heterogeneity is retained in the claim.
 
 ### G7 — Reproducible benchmark ledger
 
@@ -132,4 +134,4 @@ The strong method-paper claim fails or must be narrowed if, on locked equal-budg
 
 ## Current paper-readiness decision
 
-**Not submission-ready yet, but substantially closer.** The architecture, reproducibility boundary, negative-result logic, and an improved complementary observability observer are now defensible. The decisive remaining tasks are: V4 cross-budget competition with the emitted PolliPi trace, missing ablations, then method freeze and one-shot V5.
+**Not submission-ready yet.** V4 cross-budget competition and the required fixed-rule ablations are complete, and they narrow the intended claim to scarce budgets. The remaining decisive work is to implement and freeze the preregistered shifted V5 renderer/prevalence grid, record immutable method SHAs, and execute V5 exactly once. A V5 failure must narrow or reject the method claim rather than trigger another tuning cycle.

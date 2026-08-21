@@ -76,9 +76,18 @@ Primary endpoints:
 - captures per recovered hidden error;
 - disturbance-distribution total-variation distortion.
 
-## Pass condition for the strong methods claim
+## Pass condition for the narrowed methods claim
 
-The strong claim is supported only if structured disagreement lies on a useful Pareto frontier across the locked V5 tests and provides information not reproduced by either single observer or the simple OR/AND ablations.
+V4 established a development-stage budget crossover: structured disagreement is on the central frontier at 10% and 25%, while simple union dominates the central axes at 50%. V5 therefore tests a **scarce-budget claim** rather than requiring disagreement to win at every budget.
+
+The claim is supported only if, at the locked 10% and 25% V5 budgets, structured disagreement:
+
+- lies on the true-event / hidden-error / recovery-cost Pareto frontier;
+- improves hidden-error discovery over both single-view removals;
+- provides a missed-event recovery pattern not reproduced by simple OR or AND;
+- keeps its disturbance-distribution distortion visible and scientifically interpretable across prevalence shifts.
+
+The 50% budget is a preregistered crossover control. Union may remain preferable there; disagreement is not required to dominate it.
 
 It does **not** need to maximise every endpoint. A credible result can trade some raw event recovery for substantially better hidden-error discovery at the same resource budget, provided the trade-off is stable across prevalence and disturbance shifts.
 
@@ -86,8 +95,8 @@ It does **not** need to maximise every endpoint. A credible result can trade som
 
 The strong claim is narrowed or rejected if:
 
-- disagreement is dominated by a single observer across V5 budgets;
-- any gain is reproduced by simple OR;
+- disagreement is dominated by a single observer at both scarce V5 budgets;
+- its scarce-budget gain is reproduced by simple OR;
 - gains disappear under shifted event prevalence;
 - clean-scene false-audit cost eliminates the hidden-error benefit;
 - the result depends on a single disturbance family;

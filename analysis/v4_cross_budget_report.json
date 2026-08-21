@@ -1,0 +1,356 @@
+{
+  "budgets": [
+    {
+      "budget_fraction": 0.1,
+      "pareto_policies": [
+        "intersection",
+        "disagreement"
+      ],
+      "results": [
+        {
+          "attribution_audit_yield": 0.028947916666666667,
+          "budget_fraction": 0.1,
+          "captures_per_hidden_error": 2.2669750186219124,
+          "disturbance_tv_distance": 0.0539,
+          "false_event_audit_yield": 0.028572916666666667,
+          "hidden_error_recall": 0.1002707444468897,
+          "missed_event_audit_yield": 0.38477083333333334,
+          "policy": "uniform",
+          "selected": 480,
+          "true_event_recall": 0.10026691722592818,
+          "windows": 4800
+        },
+        {
+          "attribution_audit_yield": 0.0,
+          "budget_fraction": 0.1,
+          "captures_per_hidden_error": 2.003992778547584,
+          "disturbance_tv_distance": 0.6471802083333333,
+          "false_event_audit_yield": 0.16634375,
+          "hidden_error_recall": 0.11335788156566884,
+          "missed_event_audit_yield": 0.3336354166666667,
+          "policy": "pollipi_candidate",
+          "selected": 480,
+          "true_event_recall": 0.16676268761650154,
+          "windows": 4800
+        },
+        {
+          "attribution_audit_yield": 0.0,
+          "budget_fraction": 0.1,
+          "captures_per_hidden_error": 1.9965744653398234,
+          "disturbance_tv_distance": 0.5326239583333333,
+          "false_event_audit_yield": 0.0,
+          "hidden_error_recall": 0.11380626552347335,
+          "missed_event_audit_yield": 0.50196875,
+          "policy": "insepi_audit",
+          "selected": 480,
+          "true_event_recall": 0.10039122851411987,
+          "windows": 4800
+        },
+        {
+          "attribution_audit_yield": 0.14388541666666665,
+          "budget_fraction": 0.1,
+          "captures_per_hidden_error": 1.749961580937017,
+          "disturbance_tv_distance": 0.530125,
+          "false_event_audit_yield": 0.14198958333333334,
+          "hidden_error_recall": 0.12977297051150827,
+          "missed_event_audit_yield": 0.28648958333333335,
+          "policy": "union",
+          "selected": 480,
+          "true_event_recall": 0.17163525928391382,
+          "windows": 4800
+        },
+        {
+          "attribution_audit_yield": 0.0040625,
+          "budget_fraction": 0.1,
+          "captures_per_hidden_error": 1.5726244314714795,
+          "disturbance_tv_distance": 0.6665552083333334,
+          "false_event_audit_yield": 0.003479166666666667,
+          "hidden_error_recall": 0.14437158737046307,
+          "missed_event_audit_yield": 0.6292083333333334,
+          "policy": "intersection",
+          "selected": 480,
+          "true_event_recall": 0.1872415302753506,
+          "windows": 4800
+        },
+        {
+          "attribution_audit_yield": 0.0,
+          "budget_fraction": 0.1,
+          "captures_per_hidden_error": 1.310077817145652,
+          "disturbance_tv_distance": 0.7054197916666667,
+          "false_event_audit_yield": 0.0,
+          "hidden_error_recall": 0.17325906458619938,
+          "missed_event_audit_yield": 0.7641458333333333,
+          "policy": "disagreement",
+          "selected": 480,
+          "true_event_recall": 0.15284245366174282,
+          "windows": 4800
+        },
+        {
+          "attribution_audit_yield": 0.0,
+          "budget_fraction": 0.1,
+          "captures_per_hidden_error": 2.003992778547584,
+          "disturbance_tv_distance": 0.6471802083333333,
+          "false_event_audit_yield": 0.16634375,
+          "hidden_error_recall": 0.11335788156566884,
+          "missed_event_audit_yield": 0.3336354166666667,
+          "policy": "disagreement_pollipi_only",
+          "selected": 480,
+          "true_event_recall": 0.16676268761650154,
+          "windows": 4800
+        },
+        {
+          "attribution_audit_yield": 0.0,
+          "budget_fraction": 0.1,
+          "captures_per_hidden_error": 1.8046305365466344,
+          "disturbance_tv_distance": 0.7054197916666667,
+          "false_event_audit_yield": 0.0,
+          "hidden_error_recall": 0.1258690032071045,
+          "missed_event_audit_yield": 0.5551354166666667,
+          "policy": "disagreement_insepi_only",
+          "selected": 480,
+          "true_event_recall": 0.11103579838973215,
+          "windows": 4800
+        }
+      ]
+    },
+    {
+      "budget_fraction": 0.25,
+      "pareto_policies": [
+        "union",
+        "disagreement"
+      ],
+      "results": [
+        {
+          "attribution_audit_yield": 0.029420833333333334,
+          "budget_fraction": 0.25,
+          "captures_per_hidden_error": 2.2735495317376344,
+          "disturbance_tv_distance": 0.03142291666666667,
+          "false_event_audit_yield": 0.02915416666666667,
+          "hidden_error_recall": 0.24959016101499706,
+          "missed_event_audit_yield": 0.381775,
+          "policy": "uniform",
+          "selected": 1200,
+          "true_event_recall": 0.24978043988757392,
+          "windows": 4800
+        },
+        {
+          "attribution_audit_yield": 0.11735416666666666,
+          "budget_fraction": 0.25,
+          "captures_per_hidden_error": 1.8464382549430416,
+          "disturbance_tv_distance": 0.410846875,
+          "false_event_audit_yield": 0.116775,
+          "hidden_error_recall": 0.3072039484737136,
+          "missed_event_audit_yield": 0.307875,
+          "policy": "pollipi_candidate",
+          "selected": 1200,
+          "true_event_recall": 0.38884350375294874,
+          "windows": 4800
+        },
+        {
+          "attribution_audit_yield": 0.0,
+          "budget_fraction": 0.25,
+          "captures_per_hidden_error": 1.99875564934997,
+          "disturbance_tv_distance": 0.52974375,
+          "false_event_audit_yield": 0.0,
+          "hidden_error_recall": 0.2838349322092192,
+          "missed_event_audit_yield": 0.5007416666666666,
+          "policy": "insepi_audit",
+          "selected": 1200,
+          "true_event_recall": 0.2503784441419746,
+          "windows": 4800
+        },
+        {
+          "attribution_audit_yield": 0.11735416666666666,
+          "budget_fraction": 0.25,
+          "captures_per_hidden_error": 1.7921270227171853,
+          "disturbance_tv_distance": 0.35853541666666666,
+          "false_event_audit_yield": 0.116775,
+          "hidden_error_recall": 0.3164823373210732,
+          "missed_event_audit_yield": 0.32422083333333335,
+          "policy": "union",
+          "selected": 1200,
+          "true_event_recall": 0.39702733062377465,
+          "windows": 4800
+        },
+        {
+          "attribution_audit_yield": 0.020541666666666666,
+          "budget_fraction": 0.25,
+          "captures_per_hidden_error": 1.9786124501151916,
+          "disturbance_tv_distance": 0.22298229166666667,
+          "false_event_audit_yield": 0.020754166666666667,
+          "hidden_error_recall": 0.2867212533935797,
+          "missed_event_audit_yield": 0.4645666666666667,
+          "policy": "intersection",
+          "selected": 1200,
+          "true_event_recall": 0.322400527934023,
+          "windows": 4800
+        },
+        {
+          "attribution_audit_yield": 0.0,
+          "budget_fraction": 0.25,
+          "captures_per_hidden_error": 1.7800223114014082,
+          "disturbance_tv_distance": 0.7053989583333333,
+          "false_event_audit_yield": 0.0,
+          "hidden_error_recall": 0.3186528098209862,
+          "missed_event_audit_yield": 0.5621666666666667,
+          "policy": "disagreement",
+          "selected": 1200,
+          "true_event_recall": 0.2811056694803969,
+          "windows": 4800
+        },
+        {
+          "attribution_audit_yield": 0.010320833333333333,
+          "budget_fraction": 0.25,
+          "captures_per_hidden_error": 2.0894784855256416,
+          "disturbance_tv_distance": 0.415109375,
+          "false_event_audit_yield": 0.116775,
+          "hidden_error_recall": 0.27150674058327123,
+          "missed_event_audit_yield": 0.3519291666666667,
+          "policy": "disagreement_pollipi_only",
+          "selected": 1200,
+          "true_event_recall": 0.35735184028628164,
+          "windows": 4800
+        },
+        {
+          "attribution_audit_yield": 0.0,
+          "budget_fraction": 0.25,
+          "captures_per_hidden_error": 1.8051397541144927,
+          "disturbance_tv_distance": 0.7053989583333333,
+          "false_event_audit_yield": 0.0,
+          "hidden_error_recall": 0.31421710115845986,
+          "missed_event_audit_yield": 0.5543375,
+          "policy": "disagreement_insepi_only",
+          "selected": 1200,
+          "true_event_recall": 0.27719046512097606,
+          "windows": 4800
+        }
+      ]
+    },
+    {
+      "budget_fraction": 0.5,
+      "pareto_policies": [
+        "union"
+      ],
+      "results": [
+        {
+          "attribution_audit_yield": 0.029597916666666668,
+          "budget_fraction": 0.5,
+          "captures_per_hidden_error": 2.2673057446642333,
+          "disturbance_tv_distance": 0.018045833333333334,
+          "false_event_audit_yield": 0.029260416666666667,
+          "hidden_error_recall": 0.500234387237615,
+          "missed_event_audit_yield": 0.38243333333333335,
+          "policy": "uniform",
+          "selected": 2400,
+          "true_event_recall": 0.5000345466117113,
+          "windows": 4800
+        },
+        {
+          "attribution_audit_yield": 0.05867708333333333,
+          "budget_fraction": 0.5,
+          "captures_per_hidden_error": 2.1085239585413587,
+          "disturbance_tv_distance": 0.13727708333333333,
+          "false_event_audit_yield": 0.0583875,
+          "hidden_error_recall": 0.5378761841465253,
+          "missed_event_audit_yield": 0.35742083333333335,
+          "policy": "pollipi_candidate",
+          "selected": 2400,
+          "true_event_recall": 0.5923290360606863,
+          "windows": 4800
+        },
+        {
+          "attribution_audit_yield": 0.0,
+          "budget_fraction": 0.5,
+          "captures_per_hidden_error": 1.8905091215631895,
+          "disturbance_tv_distance": 0.3516229166666667,
+          "false_event_audit_yield": 0.0,
+          "hidden_error_recall": 0.5999873499625781,
+          "missed_event_audit_yield": 0.5292333333333333,
+          "policy": "insepi_audit",
+          "selected": 2400,
+          "true_event_recall": 0.5292543197067213,
+          "windows": 4800
+        },
+        {
+          "attribution_audit_yield": 0.05867708333333333,
+          "budget_fraction": 0.5,
+          "captures_per_hidden_error": 1.807397966780185,
+          "disturbance_tv_distance": 0.184996875,
+          "false_event_audit_yield": 0.0583875,
+          "hidden_error_recall": 0.6274753548223834,
+          "missed_event_audit_yield": 0.43643125,
+          "policy": "union",
+          "selected": 2400,
+          "true_event_recall": 0.671364085523778,
+          "windows": 4800
+        },
+        {
+          "attribution_audit_yield": 0.026677083333333334,
+          "budget_fraction": 0.5,
+          "captures_per_hidden_error": 2.1616567796586432,
+          "disturbance_tv_distance": 0.07435625,
+          "false_event_audit_yield": 0.026377083333333332,
+          "hidden_error_recall": 0.5246694211470955,
+          "missed_event_audit_yield": 0.4097875,
+          "policy": "intersection",
+          "selected": 2400,
+          "true_event_recall": 0.5483614646759787,
+          "windows": 4800
+        },
+        {
+          "attribution_audit_yield": 0.0,
+          "budget_fraction": 0.5,
+          "captures_per_hidden_error": 1.8888755956315446,
+          "disturbance_tv_distance": 0.30643645833333333,
+          "false_event_audit_yield": 0.0,
+          "hidden_error_recall": 0.6003800788605937,
+          "missed_event_audit_yield": 0.5295916666666667,
+          "policy": "disagreement",
+          "selected": 2400,
+          "true_event_recall": 0.5296179550551113,
+          "windows": 4800
+        },
+        {
+          "attribution_audit_yield": 0.023235416666666668,
+          "budget_fraction": 0.5,
+          "captures_per_hidden_error": 2.2052303490654057,
+          "disturbance_tv_distance": 0.13820625,
+          "false_event_audit_yield": 0.0583875,
+          "hidden_error_recall": 0.5142978711132781,
+          "missed_event_audit_yield": 0.37206875,
+          "policy": "disagreement_pollipi_only",
+          "selected": 2400,
+          "true_event_recall": 0.5715272757102721,
+          "windows": 4800
+        },
+        {
+          "attribution_audit_yield": 0.0,
+          "budget_fraction": 0.5,
+          "captures_per_hidden_error": 1.8800451905483635,
+          "disturbance_tv_distance": 0.3516229166666667,
+          "false_event_audit_yield": 0.0,
+          "hidden_error_recall": 0.6032507402923457,
+          "missed_event_audit_yield": 0.53211875,
+          "policy": "disagreement_insepi_only",
+          "selected": 2400,
+          "true_event_recall": 0.5321411413120475,
+          "windows": 4800
+        }
+      ]
+    }
+  ],
+  "evaluated_conditions": 68,
+  "evaluation_split": "test",
+  "insepi_source_commit": "19db110e8610151711adf87accafa05b5f2969d2",
+  "pollipi_provenance": {
+    "record_type": "provenance",
+    "schema": "pollipi-insepi-factorial-v4",
+    "source_commit": "5541201b376689c32aaabeafbc8e7e9592150d23",
+    "world_fingerprint": "10e38358499b79829876752986492c6a69b3ab15ec7b6756e6ae7ad75b314193"
+  },
+  "replicates": 200,
+  "schema": "pollipi-insepi-factorial-cross-v4-report",
+  "seed": 20260821,
+  "world_fingerprint": "10e38358499b79829876752986492c6a69b3ab15ec7b6756e6ae7ad75b314193",
+  "world_windows": 4800
+}
