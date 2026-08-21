@@ -29,21 +29,53 @@ jobs:
             exit "$status"
           }
           cat pytest.log
-      - name: Print V2 visual benchmark ledger
+      - name: Print V2/V3 benchmark ledger
         if: matrix.python-version == '3.11'
         run: |
           python - <<'PY'
+          import json
+          from pathlib import Path
           from interaction_sensing.simulation.portable_visual_v2 import suite_fingerprint
           from interaction_sensing.simulation.visual_contradiction_v2 import run_visual_contradiction_v2
+          from interaction_sensing.simulation.visual_disagreement_v2 import compare_visual_traces
+          from interaction_sensing.simulation.budget_competition import run_budget_competition
+
+          insepi_rows = [row.to_dict() for row in run_visual_contradiction_v2()]
+          pollipi_rows = [
+              json.loads(line)
+              for line in Path('benchmarks/pollipi_visual_v2_618298e.jsonl').read_text(encoding='utf-8').splitlines()
+              if line.strip()
+          ]
           print("portable_visual_v2_sha256", suite_fingerprint())
-          for row in run_visual_contradiction_v2():
-              print(row.scenario_id, row.true_visit, row.inferred_noise_source,
-                    row.observability_state,
-                    f"false={row.false_event_risk:.3f}",
-                    f"missed={row.missed_event_risk:.3f}",
-                    f"attrib={row.attribution_risk:.3f}",
-                    f"local={row.local_relative_motion:.3f}",
-                    f"background={row.background_motion:.3f}")
+          for row in insepi_rows:
+              print("INSEPI_V2", row['scenario_id'], row['true_visit'], row['inferred_noise_source'],
+                    row['observability_state'],
+                    f"false={row['false_event_risk']:.3f}",
+                    f"missed={row['missed_event_risk']:.3f}",
+                    f"attrib={row['attribution_risk']:.3f}")
+
+          print("V2_DISAGREEMENT")
+          for row in compare_visual_traces(pollipi_rows, insepi_rows):
+              print(row.scenario_id, row.pollipi_state, row.observability_state,
+                    row.disagreement_type, f"priority={row.observable_priority:.2f}",
+                    f"latent_error={row.latent_error}")
+
+          print("V3_EQUAL_BUDGET")
+          for row in run_budget_competition(
+              pollipi_rows, insepi_rows,
+              budget_fraction=0.25,
+              world_windows=2400,
+              replicates=100,
+              seed=20260821,
+          ):
+              print(row.policy,
+                    f"event_recall={row.true_event_recall:.3f}",
+                    f"error_recall={row.hidden_error_recall:.3f}",
+                    f"miss_yield={row.missed_event_audit_yield:.3f}",
+                    f"false_yield={row.false_event_audit_yield:.3f}",
+                    f"attrib_yield={row.attribution_audit_yield:.3f}",
+                    f"captures_per_error={row.captures_per_hidden_error:.3f}",
+                    f"tv={row.disturbance_tv_distance:.3f}")
           PY
       - name: Upload pytest output
         if: always()
