@@ -46,19 +46,26 @@ jobs:
           assert '[[V7_LOCKED_RESULT]]' in manuscript
           assert '## Data/Code for peer review' in manuscript
           assert '### 2.13. AI-assisted software and manuscript development' in manuscript
+          assert 'PolliPi' not in manuscript and 'InsePi' not in manuscript
+          assert '**Target journal:**' not in manuscript and '**Status:**' not in manuscript
           assert not Path('.v7/run/v7_pixels.npz').exists()
 
           manifest = json.loads(Path('.peer-review/anonymous/ANONYMOUS_BUNDLE_MANIFEST.json').read_text())
           assert manifest['double_anonymous'] is True
+          assert manifest['observer_names_anonymised'] is True
           assert manifest['title_page_excluded'] is True
           assert manifest['v7_materialised'] is False
           print('MEE_PACKAGE_DOUBLE_ANONYMOUS true')
+          print('MEE_PACKAGE_OBSERVER_NAMES_ANONYMISED true')
           print('MEE_PACKAGE_LICENSE_READY', str(manifest['license_ready']).lower())
           print('MEE_PACKAGE_V7_MATERIALISED false')
           print('MEE_PACKAGE_MANIFEST', manifest['manifest_sha256'])
 
           with zipfile.ZipFile('.peer-review/mee-anonymous-peer-review.zip') as archive:
-              assert 'manuscript/TITLE_PAGE_TEMPLATE.md' not in archive.namelist()
+              names = archive.namelist()
+              assert 'manuscript/TITLE_PAGE_TEMPLATE.md' not in names
+              assert all('pollipi' not in name.lower() for name in names)
+              assert all('insepi' not in name.lower() for name in names)
           PY
       - name: Upload anonymous peer-review package
         uses: actions/upload-artifact@v4
@@ -66,7 +73,6 @@ jobs:
           name: mee-anonymous-peer-review-pre-v7
           path: |
             manuscript/generated/MEE_PRE_V7_SUBMISSION.md
-            manuscript/figures/generated/
             .peer-review/mee-anonymous-peer-review.zip
             .peer-review/anonymous/ANONYMOUS_BUNDLE_MANIFEST.json
           if-no-files-found: error
