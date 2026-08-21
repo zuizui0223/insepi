@@ -33,7 +33,8 @@ jobs:
             tests/test_portfolio_development_v6.py \
             tests/test_portfolio_fit_v6.py \
             tests/test_portfolio_sparse_v6.py \
-            tests/test_portfolio_screening_v6b.py
+            tests/test_portfolio_screening_v6b.py \
+            tests/test_portfolio_single_arm_v6.py
       - name: Screen sparse and budget-conditioned portfolios
         run: |
           python - <<'PY'
@@ -74,4 +75,35 @@ jobs:
           print('V6B_PARETO_COUNTS', dict(sorted(counts.items())))
           for method in ('v6_sparse', 'v6_budget_conditioned', 'v6_forced_four_arm'):
               print('V6B_FRONTIER_REGIMES', method, sorted(regimes.get(method, [])))
+          PY
+      - name: Screen minimal exploration plus one exploitation arm
+        run: |
+          python - <<'PY'
+          from collections import Counter
+          from interaction_sensing.simulation.portfolio_screening_v6c import run_v6c_screening
+
+          report = run_v6c_screening(
+              'benchmarks/pollipi_factorial_v4_5541201.tsv',
+              fit_world_windows=400,
+              fit_replicates=3,
+              eval_world_windows=1200,
+              eval_replicates=20,
+              seed=20260821,
+          )
+          print('V6C_FIT', report.fit.to_dict())
+          print('V6C_EXPLOITATION_ARM', report.exploitation_arm)
+          counts = Counter(row.method for row in report.results if row.pareto)
+          for row in report.results:
+              print(
+                  'V6C_DEV',
+                  f'p={row.prevalence:.2f}',
+                  f'b={row.budget_fraction:.2f}',
+                  row.method,
+                  f'event={row.true_event_recall:.3f}',
+                  f'error={row.hidden_error_recall:.3f}',
+                  f'cpe={row.captures_per_hidden_error:.3f}',
+                  f'tv={row.disturbance_tv_distance:.3f}',
+                  f'pareto={int(row.pareto)}',
+              )
+          print('V6C_PARETO_COUNTS', dict(sorted(counts.items())))
           PY
