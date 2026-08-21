@@ -29,7 +29,7 @@ jobs:
             exit "$status"
           }
           cat pytest.log
-      - name: Print V2/V3 benchmark ledger
+      - name: Print V2/V3/V4 benchmark ledger
         if: matrix.python-version == '3.11'
         run: |
           python - <<'PY'
@@ -39,6 +39,8 @@ jobs:
           from interaction_sensing.simulation.visual_contradiction_v2 import run_visual_contradiction_v2
           from interaction_sensing.simulation.visual_disagreement_v2 import compare_visual_traces
           from interaction_sensing.simulation.budget_competition import run_budget_competition
+          from interaction_sensing.simulation.factorial_world_v4 import suite_fingerprint as v4_fingerprint
+          from interaction_sensing.simulation.factorial_benchmark_v4 import run_factorial_v4, summarize_factorial_v4
 
           insepi_rows = [row.to_dict() for row in run_visual_contradiction_v2()]
           pollipi_rows = [
@@ -76,6 +78,15 @@ jobs:
                     f"attrib_yield={row.attribution_audit_yield:.3f}",
                     f"captures_per_error={row.captures_per_hidden_error:.3f}",
                     f"tv={row.disturbance_tv_distance:.3f}")
+
+          v4_rows = run_factorial_v4()
+          print("factorial_v4_sha256", v4_fingerprint())
+          print("INSEPI_V4_SUMMARY", summarize_factorial_v4(v4_rows))
+          for family in sorted({row.disturbance_family for row in v4_rows if row.split == 'test'}):
+              family_rows = [row for row in v4_rows if row.split == 'test' and row.disturbance_family == family]
+              if family_rows:
+                  risky = sum(row.observability_state in {'confounded','audit_priority','unobservable'} for row in family_rows)
+                  print("INSEPI_V4_TEST_FAMILY", family, f"risk_recall={risky/len(family_rows):.3f}")
           PY
       - name: Upload pytest output
         if: always()
