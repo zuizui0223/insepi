@@ -8,6 +8,7 @@ import zipfile
 
 
 ROOT = Path(__file__).resolve().parents[1]
+TEXT_SUFFIXES = (".py", ".md", ".toml", ".json", ".jsonl", ".txt", ".yml", ".yaml", ".svg", ".csv", ".tsv")
 
 
 def test_mee_manuscript_has_four_part_abstract_and_required_statements(tmp_path: Path) -> None:
@@ -92,7 +93,7 @@ def test_anonymous_bundle_is_deterministic_and_identity_scrubbed(tmp_path: Path)
         combined = "\n".join(
             archive.read(name).decode("utf-8")
             for name in sorted(names)
-            if name.endswith((".py", ".md", ".toml", ".json", ".txt", ".yml", ".yaml", ".svg"))
+            if name.endswith(TEXT_SUFFIXES)
         )
     assert "zuizui0223" not in combined
     assert "github.com/zuizui0223" not in combined
@@ -102,5 +103,8 @@ def test_anonymous_bundle_is_deterministic_and_identity_scrubbed(tmp_path: Path)
     assert "insepi" not in combined
     assert "d58d0a86034a6c2d53f90efbe4245370fd7cd2e9" not in combined
     assert "980813bab996909020140fad5bd83b055eb3db9c" not in combined
+    # JSONL trace schemas and keys must be anonymised too, not just filenames.
+    assert "observer_e_state" in combined
+    assert "observer_e-observer_o-visual-contradiction-v2" in combined
     # 64-character scientific fingerprints are intentionally not scrubbed.
     assert "9442a25c3c35febaf44b1bc8f1bedce5524aa34a926f80513069593891982ac3" in combined
