@@ -1,0 +1,15 @@
+{
+  "schema": "pollipi-insepi-v7-baselines-v1",
+  "registry_sha256": "94288d76f69b57e9b3096dfb9fc90f1602ea79d836a4dcf2534979f7c7cd9975",
+  "entries": [
+    {"name": "uniform", "kind": "legacy", "selector": "uniform"},
+    {"name": "pollipi_candidate", "kind": "legacy", "selector": "budget_competition:pollipi_candidate"},
+    {"name": "insepi_audit", "kind": "legacy", "selector": "budget_competition:insepi_audit"},
+    {"name": "legacy_fixed_disagreement", "kind": "legacy", "selector": "budget_competition:disagreement"},
+    {"name": "candidate_or_risky", "kind": "legacy", "selector": "budget_competition:union"},
+    {"name": "candidate_and_risky", "kind": "legacy", "selector": "budget_competition:intersection"},
+    {"name": "v6_frozen", "kind": "portfolio", "weights": {"exploration": 0.5, "pollipi": 0.1, "insepi": 0.4, "disagreement": 0.0}},
+    {"name": "v6_no_pollipi", "kind": "portfolio_ablation", "weights": {"exploration": 0.6, "pollipi": 0.0, "insepi": 0.4, "disagreement": 0.0}},
+    {"name": "v6_no_insepi", "kind": "portfolio_ablation", "weights": {"exploration": 0.9, "pollipi": 0.1, "insepi": 0.0, "disagreement": 0.0}}
+  ]
+}
