@@ -93,9 +93,9 @@ jobs:
         run: |
           python - <<'PY'
           from collections import Counter
-          from interaction_sensing.simulation.portfolio_development_v6 import run_v6_development
+          from interaction_sensing.simulation.portfolio_screening_v6 import run_v6_screening
 
-          report = run_v6_development(
+          report = run_v6_screening(
               'benchmarks/pollipi_factorial_v4_5541201.tsv',
               fit_world_windows=400,
               fit_replicates=3,
