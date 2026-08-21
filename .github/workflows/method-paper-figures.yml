@@ -1,0 +1,51 @@
+name: Method paper pre-V7 figures
+
+on:
+  pull_request:
+    paths:
+      - "manuscript/figures/**"
+      - "scripts/build_pre_v7_figures.py"
+      - "tests/test_pre_v7_figures.py"
+      - ".github/workflows/method-paper-figures.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install test tools
+        run: python -m pip install pytest
+      - name: Test deterministic and V7-safe figure generation
+        run: pytest -q tests/test_pre_v7_figures.py
+      - name: Build pre-V7 figures
+        run: python scripts/build_pre_v7_figures.py
+      - name: Verify V7 remains absent from generated figures
+        shell: bash
+        run: |
+          set -euo pipefail
+          test ! -e .v7/run/v7_pixels.npz
+          ! grep -R "\[\[V7_LOCKED_RESULT\]\]" manuscript/figures/generated
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          manifest = json.loads(Path('manuscript/figures/generated/manifest.json').read_text())
+          assert manifest['v7_materialised'] is False
+          assert len(manifest['outputs']) == 8
+          print('PRE_V7_FIGURES', manifest['evidence_sha256'])
+          for name, record in sorted(manifest['outputs'].items()):
+              print('FIGURE_OUTPUT', name, record['sha256'])
+          PY
+      - name: Upload manuscript figure package
+        uses: actions/upload-artifact@v4
+        with:
+          name: method-paper-pre-v7-figures
+          path: manuscript/figures/generated/
+          if-no-files-found: error
+          retention-days: 90
