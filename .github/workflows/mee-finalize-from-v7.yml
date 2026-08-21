@@ -1,0 +1,95 @@
+name: Finalize MEE package from locked V7
+
+on:
+  workflow_dispatch:
+    inputs:
+      v7_run_id:
+        description: "Successful V7 one-shot workflow run ID containing v7-locked-validation-evidence"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  finalize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install package and test tools
+        run: python -m pip install -e ".[dev]"
+
+      - name: Download immutable V7 execution evidence
+        env:
+          GH_TOKEN: ${{ github.token }}
+          V7_RUN_ID: ${{ inputs.v7_run_id }}
+        run: |
+          set -euo pipefail
+          mkdir -p .v7/final-evidence
+          gh run download "$V7_RUN_ID" \
+            --repo "$GITHUB_REPOSITORY" \
+            --name v7-locked-validation-evidence \
+            --dir .v7/final-evidence
+          test -f .v7/final-evidence/v7_execution_ledger.json
+          test -f .v7/final-evidence/v7_report.json
+          echo "MEE_FINALIZER_V7_RUN $V7_RUN_ID"
+
+      - name: Rebuild exact pre-V7 reviewer manuscript
+        run: python scripts/build_mee_submission_manuscript.py
+
+      - name: Finalize manuscript, SI and preregistered Figure 6
+        run: |
+          python scripts/finalize_submission_from_v7.py \
+            --ledger .v7/final-evidence/v7_execution_ledger.json \
+            --report .v7/final-evidence/v7_report.json
+
+      - name: Audit deterministic finalization
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          manuscript = Path('manuscript/generated/MEE_FINAL_SUBMISSION.md').read_text(encoding='utf-8')
+          supplement = Path('manuscript/generated/SUPPLEMENTARY_INFORMATION_FINAL.md').read_text(encoding='utf-8')
+          receipt = json.loads(Path('manuscript/generated/V7_SUBMISSION_FINALIZATION_RECEIPT.json').read_text())
+          assert '[[V7_LOCKED_RESULT' not in manuscript
+          assert '[[V7_LOCKED_RESULT' not in supplement
+          assert receipt['claim_level'] in {'A','B','C','D','E'}
+          assert Path('manuscript/figures/generated/fig6_v7_locked_validation.svg').exists()
+          assert Path('manuscript/figures/generated/fig6_v7_locked_validation.csv').exists()
+          print('MEE_FINAL_CLAIM_LEVEL', receipt['claim_level'])
+          print('MEE_FINAL_GATE', 'PASS' if receipt['gate_passed'] else 'FAIL')
+          print('MEE_FINALIZATION_RECEIPT', receipt['receipt_sha256'])
+          PY
+
+      - name: Upload finalized publication transform
+        uses: actions/upload-artifact@v4
+        with:
+          name: mee-finalized-from-locked-v7
+          path: |
+            manuscript/generated/MEE_FINAL_SUBMISSION.md
+            manuscript/generated/SUPPLEMENTARY_INFORMATION_FINAL.md
+            manuscript/generated/V7_SUBMISSION_FINALIZATION_RECEIPT.json
+            manuscript/figures/generated/fig6_v7_locked_validation.svg
+            manuscript/figures/generated/fig6_v7_locked_validation.csv
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Preserve link to source V7 evidence
+        run: |
+          echo "## Finalized MEE package" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "Source locked V7 workflow run: \`${{ inputs.v7_run_id }}\`" >> "$GITHUB_STEP_SUMMARY"
+          python - <<'PY' >> "$GITHUB_STEP_SUMMARY"
+          import json
+          from pathlib import Path
+          receipt = json.loads(Path('manuscript/generated/V7_SUBMISSION_FINALIZATION_RECEIPT.json').read_text())
+          print(f"Claim level: **{receipt['claim_level']}**")
+          print(f"Locked gate: **{'PASS' if receipt['gate_passed'] else 'FAIL'}**")
+          print(f"Finalization receipt: `{receipt['receipt_sha256']}`")
+          PY
