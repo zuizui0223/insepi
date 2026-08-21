@@ -36,7 +36,9 @@ def test_polish_wraps_fig2_and_moves_fig4_legend_without_touching_v7(tmp_path: P
     fig2 = fig2_path.read_text(encoding="utf-8")
     assert "targeted policies trade event recovery against hidden-error recovery and sampling distortion;</text>" in fig2
     assert "fixed disagreement is not a free improvement.</text>" in fig2
-    assert 'x="180.0" y="718.0"' in fig2
+    assert 'x="200.0" y="718.0"' in fig2
+    assert "candidate OR risky</text>" in fig2
+    assert "candidate AND risky</text>" in fig2
 
     fig4 = fig4_path.read_text(encoding="utf-8")
     assert 'x="805.0" y="535.0"' in fig4
