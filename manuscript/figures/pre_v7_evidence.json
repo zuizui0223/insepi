@@ -1,0 +1,52 @@
+{
+  "schema": "insepi-method-paper-pre-v7-figure-evidence-v1",
+  "scope": "Only V1-V6 development/falsification evidence; no V7 seed, pixels, traces, or outcomes.",
+  "provenance": {
+    "v2_pixel_world_sha256": "f281fedd7ebf899dbc472b73b21afd25a30f18bb5481af71ec65b13f63a80ec8",
+    "v4_world_sha256": "10e38358499b79829876752986492c6a69b3ab15ec7b6756e6ae7ad75b314193",
+    "v5_world_sha256": "9a604a9646efbfaba8e123e0adc58d0f7a82993eec2ab5d56ede8fea5fa4f8b5",
+    "v5_pollipi_trace_sha256": "56ec4de0b710273ee47e500d6b1d7f92c50ba40274619528f857e133633385c0",
+    "v5_cross_report_sha256": "a6d1f30b3d18707e83cb5d0d5f60581d06fdf42f7bbe485fb0992079f3ce495e",
+    "v6_allocator_commit": "a8ac75991ab28fd74a3f3a5482304a2b127a97bc"
+  },
+  "v3_equal_budget": {
+    "budget": 0.25,
+    "world_windows": 2400,
+    "replicates": 100,
+    "policies": [
+      {"name": "uniform", "event_recall": 0.251, "hidden_error_recall": 0.251, "tv": 0.022},
+      {"name": "pollipi_candidate", "event_recall": 0.325, "hidden_error_recall": 0.100, "tv": 0.301},
+      {"name": "insepi_audit", "event_recall": 0.189, "hidden_error_recall": 0.251, "tv": 0.667},
+      {"name": "candidate_or_risky", "event_recall": 0.313, "hidden_error_recall": 0.084, "tv": 0.261},
+      {"name": "candidate_and_risky", "event_recall": 0.284, "hidden_error_recall": 0.182, "tv": 0.251},
+      {"name": "fixed_disagreement", "event_recall": 0.188, "hidden_error_recall": 0.251, "tv": 0.500}
+    ]
+  },
+  "v5_locked_surface": {
+    "prevalences": ["rare", "balanced", "common"],
+    "budgets": [0.10, 0.25, 0.50],
+    "full_gate_pass": [[false, false, false], [false, true, false], [false, false, false]],
+    "locked_findings": [
+      "Only balanced prevalence at 25% budget passed the complete fixed-disagreement gate.",
+      "Rare prevalence at 10% and 25% budget fell off the Pareto frontier and lost to a single-view-removal comparator.",
+      "At common prevalence and 25% budget, InsePi-only had higher hidden-error recall.",
+      "At 10% budget, disturbance TV approached approximately 0.833 in some regimes.",
+      "Complementary observer signal remained visible across six to seven disturbance families per prevalence."
+    ]
+  },
+  "v6_focused_candidates": [
+    {"name": "E40_P10_I50", "exploration": 0.40, "pollipi": 0.10, "insepi": 0.50, "disagreement": 0.0, "passed": false, "worst_joint_ratio": null, "mean_joint_ratio": null, "max_tv": 0.26567, "failure": "TV ceiling"},
+    {"name": "E50_P10_I40", "exploration": 0.50, "pollipi": 0.10, "insepi": 0.40, "disagreement": 0.0, "passed": true, "worst_joint_ratio": 1.00846, "mean_joint_ratio": 1.11642, "max_tv": 0.21919, "failure": null},
+    {"name": "E60_P10_I30", "exploration": 0.60, "pollipi": 0.10, "insepi": 0.30, "disagreement": 0.0, "passed": true, "worst_joint_ratio": 1.00832, "mean_joint_ratio": 1.10303, "max_tv": 0.17222, "failure": null},
+    {"name": "E70_P10_I20", "exploration": 0.70, "pollipi": 0.10, "insepi": 0.20, "disagreement": 0.0, "passed": false, "worst_joint_ratio": 0.98329, "mean_joint_ratio": null, "max_tv": null, "failure": "common-prevalence hidden-error robustness"}
+  ],
+  "generation_ledger": [
+    {"generation": "V1", "question": "Do epistemically distinct observers produce structured contradictions?", "status": "development"},
+    {"generation": "V2", "question": "Do contradictions persist from identical rendered pixels?", "status": "development"},
+    {"generation": "V3", "question": "Does direct disagreement win under an equal budget?", "status": "negative"},
+    {"generation": "V4", "question": "Can observability sensing improve without merging observer logic?", "status": "development"},
+    {"generation": "V5", "question": "Is fixed scalar disagreement robust to prevalence shift?", "status": "locked fail"},
+    {"generation": "V6", "question": "Can guaranteed exploration plus observer-specific quotas repair the seam?", "status": "frozen candidate"},
+    {"generation": "V7", "question": "Does frozen V6 generalise to a new locked world?", "status": "unexecuted"}
+  ]
+}
