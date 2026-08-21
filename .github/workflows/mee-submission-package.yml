@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - "manuscript/**"
+      - "editor/**"
       - "scripts/build_mee_submission_manuscript.py"
       - "scripts/build_anonymous_peer_review_bundle.py"
       - "scripts/build_pre_v7_figures.py"
@@ -81,7 +82,7 @@ jobs:
           with zipfile.ZipFile('.peer-review/mee-anonymous-peer-review.zip') as archive:
               names = archive.namelist()
               assert 'manuscript/TITLE_PAGE_TEMPLATE.md' not in names
-              assert 'manuscript/EDITOR_COVER_LETTER_TEMPLATE.md' not in names
+              assert 'editor/EDITOR_COVER_LETTER_TEMPLATE.md' not in names
               assert all('pollipi' not in name.lower() for name in names)
               assert all('insepi' not in name.lower() for name in names)
           PY
@@ -101,6 +102,6 @@ jobs:
           name: mee-editor-only-templates-not-for-review
           path: |
             manuscript/TITLE_PAGE_TEMPLATE.md
-            manuscript/EDITOR_COVER_LETTER_TEMPLATE.md
+            editor/EDITOR_COVER_LETTER_TEMPLATE.md
           if-no-files-found: error
           retention-days: 90
