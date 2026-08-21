@@ -36,6 +36,24 @@ jobs:
       - name: Install orchestrator
         run: python -m pip install -e ".[dev]"
 
+      - name: Verify frozen scientific file provenance
+        shell: bash
+        run: |
+          set -euo pipefail
+          allocator_last="$(git log -1 --format=%H -- src/interaction_sensing/simulation/frozen_portfolio_v6.py)"
+          generator_last="$(git log -1 --format=%H -- src/interaction_sensing/simulation/locked_world_v7.py)"
+          evaluator_last="$(git log -1 --format=%H -- src/interaction_sensing/simulation/v7_evaluator.py)"
+          materializer_last="$(git log -1 --format=%H -- src/interaction_sensing/simulation/v7_materialization.py)"
+          test "$allocator_last" = "$FROZEN_ALLOCATOR_SHA" || { echo "allocator drift: $allocator_last"; exit 1; }
+          test "$generator_last" = "$FROZEN_GENERATOR_SHA" || { echo "generator drift: $generator_last"; exit 1; }
+          test "$evaluator_last" = "$FROZEN_EVALUATOR_SHA" || { echo "evaluator drift: $evaluator_last"; exit 1; }
+          test "$materializer_last" = "$FROZEN_MATERIALIZER_SHA" || { echo "materializer drift: $materializer_last"; exit 1; }
+          echo "V7_FROZEN_FILE_PROVENANCE PASS"
+          echo "allocator $allocator_last"
+          echo "generator $generator_last"
+          echo "evaluator $evaluator_last"
+          echo "materializer $materializer_last"
+
       - name: Read lock state without deriving seed
         id: lock
         shell: bash
