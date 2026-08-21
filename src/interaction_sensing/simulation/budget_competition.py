@@ -13,6 +13,18 @@ from typing import Iterable, Mapping, Sequence
 
 
 POLLIPI_CANDIDATE = {"strong_visitation_candidate", "uncertain_local_activity"}
+CORE_POLICIES = (
+    "uniform",
+    "pollipi_candidate",
+    "insepi_audit",
+    "union",
+    "intersection",
+    "disagreement",
+)
+SINGLE_VIEW_ABLATIONS = (
+    "disagreement_pollipi_only",
+    "disagreement_insepi_only",
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -68,6 +80,13 @@ def allocation_score(
     missed_risk = _risk(insepi, "missed_event_risk")
     attribution_risk = _risk(insepi, "attribution_risk")
     max_risk = max(false_risk, missed_risk, attribution_risk)
+
+    if policy == "disagreement_pollipi_only":
+        false_risk = missed_risk = attribution_risk = max_risk = 0.0
+        policy = "disagreement"
+    elif policy == "disagreement_insepi_only":
+        candidate = strong = environmental = False
+        policy = "disagreement"
 
     if policy == "uniform":
         return 0.0
@@ -196,9 +215,7 @@ def run_budget_competition(
     pollipi_rows: Iterable[Mapping[str, object]],
     insepi_rows: Iterable[Mapping[str, object]],
     *,
-    policies: Sequence[str] = (
-        "uniform", "pollipi_candidate", "insepi_audit", "union", "intersection", "disagreement"
-    ),
+    policies: Sequence[str] = CORE_POLICIES,
     budget_fraction: float = 0.25,
     world_windows: int = 1200,
     replicates: int = 100,
