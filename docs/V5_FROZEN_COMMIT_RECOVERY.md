@@ -13,7 +13,38 @@ Expected immutable commits:
 The V7 one-shot workflow expects each exact commit to be advertised as the tip of
 branch `frozen/v5-method` in its own repository.
 
-## PolliPi local recovery
+## Recommended fail-closed helper
+
+The current InsePi packaging branch contains `scripts/publish_frozen_v5_ref.py`.
+It does not reconstruct any history and does not checkout/reset the worktree. It
+first verifies that the required object exists locally and that `origin` identifies
+the expected repository. **Without `--push` it performs verification only.**
+
+From a checkout containing the helper script, run against the local PolliPi clone:
+
+```bash
+python scripts/publish_frozen_v5_ref.py pollipi /path/to/local/pollipi
+```
+
+If and only if that reports `FROZEN_V5_RECOVERY_STATUS verified-local-only`, publish
+the exact ref:
+
+```bash
+python scripts/publish_frozen_v5_ref.py pollipi /path/to/local/pollipi --push
+```
+
+Then repeat for the local InsePi clone:
+
+```bash
+python scripts/publish_frozen_v5_ref.py insepi /path/to/local/insepi
+python scripts/publish_frozen_v5_ref.py insepi /path/to/local/insepi --push
+```
+
+The `--push` mode verifies that the advertised remote branch tip equals the frozen
+SHA exactly after push. It aborts if the required object is absent or repository
+identity does not match.
+
+## Equivalent manual PolliPi recovery
 
 Run from the local PolliPi clone that still contains the frozen commit:
 
@@ -31,7 +62,7 @@ git ls-remote https://github.com/zuizui0223/pollipi.git refs/heads/frozen/v5-met
 # d58d0a86034a6c2d53f90efbe4245370fd7cd2e9  refs/heads/frozen/v5-method
 ```
 
-## InsePi local recovery
+## Equivalent manual InsePi recovery
 
 Run from the local InsePi clone that still contains the frozen commit:
 
@@ -48,6 +79,14 @@ Then the public check must return exactly:
 git ls-remote https://github.com/zuizui0223/insepi.git refs/heads/frozen/v5-method
 # 980813bab996909020140fad5bd83b055eb3db9c  refs/heads/frozen/v5-method
 ```
+
+## Current remote diagnosis
+
+The two frozen branches are currently absent. Direct GitHub attempts to create
+`frozen/v5-method` from the expected SHAs return `422 Object does not exist` in
+both repositories. This establishes that the commits are not merely unreferenced
+remote objects: an original local clone that still contains each git object is
+required.
 
 ## What happens after both branch tips match
 
