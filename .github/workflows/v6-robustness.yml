@@ -1,15 +1,6 @@
 name: V6 robustness gate
 
 on:
-  pull_request:
-    paths:
-      - "src/interaction_sensing/simulation/robustness_gate_v6.py"
-      - "src/interaction_sensing/simulation/portfolio_candidate_gate_v6.py"
-      - "src/interaction_sensing/simulation/portfolio_*_v6*.py"
-      - "src/interaction_sensing/simulation/observer_portfolio_v6.py"
-      - "tests/test_robustness_gate_v6.py"
-      - "benchmarks/pollipi_factorial_v4_5541201.tsv"
-      - ".github/workflows/v6-robustness.yml"
   workflow_dispatch:
 
 permissions:
