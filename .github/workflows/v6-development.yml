@@ -1,16 +1,6 @@
 name: V6 portfolio development
 
 on:
-  pull_request:
-    paths:
-      - "src/interaction_sensing/simulation/observer_portfolio_v6.py"
-      - "src/interaction_sensing/simulation/portfolio_*_v6*.py"
-      - "tests/test_observer_portfolio_v6.py"
-      - "tests/test_portfolio_*_v6*.py"
-      - "benchmarks/pollipi_factorial_v4_5541201.tsv"
-      - "docs/OBSERVER_PORTFOLIO_V6.md"
-      - "docs/V5_FALSIFICATION_LEDGER.md"
-      - ".github/workflows/v6-development.yml"
   workflow_dispatch:
 
 permissions:
