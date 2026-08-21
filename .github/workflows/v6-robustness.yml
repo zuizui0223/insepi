@@ -1,0 +1,67 @@
+name: V6 robustness gate
+
+on:
+  pull_request:
+    paths:
+      - "src/interaction_sensing/simulation/robustness_gate_v6.py"
+      - "src/interaction_sensing/simulation/portfolio_candidate_gate_v6.py"
+      - "src/interaction_sensing/simulation/portfolio_*_v6*.py"
+      - "src/interaction_sensing/simulation/observer_portfolio_v6.py"
+      - "tests/test_robustness_gate_v6.py"
+      - "benchmarks/pollipi_factorial_v4_5541201.tsv"
+      - ".github/workflows/v6-robustness.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install package
+        run: python -m pip install -e ".[dev]"
+      - name: Test robustness gate
+        run: pytest -q tests/test_robustness_gate_v6.py
+      - name: Run paired candidate gate
+        run: |
+          python - <<'PY'
+          from interaction_sensing.simulation.portfolio_candidate_gate_v6 import run_candidate_gate
+
+          report = run_candidate_gate(
+              'benchmarks/pollipi_factorial_v4_5541201.tsv',
+              fit_world_windows=600,
+              fit_replicates=4,
+              gate_world_windows=2400,
+              gate_replicates=60,
+              seed=20260821,
+              ratio_floor=1.0,
+              tv_ceiling=0.25,
+          )
+          print('V6_GATE_WORLD', report.world_fingerprint)
+          for rank, (name, gate) in enumerate(report.candidates, start=1):
+              print(
+                  'V6_GATE_CANDIDATE', rank, name,
+                  gate.weights.to_dict(),
+                  f'pass={int(gate.passes_development_gate)}',
+                  f'worst_joint_ratio={gate.worst_joint_ratio:.4f}',
+                  f'mean_joint_ratio={gate.mean_joint_ratio:.4f}',
+                  f'max_tv={gate.max_tv_distance:.4f}',
+                  f'max_excess_tv={gate.max_excess_tv_over_uniform:.4f}',
+                  f'regimes_ge_uniform={gate.n_regimes_at_or_above_uniform}/9',
+              )
+              for row in gate.regimes:
+                  print(
+                      'V6_GATE_REGIME', name,
+                      f'p={row.prevalence:.2f}',
+                      f'b={row.budget_fraction:.2f}',
+                      f'event_ratio={row.event_ratio:.4f}',
+                      f'error_ratio={row.hidden_error_ratio:.4f}',
+                      f'joint={row.joint_ratio:.4f}',
+                      f'tv={row.candidate_tv_distance:.4f}',
+                  )
+          PY
