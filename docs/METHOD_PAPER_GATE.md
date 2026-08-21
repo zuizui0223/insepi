@@ -1,135 +1,218 @@
-# Method-paper gate: disagreement-driven ecological sensing
+# Method-paper gate: exploration-guarded dual-observer ecological sensing
 
-## Submission claim
+## Current submission hypothesis
 
-The pre-empirical paper should not claim field accuracy. Its standalone claim is methodological:
+The pre-empirical paper must not claim field accuracy. After the locked V5
+falsification and V6 development, the current standalone methodological
+hypothesis is:
 
-> Keeping two observation programs epistemically independent, then using their structured disagreement as an adaptive audit signal, can improve discovery of observation-process failures under finite sensing budgets compared with either program alone.
+> Ecological sensing under finite budgets can be made more robust to unknown
+> event prevalence by keeping biological-evidence and observability-risk
+> observers independent, guaranteeing a substantial uniform-exploration quota,
+> and allocating separate observer-specific exploitation quotas rather than
+> collapsing their outputs into one fixed scalar priority.
 
-PolliPi supplies a biological-evidence / capture-allocation view. InsePi supplies an observability / error-process view. The methodological object is the **development and sensing protocol built around their disagreement**, not a new monolithic classifier.
+The frozen V6 candidate is:
 
-## What must be true before submission
+```text
+50% uniform exploration
+10% PolliPi biological-evidence priority
+40% InsePi observability-risk priority
+ 0% direct disagreement priority
+```
 
-A simulation-only manuscript is ready only after all gates below pass.
+Disagreement remains central to the **development method**—it exposed conflicting
+assumptions and localised the failed allocation seam—but V5/V6 evidence does not
+support using disagreement itself as a direct allocation quota.
 
-### G1 — Independent implementations
+## G1 — Independent implementations
 
 - PolliPi and InsePi remain separately executable.
 - Neither imports the other's decision logic.
-- Common material is restricted to benchmark contracts, latent truth, rendered pixels, and portable traces.
+- Common material is benchmark/world contracts and emitted traces.
 - Agreement is never a tuning target.
 
-**Status: PASS for the current V1–V4 architecture.**
+**Status: PASS for the development architecture.**
 
-### G2 — Pixel parity
+## G2 — Pixel/provenance parity
 
-- Both repositories reproduce the same portable rendered world fingerprint.
-- Both make decisions from identical pixels.
-- Hidden scenario labels are used only for post-hoc evaluation, never as inputs to either sensing decision.
+- identical benchmark worlds have cross-repository fingerprints;
+- observer decisions are generated independently from the same pixels;
+- emitted traces carry source provenance;
+- allocation consumes emitted observer outputs, not the sibling implementation.
 
-**Status: PASS for V2 and V4.** V2 and V4 fingerprints are fixed and verified independently in both repositories. PolliPi now emits a provenance-pinned V4 trace artifact rather than sharing decision code.
+**Status: PASS for V2/V4 development infrastructure.**
 
-### G3 — Broad perturbation coverage
+## G3 — Broad simulation coverage
 
-V4 covers visit presence/absence, wind, camera displacement, shadow, occlusion, blur, clutter, mixed disturbances, intensity shifts, and lens contamination as an OOD family.
+Development evidence covers event presence/absence, wind, camera displacement,
+shadow/illumination change, occlusion, blur, clutter, mixed disturbances,
+intensity shifts and OOD lens contamination. Prevalence and sensing budget are
+also varied explicitly.
 
-**Status: PASS as a development benchmark, not final validation.** V4 test results were inspected during InsePi feature development and therefore V4 is explicitly a development holdout. Final untouched validation is reserved for locked V5.
+**Status: PASS as development coverage.** V4 was inspected repeatedly and is not
+claim-bearing final validation.
 
-### G4 — Equal-budget competition
+## G4 — Equal-budget competition and falsification
 
-Compare at fixed storage / audit budget:
+### V3
 
-1. uniform sampling;
-2. PolliPi candidate-priority;
-3. InsePi audit-priority;
-4. disagreement-priority;
-5. simple union and intersection ablations.
+The first equal-budget comparison showed that fixed disagreement priority did not
+beat uniform/InsePi hidden-error recovery. This was retained as a negative result.
 
-Primary endpoints:
+### Locked V5
 
-- latent observation-error recall;
-- true-event recovery;
-- false-event audit yield;
-- missed-event audit yield;
-- attribution-error audit yield;
-- total-variation distortion of sampled disturbance conditions;
-- captures or bytes per recovered hidden error.
+The user-reported one-shot V5 contained 180 conditions, three prevalence regimes,
+three budgets, eight policies, 4,800 windows and 200 replicates. It **failed** its
+pre-registered strong disagreement-allocation gate. Only balanced prevalence at
+25% budget satisfied all reported conditions; rare/common regimes exposed
+prevalence sensitivity and selection distortion.
 
-**Status: V3 IMPLEMENTED BUT NOT PASSED.** At a 25% budget on the first V2-derived competition, structured disagreement did not outperform the strongest alternatives. Hidden-error recall was about 0.251 for uniform, InsePi-only, and disagreement-priority. This negative result is retained; disagreement weights were not tuned to force a win.
+The important retained result is that complementary observer signal still existed
+across multiple disturbance families. V5 therefore falsified the scalar
+allocation claim rather than observer independence itself.
 
-**V4 cross-budget bridge now exists.** PolliPi emits a source-commit/world-fingerprint trace artifact and InsePi has a provenance-checked cross-repo V4 runner. The next comparison uses the improved gradient-structure observability observer.
+**Status: fixed scalar disagreement allocation REJECTED.**
 
-### G5 — Held-out generalisation
+## G5 — V6 new policy generation
 
-V4 used separate calibration/test seeds and intensities plus mixed and OOD families. Because V4 test output was subsequently used diagnostically, it is no longer the final untouched evidence.
+V6 changed the policy class instead of retuning V5:
 
-**Status: DEVELOPMENT PASS / FINAL PENDING.** A one-shot V5 protocol is preregistered in `docs/V5_LOCKED_VALIDATION.md`. V5 seeds will be derived from the frozen PolliPi and InsePi commit SHAs, preventing favourable seed selection after results are known.
+- exact-budget quota allocation;
+- a guaranteed positive uniform-exploration share;
+- separate PolliPi and InsePi exploitation rankings;
+- targeted-arm spillover returns to exploration;
+- allocation is invariant to latent truth when observer outputs are held fixed;
+- fitting compares candidates on shared sampled worlds;
+- sparse fitting may remove an unnecessary arm.
 
-### G6 — Ablation
+High-resolution V4 development used 4,800 windows × 200 paired replicates across
+three prevalence regimes and three budgets. The frozen candidate
+`E=.50/P=.10/I=.40/D=0` achieved:
 
-Required comparisons:
+- worst paired joint event/error ratio to uniform: **1.00846**;
+- mean joint ratio: **1.11642**;
+- maximum disturbance-family TV: **0.21919**;
+- regimes with both recovery ratios at/above uniform: **9/9**.
 
-- disagreement without PolliPi state;
-- disagreement without InsePi risk;
-- simple union (`candidate OR risky`);
-- simple intersection (`candidate AND risky`);
-- learned/tuned combined score, if introduced;
-- full independent disagreement policy.
+The nearby alternatives reveal a real trade-off rather than a flat optimum:
 
-**Status: PARTIAL.** Union and intersection are already implemented. Single-view removals and any learned-score ablation remain.
+- E40/P10/I50 failed the TV ceiling (0.26567);
+- E60/P10/I30 also passed but had lower worst/mean joint benefit;
+- E70/P10/I20 lost hidden-error robustness at common prevalence.
 
-### G7 — Reproducible benchmark ledger
+**Status: V6 METHOD FROZEN FOR FUTURE VALIDATION.**
+Allocator implementation commit:
+`a8ac75991ab28fd74a3f3a5482304a2b127a97bc`.
 
-Every headline result must be reproducible from fixed simulator versions, seed registries, source commits, fingerprints, traces and CI.
+## G6 — Exploration guarantee
 
-**Status: STRONG.** Both repositories emit benchmark ledgers. PolliPi now publishes a V4 JSONL artifact containing source commit and world fingerprint provenance; InsePi consumes emitted traces without importing PolliPi decision logic.
+V6 gives the uniform component a structural role. If an `alpha` fraction of
+selected effort is uniform, the expected selected distribution satisfies
 
-## What V3 falsified
+```text
+Q = alpha U + (1-alpha)R
+TV(Q,U) <= 1-alpha.
+```
 
-The first equal-budget result falsified the naive expectation that disagreement alone is automatically superior. Identical-pixel inspection showed that InsePi failed to provide independent warning for several PolliPi misses, especially occlusion/blur/clutter in V2.
+With frozen `alpha=.50`, V6 has a nontrivial analytical bound on selection bias in
+addition to the empirical V4 development TV result. This theory directly targets
+the V5 low-budget concentration failure.
 
-## V4 development result
+**Status: IMPLEMENTED and unit-tested.**
 
-The initial intensity-correlation occlusion audit recovered all V4 disturbances but falsely flagged 50% of clean test windows. It was rejected.
+## G7 — Ablations
 
-Replacing it with **local gradient-correlation** gave a much better trade-off:
+Development comparisons include:
 
-- test clean false-risk rate: **0.00**;
-- test disturbance risk recall: **0.875**;
-- occlusion risk recall: **0.75**;
-- occlusion+blur: **1.00**;
-- wind, shadow, shake and mixed broad disturbances: **1.00**;
-- lens OOD: **0.00**.
+- uniform;
+- PolliPi-only;
+- InsePi-only;
+- legacy scalar disagreement;
+- OR;
+- AND;
+- forced four-arm portfolio;
+- sparse portfolio;
+- single-arm portfolios;
+- PolliPi/InsePi/disagreement arm removals.
 
-The lens miss is intentionally retained rather than tuned away: V4 is for development diagnosis, and V5 will test whether the final architecture generalises without another tuning cycle.
+Arm-removal results were used diagnostically. They were not hidden when they made
+simpler candidates look competitive.
 
-PolliPi V4 visit recovery on the same pixels is only about **0.353** overall, with zero recovery in occlusion, shadow, shake and several mixed families. This creates the complementary-error structure required for a meaningful disagreement test, but the actual equal-budget advantage remains to be demonstrated.
+**Status: STRONG FOR DEVELOPMENT; must be repeated in V7 with frozen rules.**
 
-## Development rule
+## G8 — Reproducibility ledger
 
-Do not modify disagreement weights merely to win a benchmark. Improve an observer only for an independently justified observation-process failure, and separate development holdouts from the final locked validation.
+Current public development evidence records:
 
-## Falsification criteria
+- V4 world fingerprint
+  `10e38358499b79829876752986492c6a69b3ab15ec7b6756e6ae7ad75b314193`;
+- PolliPi V4 emitted-trace source commit
+  `5541201b376689c32aaabeafbc8e7e9592150d23`;
+- V6 allocator implementation commit
+  `a8ac75991ab28fd74a3f3a5482304a2b127a97bc`;
+- machine-readable V6 freeze manifest `benchmarks/v6_method_freeze.json`;
+- frozen method note `docs/V6_METHOD_FREEZE.md`.
 
-The strong method-paper claim fails or must be narrowed if, on locked equal-budget validation:
+The user-reported frozen V5 method commits/hashes are recorded in
+`docs/V5_FALSIFICATION_LEDGER.md`, but those local method commits are not currently
+resolvable from the public GitHub repositories.
 
-- disagreement-priority is consistently dominated by a single-program policy;
-- any apparent gain disappears under the `candidate OR risky` ablation;
-- gains depend on hidden true-event labels in allocation;
-- clean-scene false-audit cost removes the hidden-error benefit;
-- gains collapse under prevalence or disturbance shifts;
-- cross-repository provenance/fingerprints diverge.
+**Status: V6 public development reproducibility strong; V5/V7 final chain still
+has a materialisation blocker.**
 
-## Manuscript structure if gates pass
+## What the development programme has falsified
 
-1. **Problem:** ecological cameras estimate biological processes through a noisy observation process; target-first filtering and noise-first auditing optimise different objectives.
-2. **Method:** independent parallel observers + post-decision disagreement operator.
-3. **Theory/taxonomy:** agreement, complementary caution, allocation conflict, hidden-miss conflict, false-candidate conflict.
-4. **Development evidence:** V1 latent-policy contradiction, V2 identical pixels, V3 negative equal-budget result, V4 observer improvement.
-5. **Locked validation:** one-shot V5 across budgets and prevalence shifts.
-6. **Ablations/Pareto frontier.**
-7. **Scope:** no field-accuracy claim; empirical deployment is external validation.
+The increasingly narrow falsification sequence is itself a result:
+
+1. disagreement is not automatically useful just because two observers differ;
+2. even when disagreement predicts real error mechanisms, a fixed scalar ranking
+   can induce severe prevalence-dependent sampling distortion;
+3. forcing every observer-derived signal to receive allocation budget is also
+   unnecessary;
+4. the best current development candidate preserves observer independence but
+   uses disagreement diagnostically rather than as direct allocation.
+
+This makes the method paper stronger than a simple winner-picking benchmark: the
+architecture is being selected by explicit failed hypotheses.
+
+## Final locked validation: V7
+
+V7 is a new no-peek generation. The protocol is committed in
+`docs/V7_LOCKED_VALIDATION_PROTOCOL.md`.
+
+The strong V6 claim may be made only if locked V7 satisfies all pre-registered
+rules, including:
+
+- no core prevalence × budget regime with joint ratio below 0.98 to uniform;
+- mean joint ratio >1.00;
+- max disturbance TV <=0.25;
+- worst-case robustness competitive with all frozen legacy baselines;
+- neither PolliPi-arm nor InsePi-arm removal strictly dominates full V6;
+- no truth leakage;
+- full source/trace/report hashes preserved.
+
+V7 is run once. Failure lowers the claim ceiling; it does not trigger tuning under
+the same validation generation.
+
+## Manuscript structure if V7 passes
+
+1. **Observation problem:** biological process and observation process are not
+   the same state variable.
+2. **Independent observers:** PolliPi evidence vs InsePi observability.
+3. **Contradictory development framework:** disagreement as diagnostic evidence.
+4. **Falsification sequence:** V3 and locked V5 failures of scalar allocation.
+5. **V6 method:** exploration-guarded dual-observer portfolio and TV guarantee.
+6. **Development evidence:** V4 high-resolution stress tests and ablations.
+7. **Locked V7 validation:** prevalence/budget robustness and baseline comparison.
+8. **Scope:** no field-accuracy claim; empirical deployment is external validation.
 
 ## Current paper-readiness decision
 
-**Not submission-ready yet, but substantially closer.** The architecture, reproducibility boundary, negative-result logic, and an improved complementary observability observer are now defensible. The decisive remaining tasks are: V4 cross-budget competition with the emitted PolliPi trace, missing ablations, then method freeze and one-shot V5.
+**Not submission-ready yet.**
+
+The method candidate is now frozen and the methods-paper story is coherent, but
+claim-bearing validation has not been run. V7 remains **BLOCKED** because the
+user-reported V5 frozen observer commits/evidence are local/unpushed and the final
+V7 observer/generator/baseline provenance cannot yet be made fully reproducible.
+No V7 seed or world has been generated.
