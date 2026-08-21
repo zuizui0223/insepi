@@ -1,8 +1,22 @@
 # V7 locked validation protocol — pre-execution boundary
 
 **Do not generate or run V7 from this document.** This file defines the claim
-boundary before any V7 world is materialised. Candidate weights are frozen only
-after the V6 high-resolution development comparison is complete.
+boundary before any V7 world is materialised.
+
+## Frozen V6 candidate
+
+High-resolution V4 development is complete and the V6 allocator is frozen.
+
+- method: `exploration_guarded_dual_observer_portfolio_v6`
+- allocator implementation commit:
+  `a8ac75991ab28fd74a3f3a5482304a2b127a97bc`
+- exact weights: exploration `0.50`, PolliPi `0.10`, InsePi `0.40`, direct
+  disagreement `0.00`
+- freeze manifest: `benchmarks/v6_method_freeze.json`
+- development world fingerprint:
+  `10e38358499b79829876752986492c6a69b3ab15ec7b6756e6ae7ad75b314193`
+
+V4 remains development evidence; it is not final validation.
 
 ## Why V7 exists
 
@@ -28,14 +42,19 @@ All must be true:
    otherwise made reproducibly materialisable. Until then, public GitHub V6 work
    is development evidence and V7 execution is blocked.
 
+Preconditions 3 and 4 are now satisfied. The others remain required.
+
 ## Seed rule
 
 After the method and generator commits are frozen, the V7 master seed must be
-derived deterministically from immutable identifiers, for example:
+derived deterministically from immutable identifiers:
 
 ```text
 SHA256("V7" || pollipi_method_sha || insepi_method_sha || allocator_sha || generator_sha)
 ```
+
+For V7, `allocator_sha` is fixed to
+`a8ac75991ab28fd74a3f3a5482304a2b127a97bc`.
 
 The seed may not be hand-picked, rerolled, or replaced after inspection.
 
@@ -67,8 +86,8 @@ At minimum:
 - V6 candidate with InsePi allocation arm removed and its quota returned to
   exploration.
 
-If the frozen V6 candidate has disagreement weight zero, no artificial positive
-disagreement quota is introduced merely for V7.
+Because the frozen V6 candidate has disagreement weight zero, no artificial
+positive disagreement quota is introduced merely for V7.
 
 ## Primary paired metrics
 
@@ -92,9 +111,6 @@ worst_joint_ratio = min_regime(min(event_ratio_to_uniform,
 This directly tests the prevalence-shift failure discovered in V5.
 
 ## Locked pass/fail rules
-
-Before V7 execution the final method-freeze manifest must copy these rules and
-fill the frozen candidate identifiers.
 
 A strong V6 allocation claim passes only if all are satisfied:
 
@@ -130,7 +146,10 @@ V7 is executed once after all preconditions are frozen. After first inspection:
 
 ## Current status
 
-V7 execution is **BLOCKED**. V6 high-resolution development selection is still in
-progress, and the user-reported V5 frozen method commits are not currently
-resolvable from the public GitHub repository. This status must be changed only by
-an explicit method-freeze commit after those prerequisites are satisfied.
+V7 execution is **BLOCKED**.
+
+The V6 allocator and weight manifest are frozen, but the user-reported V5 frozen
+observer commits (`d58d0a...` PolliPi and `980813...` InsePi) are still not
+resolvable from the public GitHub repositories, and the final V7 observer commits,
+generator commit, baseline freeze, and derived seed therefore cannot yet be
+materialised reproducibly. **No V7 seed or world has been generated.**
