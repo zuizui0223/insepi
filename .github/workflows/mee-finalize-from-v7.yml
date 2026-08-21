@@ -48,6 +48,12 @@ jobs:
             --ledger .v7/final-evidence/v7_execution_ledger.json \
             --report .v7/final-evidence/v7_report.json
 
+      - name: Finalize editor cover letter from the same verified ledger
+        run: |
+          python scripts/finalize_cover_letter_from_v7.py \
+            --ledger .v7/final-evidence/v7_execution_ledger.json \
+            --report .v7/final-evidence/v7_report.json
+
       - name: Audit deterministic finalization
         run: |
           python - <<'PY'
@@ -56,9 +62,11 @@ jobs:
 
           manuscript = Path('manuscript/generated/MEE_FINAL_SUBMISSION.md').read_text(encoding='utf-8')
           supplement = Path('manuscript/generated/SUPPLEMENTARY_INFORMATION_FINAL.md').read_text(encoding='utf-8')
+          cover = Path('manuscript/generated/EDITOR_COVER_LETTER_FINAL.md').read_text(encoding='utf-8')
           receipt = json.loads(Path('manuscript/generated/V7_SUBMISSION_FINALIZATION_RECEIPT.json').read_text())
           assert '[[V7_LOCKED_RESULT' not in manuscript
           assert '[[V7_LOCKED_RESULT' not in supplement
+          assert '[[V7_' not in cover
           assert receipt['claim_level'] in {'A','B','C','D','E'}
           assert Path('manuscript/figures/generated/fig6_v7_locked_validation.svg').exists()
           assert Path('manuscript/figures/generated/fig6_v7_locked_validation.csv').exists()
@@ -74,6 +82,7 @@ jobs:
           path: |
             manuscript/generated/MEE_FINAL_SUBMISSION.md
             manuscript/generated/SUPPLEMENTARY_INFORMATION_FINAL.md
+            manuscript/generated/EDITOR_COVER_LETTER_FINAL.md
             manuscript/generated/V7_SUBMISSION_FINALIZATION_RECEIPT.json
             manuscript/figures/generated/fig6_v7_locked_validation.svg
             manuscript/figures/generated/fig6_v7_locked_validation.csv
