@@ -35,6 +35,14 @@ def test_mee_manuscript_has_four_part_abstract_and_required_statements(tmp_path:
     assert "## Data/Code for peer review" in text
     assert "### 2.13. AI-assisted software and manuscript development" in text
     assert "GPT-5.6 Sol" in text
+    assert "**Target journal:**" not in text
+    assert "**Status:**" not in text
+    assert "PolliPi" not in text
+    assert "InsePi" not in text
+    assert "Observer-E" in text
+    assert "Observer-O" in text
+    assert "d58d0a86034a6c2d53f90efbe4245370fd7cd2e9" not in text
+    assert "980813bab996909020140fad5bd83b055eb3db9c" not in text
 
 
 def _sha256(path: Path) -> str:
@@ -79,6 +87,8 @@ def test_anonymous_bundle_is_deterministic_and_identity_scrubbed(tmp_path: Path)
         assert "manuscript/figures/generated/fig1_generation_timeline.svg" in names
         assert "ANONYMOUS_BUNDLE_MANIFEST.json" in names
         assert "manuscript/TITLE_PAGE_TEMPLATE.md" not in names
+        assert all("pollipi" not in name.lower() for name in names)
+        assert all("insepi" not in name.lower() for name in names)
         combined = "\n".join(
             archive.read(name).decode("utf-8")
             for name in sorted(names)
@@ -86,6 +96,10 @@ def test_anonymous_bundle_is_deterministic_and_identity_scrubbed(tmp_path: Path)
         )
     assert "zuizui0223" not in combined
     assert "github.com/zuizui0223" not in combined
+    assert "PolliPi" not in combined
+    assert "InsePi" not in combined
+    assert "pollipi" not in combined
+    assert "insepi" not in combined
     assert "d58d0a86034a6c2d53f90efbe4245370fd7cd2e9" not in combined
     assert "980813bab996909020140fad5bd83b055eb3db9c" not in combined
     # 64-character scientific fingerprints are intentionally not scrubbed.
