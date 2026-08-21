@@ -37,13 +37,20 @@ def _risk(row: Mapping[str, object], key: str) -> float:
     return float(row.get(key, 0.0) or 0.0)
 
 
+def _row_id(row: Mapping[str, object]) -> str:
+    if "scenario_id" in row:
+        return str(row["scenario_id"])
+    if "condition_id" in row:
+        return str(row["condition_id"])
+    raise KeyError("row needs scenario_id or condition_id")
+
+
 def _noise_source(pollipi: Mapping[str, object], insepi: Mapping[str, object]) -> str:
-    return str(
-        pollipi.get(
-            "noise_source",
-            insepi.get("noise_source", insepi.get("inferred_noise_source", "unknown")),
-        )
-    )
+    for row in (pollipi, insepi):
+        for key in ("noise_source", "disturbance_family", "inferred_noise_source"):
+            if key in row:
+                return str(row[key])
+    return "unknown"
 
 
 def allocation_score(
@@ -91,10 +98,10 @@ def _align_rows(
     pollipi_rows: Iterable[Mapping[str, object]],
     insepi_rows: Iterable[Mapping[str, object]],
 ) -> list[tuple[Mapping[str, object], Mapping[str, object]]]:
-    p = {str(row["scenario_id"]): row for row in pollipi_rows}
-    i = {str(row["scenario_id"]): row for row in insepi_rows}
+    p = {_row_id(row): row for row in pollipi_rows}
+    i = {_row_id(row): row for row in insepi_rows}
     if set(p) != set(i):
-        raise ValueError("scenario IDs differ between traces")
+        raise ValueError("scenario/condition IDs differ between traces")
     return [(p[key], i[key]) for key in sorted(p)]
 
 
@@ -103,15 +110,16 @@ def _latent_error_types(pollipi: Mapping[str, object], insepi: Mapping[str, obje
 
     true_visit = bool(pollipi["true_visit"])
     candidate = str(pollipi["pollipi_state"]) in POLLIPI_CANDIDATE
-    noise_source = _noise_source(pollipi, insepi)
+    noise_source = _noise_source(pollipi, insepi).lower()
+    tokens = set(noise_source.replace("+", " ").replace("_", " ").split())
     errors: set[str] = set()
     if true_visit and not candidate:
         errors.add("missed_event")
     if not true_visit and candidate:
         errors.add("false_event")
-    if true_visit and noise_source in {"occlusion", "blur_or_focus_loss"}:
+    if true_visit and ({"occlusion", "blur"} & tokens or "blur_or_focus_loss" in noise_source):
         errors.add("missed_event")
-    if candidate and noise_source == "multi_object_clutter":
+    if candidate and ("clutter" in tokens or "multi_object_clutter" in noise_source):
         errors.add("attribution")
     return errors
 
