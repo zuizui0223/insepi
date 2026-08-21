@@ -1,9 +1,17 @@
 """Trace-only evaluator for one-shot V7 validation.
 
-The evaluator knows nothing about pixels or observer implementation.  It consumes
+The evaluator knows nothing about pixels or observer implementation. It consumes
 already emitted PolliPi/InsePi traces from the same canonical artifact, samples
 paired prevalence/budget worlds, evaluates the pre-registered baselines and frozen
 V6 portfolio, then applies the locked pass/fail rules.
+
+``hidden_error_recall`` is deliberately an observer-relative audit metric: it asks
+whether allocated audit effort recovers latent-truth errors made by the PolliPi
+biological-evidence observer. It must not be described as a world-intrinsic error
+rate. To make that distinction auditable, V7 also reports two observer-independent
+secondary coverage metrics: recall of all disturbed windows and recall of true
+events occurring under disturbance. These secondary metrics do not alter the
+pre-registered hard gate.
 """
 from __future__ import annotations
 
@@ -39,6 +47,8 @@ class PolicyMetric:
     policy: str
     true_event_recall: float
     hidden_error_recall: float
+    disturbance_window_recall: float
+    disturbed_true_event_recall: float
     captures_per_hidden_error: float
     disturbance_tv_distance: float
 
@@ -204,6 +214,43 @@ def _policy_selection(
     raise ValueError(f"unknown V7 policy kind: {kind}")
 
 
+def _family(pair: tuple[Mapping[str, object], Mapping[str, object]]) -> str:
+    pollipi, insepi = pair
+    for row in (pollipi, insepi):
+        if row.get("disturbance_family") is not None:
+            return str(row["disturbance_family"])
+        if row.get("family") is not None:
+            return str(row["family"])
+    return "unknown"
+
+
+def _recall(indices: set[int], selected: set[int]) -> float:
+    return len(indices & selected) / len(indices) if indices else 1.0
+
+
+def _observer_independent_coverage(
+    world: Sequence[tuple[Mapping[str, object], Mapping[str, object]]],
+    selected: set[int],
+) -> tuple[float, float]:
+    """Return coverage metrics defined only from latent world labels.
+
+    These metrics do not inspect PolliPi state or InsePi risk predictions.
+    """
+
+    disturbed = {
+        index for index, pair in enumerate(world)
+        if _family(pair) != "clean"
+    }
+    disturbed_true_events = {
+        index for index, pair in enumerate(world)
+        if _family(pair) != "clean" and bool(pair[0].get("true_visit", False))
+    }
+    return (
+        _recall(disturbed, selected),
+        _recall(disturbed_true_events, selected),
+    )
+
+
 def evaluate_v7_traces(
     pollipi_rows: Iterable[Mapping[str, object]],
     insepi_rows: Iterable[Mapping[str, object]],
@@ -219,7 +266,10 @@ def evaluate_v7_traces(
     insepi = _normalise_rows(insepi_rows)
     aligned = align_rows(pollipi, insepi)
     entries = list(baseline_registry["entries"])
-    accum: dict[tuple[float, float, str], list[tuple[float, float, float, float]]] = {}
+    accum: dict[
+        tuple[float, float, str],
+        list[tuple[float, float, float, float, float, float]],
+    ] = {}
 
     for prevalence in prevalences:
         for budget in budgets:
@@ -251,24 +301,32 @@ def evaluate_v7_traces(
                             else PortfolioWeights(1.0, 0.0, 0.0, 0.0)
                         ),
                     )
+                    disturbance_recall, disturbed_event_recall = _observer_independent_coverage(
+                        world,
+                        selected,
+                    )
                     accum.setdefault((prevalence, budget, policy_name), []).append((
                         result.true_event_recall,
                         result.hidden_error_recall,
+                        disturbance_recall,
+                        disturbed_event_recall,
                         result.captures_per_hidden_error,
                         result.disturbance_tv_distance,
                     ))
 
     metrics: list[PolicyMetric] = []
     for (prevalence, budget, policy), values in sorted(accum.items()):
-        finite_cpe = [row[2] for row in values if isfinite(row[2])]
+        finite_cpe = [row[4] for row in values if isfinite(row[4])]
         metrics.append(PolicyMetric(
             prevalence=prevalence,
             budget=budget,
             policy=policy,
             true_event_recall=mean(row[0] for row in values),
             hidden_error_recall=mean(row[1] for row in values),
+            disturbance_window_recall=mean(row[2] for row in values),
+            disturbed_true_event_recall=mean(row[3] for row in values),
             captures_per_hidden_error=(mean(finite_cpe) if finite_cpe else float("inf")),
-            disturbance_tv_distance=mean(row[3] for row in values),
+            disturbance_tv_distance=mean(row[5] for row in values),
         ))
     return metrics
 
@@ -364,6 +422,17 @@ def build_report(
     report = {
         "schema": REPORT_SCHEMA,
         "provenance": dict(provenance),
+        "metric_semantics": {
+            "hidden_error_recall": (
+                "observer-relative recovery of latent-truth PolliPi detection/attribution errors"
+            ),
+            "disturbance_window_recall": (
+                "observer-independent coverage of latent non-clean disturbance windows"
+            ),
+            "disturbed_true_event_recall": (
+                "observer-independent coverage of latent true events under non-clean disturbance"
+            ),
+        },
         "metrics": [row.to_dict() for row in metrics],
         "gate": gate.to_dict(),
     }
