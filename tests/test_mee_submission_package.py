@@ -79,6 +79,18 @@ def test_verified_bibliography_has_unique_core_dois() -> None:
     assert bib.count("@") == 11  # McKeeman (1998) has no DOI in the verified list.
 
 
+def test_pre_v7_supplement_preserves_locked_boundary() -> None:
+    supplement = (ROOT / "manuscript" / "SUPPLEMENTARY_INFORMATION_PRE_V7.md").read_text(encoding="utf-8")
+    assert "## Appendix S5. Locked V5 falsification record" in supplement
+    assert "## Appendix S6. V6 focused candidate comparison" in supplement
+    assert "## Appendix S8. V7 seed-independent preregistration" in supplement
+    assert "[[V7_LOCKED_RESULT:STATUS]]" in supplement
+    assert "[[V7_LOCKED_RESULT:SUPPLEMENTARY]]" in supplement
+    assert "master_seed_hex" not in supplement
+    assert "180 conditions" in supplement
+    assert "94288d76f69b57e9b3096dfb9fc90f1602ea79d836a4dcf2534979f7c7cd9975" in supplement
+
+
 def test_anonymous_bundle_is_deterministic_and_identity_scrubbed(tmp_path: Path) -> None:
     generated = ROOT / "manuscript" / "generated" / "MEE_PRE_V7_SUBMISSION.md"
     generated.parent.mkdir(parents=True, exist_ok=True)
@@ -116,6 +128,7 @@ def test_anonymous_bundle_is_deterministic_and_identity_scrubbed(tmp_path: Path)
         assert "manuscript/generated/MEE_PRE_V7_SUBMISSION.md" in names
         assert "manuscript/figures/generated/fig1_generation_timeline.svg" in names
         assert "manuscript/REFERENCES_VERIFIED.bib" in names
+        assert "manuscript/SUPPLEMENTARY_INFORMATION_PRE_V7.md" in names
         assert "ANONYMOUS_BUNDLE_MANIFEST.json" in names
         assert "manuscript/TITLE_PAGE_TEMPLATE.md" not in names
         assert all("pollipi" not in name.lower() for name in names)
