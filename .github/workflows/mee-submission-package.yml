@@ -1,0 +1,80 @@
+name: MEE submission package
+
+on:
+  pull_request:
+    paths:
+      - "manuscript/**"
+      - "scripts/build_mee_submission_manuscript.py"
+      - "scripts/build_anonymous_peer_review_bundle.py"
+      - "scripts/build_pre_v7_figures.py"
+      - "scripts/polish_pre_v7_figures.py"
+      - "tests/test_mee_submission_package.py"
+      - ".github/workflows/mee-submission-package.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install test tools
+        run: python -m pip install pytest
+      - name: Test journal-format and anonymisation contracts
+        run: pytest -q tests/test_mee_submission_package.py tests/test_pre_v7_figures.py tests/test_pre_v7_figure_polish.py
+      - name: Build MEE-format pre-V7 manuscript
+        run: python scripts/build_mee_submission_manuscript.py
+      - name: Build and polish pre-V7 figures
+        run: |
+          python scripts/build_pre_v7_figures.py
+          python scripts/polish_pre_v7_figures.py
+      - name: Build deterministic anonymous peer-review bundle
+        run: python scripts/build_anonymous_peer_review_bundle.py
+      - name: Audit package state
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          import zipfile
+
+          manuscript = Path('manuscript/generated/MEE_PRE_V7_SUBMISSION.md').read_text(encoding='utf-8')
+          assert '[[V7_LOCKED_RESULT]]' in manuscript
+          assert '## Data/Code for peer review' in manuscript
+          assert '### 2.13. AI-assisted software and manuscript development' in manuscript
+          assert not Path('.v7/run/v7_pixels.npz').exists()
+
+          manifest = json.loads(Path('.peer-review/anonymous/ANONYMOUS_BUNDLE_MANIFEST.json').read_text())
+          assert manifest['double_anonymous'] is True
+          assert manifest['title_page_excluded'] is True
+          assert manifest['v7_materialised'] is False
+          print('MEE_PACKAGE_DOUBLE_ANONYMOUS true')
+          print('MEE_PACKAGE_LICENSE_READY', str(manifest['license_ready']).lower())
+          print('MEE_PACKAGE_V7_MATERIALISED false')
+          print('MEE_PACKAGE_MANIFEST', manifest['manifest_sha256'])
+
+          with zipfile.ZipFile('.peer-review/mee-anonymous-peer-review.zip') as archive:
+              assert 'manuscript/TITLE_PAGE_TEMPLATE.md' not in archive.namelist()
+          PY
+      - name: Upload anonymous peer-review package
+        uses: actions/upload-artifact@v4
+        with:
+          name: mee-anonymous-peer-review-pre-v7
+          path: |
+            manuscript/generated/MEE_PRE_V7_SUBMISSION.md
+            manuscript/figures/generated/
+            .peer-review/mee-anonymous-peer-review.zip
+            .peer-review/anonymous/ANONYMOUS_BUNDLE_MANIFEST.json
+          if-no-files-found: error
+          retention-days: 90
+      - name: Upload separate title-page template
+        uses: actions/upload-artifact@v4
+        with:
+          name: mee-title-page-template-not-for-review
+          path: manuscript/TITLE_PAGE_TEMPLATE.md
+          if-no-files-found: error
+          retention-days: 90
