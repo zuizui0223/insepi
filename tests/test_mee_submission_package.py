@@ -32,7 +32,14 @@ def test_mee_manuscript_has_four_part_abstract_and_required_statements(tmp_path:
     assert abstract.count("\n3. ") == 1
     assert abstract.count("\n4. ") == 1
     assert "\n5. " not in abstract
-    assert "[[V7_LOCKED_RESULT]]" in abstract
+    for marker in (
+        "[[V7_LOCKED_RESULT:ABSTRACT]]",
+        "[[V7_LOCKED_RESULT:TABLE]]",
+        "[[V7_LOCKED_RESULT:RESULTS]]",
+        "[[V7_LOCKED_RESULT:DISCUSSION]]",
+        "[[V7_LOCKED_RESULT:REPRODUCIBILITY_LEDGER]]",
+    ):
+        assert text.count(marker) == 1
     assert "## Data/Code for peer review" in text
     assert "### 2.13. AI-assisted software and manuscript development" in text
     assert "GPT-5.6 Sol" in text
