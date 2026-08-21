@@ -8,7 +8,7 @@ import zipfile
 
 
 ROOT = Path(__file__).resolve().parents[1]
-TEXT_SUFFIXES = (".py", ".md", ".toml", ".json", ".jsonl", ".txt", ".yml", ".yaml", ".svg", ".csv", ".tsv")
+TEXT_SUFFIXES = (".py", ".md", ".toml", ".json", ".jsonl", ".bib", ".txt", ".yml", ".yaml", ".svg", ".csv", ".tsv")
 
 
 def test_mee_manuscript_has_four_part_abstract_and_required_statements(tmp_path: Path) -> None:
@@ -45,9 +45,38 @@ def test_mee_manuscript_has_four_part_abstract_and_required_statements(tmp_path:
     assert "d58d0a86034a6c2d53f90efbe4245370fd7cd2e9" not in text
     assert "980813bab996909020140fad5bd83b055eb3db9c" not in text
 
+    # Submission references must be the audited set, not the old working list.
+    assert "## References\n" in text
+    assert "References (working citations)" not in text
+    assert "10.1109/TSE.1985.231893" in text
+    assert "On the impact of preferential sampling on ecological status and trend assessment" in text
+    assert "MacKenzie et al., 2002" in text
+    assert "Morris, White & Crowther, 2019" in text
+    assert "Dwork et al., 2015" in text
+    assert "Reference metadata remains a working list" not in text
+
 
 def _sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def test_verified_bibliography_has_unique_core_dois() -> None:
+    bib = (ROOT / "manuscript" / "REFERENCES_VERIFIED.bib").read_text(encoding="utf-8")
+    dois = [
+        "10.1145/130385.130417",
+        "10.1109/TSE.1985.231893",
+        "10.1111/j.1467-9876.2009.00701.x",
+        "10.1111/2041-210X.12803",
+        "10.1111/2041-210X.14393",
+        "10.1016/j.ecolmodel.2024.110707",
+        "10.1016/j.ecoinf.2023.102231",
+        "10.1890/0012-9658(2002)083[2248:ESORWD]2.0.CO;2",
+        "10.1126/science.aaa9375",
+        "10.1002/sim.8086",
+    ]
+    for doi in dois:
+        assert bib.count(doi) == 1
+    assert bib.count("@") == 11  # McKeeman (1998) has no DOI in the verified list.
 
 
 def test_anonymous_bundle_is_deterministic_and_identity_scrubbed(tmp_path: Path) -> None:
@@ -86,6 +115,7 @@ def test_anonymous_bundle_is_deterministic_and_identity_scrubbed(tmp_path: Path)
         names = set(archive.namelist())
         assert "manuscript/generated/MEE_PRE_V7_SUBMISSION.md" in names
         assert "manuscript/figures/generated/fig1_generation_timeline.svg" in names
+        assert "manuscript/REFERENCES_VERIFIED.bib" in names
         assert "ANONYMOUS_BUNDLE_MANIFEST.json" in names
         assert "manuscript/TITLE_PAGE_TEMPLATE.md" not in names
         assert all("pollipi" not in name.lower() for name in names)
@@ -95,14 +125,13 @@ def test_anonymous_bundle_is_deterministic_and_identity_scrubbed(tmp_path: Path)
             for name in sorted(names)
             if name.endswith(TEXT_SUFFIXES)
         )
-    assert "zuizui0223" not in combined
-    assert "github.com/zuizui0223" not in combined
-    assert "PolliPi" not in combined
-    assert "InsePi" not in combined
-    assert "pollipi" not in combined
-    assert "insepi" not in combined
-    assert "d58d0a86034a6c2d53f90efbe4245370fd7cd2e9" not in combined
-    assert "980813bab996909020140fad5bd83b055eb3db9c" not in combined
+    lowered = combined.lower()
+    assert "zuizui0223" not in lowered
+    assert "github.com/zuizui0223" not in lowered
+    assert "pollipi" not in lowered
+    assert "insepi" not in lowered
+    assert "d58d0a86034a6c2d53f90efbe4245370fd7cd2e9" not in lowered
+    assert "980813bab996909020140fad5bd83b055eb3db9c" not in lowered
     # JSONL trace schemas and keys must be anonymised too, not just filenames.
     assert "observer_e_state" in combined
     assert "observer_e-observer_o-visual-contradiction-v2" in combined
