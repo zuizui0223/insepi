@@ -61,6 +61,12 @@ Seung, H.S., Opper, M. & Sompolinsky, H. (1992). Query by committee. In *Proceed
 """
 
 GIT_SHA_RE = re.compile(r"(?<![0-9a-fA-F])[0-9a-fA-F]{40}(?![0-9a-fA-F])")
+V7_CONTEXT_MARKERS = (
+    "[[V7_LOCKED_RESULT:ABSTRACT]]",
+    "[[V7_LOCKED_RESULT:TABLE]]",
+    "[[V7_LOCKED_RESULT:RESULTS]]",
+    "[[V7_LOCKED_RESULT:DISCUSSION]]",
+)
 
 
 def anonymous_commit_id(original: str) -> str:
@@ -75,6 +81,19 @@ def anonymise_review_text(text: str) -> str:
     text = text.replace("PolliPi", "Observer-E")
     text = text.replace("InsePi", "Observer-O")
     text = GIT_SHA_RE.sub(lambda match: anonymous_commit_id(match.group(0)), text)
+    return text
+
+
+def specialise_v7_placeholders(text: str) -> str:
+    """Assign each generic V7 placeholder a fixed manuscript role before V7 exists."""
+
+    generic = "[[V7_LOCKED_RESULT]]"
+    if text.count(generic) != len(V7_CONTEXT_MARKERS):
+        raise ValueError(
+            f"expected {len(V7_CONTEXT_MARKERS)} generic V7 placeholders, found {text.count(generic)}"
+        )
+    for marker in V7_CONTEXT_MARKERS:
+        text = text.replace(generic, marker, 1)
     return text
 
 
@@ -135,6 +154,7 @@ def build(source: str) -> str:
     if results_marker not in rewritten:
         raise ValueError("cannot locate Results boundary for AI disclosure")
     rewritten = rewritten.replace(results_marker, "\n\n" + AI_DISCLOSURE + results_marker, 1)
+    rewritten = specialise_v7_placeholders(rewritten)
     return anonymise_review_text(rewritten)
 
 
@@ -142,7 +162,7 @@ def abstract_word_count(text: str) -> int:
     start = text.index("## Abstract")
     end = text.index("## Data/Code for peer review")
     block = text[start:end]
-    words = [token for token in block.replace("## Abstract", "").split() if token != "[[V7_LOCKED_RESULT]]"]
+    words = [token for token in block.replace("## Abstract", "").split() if not token.startswith("[[V7_LOCKED_RESULT")]
     return len(words)
 
 
