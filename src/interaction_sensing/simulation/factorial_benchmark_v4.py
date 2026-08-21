@@ -1,9 +1,9 @@
 """Run V4 pixels through InsePi's independently calibrated observability front end.
 
-Only the calibration split may set the local-structure threshold below.  Test and
-OOD labels are never consulted by the estimator.  This keeps V4 useful as a
-methods-paper generalisation benchmark rather than another hand-tuned scenario
-suite.
+Only the calibration split may set the local-structure threshold below. Test/OOD
+labels are never used by the estimator. V4 is now a development holdout because
+its results have been inspected during feature development; a later V5 benchmark
+will provide the untouched final validation for the methods-paper claim.
 """
 from __future__ import annotations
 
@@ -49,15 +49,22 @@ def disturbance_family(condition) -> str:
     return "+".join(active) if active else "clean"
 
 
-def local_structure_loss(background: np.ndarray, frame: np.ndarray, observation) -> float:
-    """Measure loss of local scene identity after the generic alignment stage.
+def _gradient_signature(patch: np.ndarray) -> np.ndarray:
+    """Return a high-frequency local-structure signature.
 
-    Occlusion replaces local image structure, whereas a true local event can
-    change brightness while retaining much of the underlying spatial ordering.
-    Correlation is therefore used instead of absolute pixel difference.  The
-    score is target-agnostic and can later be computed on arbitrary interaction
-    zones or tiled regions.
+    Using gradients makes the audit less sensitive to smooth biological intensity
+    changes (e.g. a visitor-shaped Gaussian pulse) while remaining sensitive to
+    replacement of the underlying scene structure by occlusion or lens effects.
     """
+
+    arr = patch.astype(np.float32)
+    gx = np.diff(arr, axis=1).reshape(-1)
+    gy = np.diff(arr, axis=0).reshape(-1)
+    return np.concatenate((gx, gy))
+
+
+def local_structure_loss(background: np.ndarray, frame: np.ndarray, observation) -> float:
+    """Measure loss of local high-frequency scene identity after alignment."""
 
     shift_y, shift_x = observation.metadata.get("estimated_shift", [0, 0])
     aligned = shift_image(frame, -int(shift_y), -int(shift_x)).astype(np.float32)
@@ -65,8 +72,8 @@ def local_structure_loss(background: np.ndarray, frame: np.ndarray, observation)
     h, w = base.shape
     ys = slice(h // 2 - 10, h // 2 + 10)
     xs = slice(w // 2 - 10, w // 2 + 10)
-    a = base[ys, xs].reshape(-1)
-    b = aligned[ys, xs].reshape(-1)
+    a = _gradient_signature(base[ys, xs])
+    b = _gradient_signature(aligned[ys, xs])
     a = a - float(a.mean())
     b = b - float(b.mean())
     denom = float(np.linalg.norm(a) * np.linalg.norm(b))
@@ -79,9 +86,9 @@ def local_structure_loss(background: np.ndarray, frame: np.ndarray, observation)
 def calibrate_occlusion_threshold() -> float:
     """Fit one transparent threshold using calibration worlds only.
 
-    The threshold maximises balanced accuracy for the *observation disturbance*
-    label occlusion on the calibration split.  True-visit labels are not used.
-    Test intensities, mixed worlds and the lens OOD family are untouched.
+    The threshold maximises balanced accuracy for the observation-disturbance
+    label ``occlusion``. True-visit labels are not used. Test intensities, mixed
+    worlds and the lens OOD family remain outside calibration.
     """
 
     labelled: list[tuple[float, bool]] = []
