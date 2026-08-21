@@ -78,6 +78,7 @@ def test_anonymous_bundle_is_deterministic_and_identity_scrubbed(tmp_path: Path)
         assert "manuscript/generated/MEE_PRE_V7_SUBMISSION.md" in names
         assert "manuscript/figures/generated/fig1_generation_timeline.svg" in names
         assert "ANONYMOUS_BUNDLE_MANIFEST.json" in names
+        assert "manuscript/TITLE_PAGE_TEMPLATE.md" not in names
         combined = "\n".join(
             archive.read(name).decode("utf-8")
             for name in sorted(names)
