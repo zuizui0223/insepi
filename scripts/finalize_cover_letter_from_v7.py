@@ -39,7 +39,7 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--ledger", required=True, type=Path)
     parser.add_argument("--report", required=True, type=Path)
-    parser.add_argument("--template", default="manuscript/EDITOR_COVER_LETTER_TEMPLATE.md", type=Path)
+    parser.add_argument("--template", default="editor/EDITOR_COVER_LETTER_TEMPLATE.md", type=Path)
     parser.add_argument("--output", default="manuscript/generated/EDITOR_COVER_LETTER_FINAL.md", type=Path)
     args = parser.parse_args()
 
