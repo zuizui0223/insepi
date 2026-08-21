@@ -29,6 +29,22 @@ jobs:
             exit "$status"
           }
           cat pytest.log
+      - name: Print V2 visual benchmark ledger
+        if: matrix.python-version == '3.11'
+        run: |
+          python - <<'PY'
+          from interaction_sensing.simulation.portable_visual_v2 import suite_fingerprint
+          from interaction_sensing.simulation.visual_contradiction_v2 import run_visual_contradiction_v2
+          print("portable_visual_v2_sha256", suite_fingerprint())
+          for row in run_visual_contradiction_v2():
+              print(row.scenario_id, row.true_visit, row.inferred_noise_source,
+                    row.observability_state,
+                    f"false={row.false_event_risk:.3f}",
+                    f"missed={row.missed_event_risk:.3f}",
+                    f"attrib={row.attribution_risk:.3f}",
+                    f"local={row.local_relative_motion:.3f}",
+                    f"background={row.background_motion:.3f}")
+          PY
       - name: Upload pytest output
         if: always()
         uses: actions/upload-artifact@v4
