@@ -1,15 +1,6 @@
 name: V9 design-based inference
 
 on:
-  pull_request:
-    paths:
-      - "benchmarks/v9_design_inference_protocol.json"
-      - "docs/V9_PRE_RESULT_FREEZE.md"
-      - "docs/DESIGN_BASED_INFERENCE_THEORY.md"
-      - "src/interaction_sensing/simulation/design_inference_v9.py"
-      - "scripts/run_v9_design_inference.py"
-      - "tests/test_design_inference_v9.py"
-      - ".github/workflows/v9-design-inference.yml"
   workflow_dispatch:
 
 permissions:
