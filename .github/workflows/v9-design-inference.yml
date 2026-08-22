@@ -1,0 +1,81 @@
+name: V9 design-based inference
+
+on:
+  pull_request:
+    paths:
+      - "benchmarks/v9_design_inference_protocol.json"
+      - "docs/V9_PRE_RESULT_FREEZE.md"
+      - "docs/DESIGN_BASED_INFERENCE_THEORY.md"
+      - "src/interaction_sensing/simulation/design_inference_v9.py"
+      - "scripts/run_v9_design_inference.py"
+      - "tests/test_design_inference_v9.py"
+      - ".github/workflows/v9-design-inference.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-inference:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install package and tests
+        run: python -m pip install -e ".[dev]"
+      - name: Verify design-based inference contracts
+        run: pytest -q tests/test_design_inference_v9.py
+      - name: Run frozen V9 twice under distinct hash seeds
+        run: |
+          PYTHONHASHSEED=1 python scripts/run_v9_design_inference.py --output-dir .v9/run-a
+          PYTHONHASHSEED=987654 python scripts/run_v9_design_inference.py --output-dir .v9/run-b
+      - name: Require byte-identical V9 evidence
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          import shutil
+
+          a = json.loads(Path('.v9/run-a/v9_design_inference_manifest.json').read_text())
+          b = json.loads(Path('.v9/run-b/v9_design_inference_manifest.json').read_text())
+          for key in ('protocol_sha256', 'result_sha256', 'replicate_csv_sha256', 'group_csv_sha256'):
+              assert a[key] == b[key], (key, a[key], b[key])
+          target = Path('.v9/design-inference')
+          if target.exists():
+              shutil.rmtree(target)
+          shutil.copytree('.v9/run-a', target)
+          print('V9_BYTE_IDENTICAL_RERUN true')
+          print('V9_CANONICAL_RESULT_SHA256', a['result_sha256'])
+          PY
+      - name: Audit frozen output boundary
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          protocol = json.loads(Path('benchmarks/v9_design_inference_protocol.json').read_text())
+          result = json.loads(Path('.v9/design-inference/v9_design_inference_result.json').read_text())
+          manifest = json.loads(Path('.v9/design-inference/v9_design_inference_manifest.json').read_text())
+          assert result['headline']['regime_count'] == 576
+          assert result['headline']['world_count'] == 57600
+          assert manifest['frozen_candidate'] == {
+              'exploration': 0.50,
+              'evidence': 0.10,
+              'observability': 0.40,
+              'disagreement': 0.00,
+          }
+          assert manifest['frozen_candidate'] == protocol['frozen_candidate']
+          assert manifest['v7_materialised'] is False
+          assert not Path('.v7/run/v7_pixels.npz').exists()
+          print('V9_NO_V7_MATERIALISATION true')
+          print('V9_FROZEN_WEIGHTS_UNCHANGED true')
+          PY
+      - name: Upload V9 inference evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: v9-design-based-inference
+          path: .v9/design-inference/
+          if-no-files-found: error
+          retention-days: 90
