@@ -1,0 +1,62 @@
+name: V8 generality benchmark
+
+on:
+  pull_request:
+    paths:
+      - "benchmarks/v8_generality_protocol.json"
+      - "docs/V8_GENERALITY_BENCHMARK_PROTOCOL.md"
+      - "src/interaction_sensing/finite_budget_guarantees.py"
+      - "src/interaction_sensing/simulation/generality_v8.py"
+      - "scripts/run_v8_generality.py"
+      - "tests/test_finite_budget_guarantees.py"
+      - "tests/test_generality_v8.py"
+      - ".github/workflows/v8-generality.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  characterize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install package and tests
+        run: python -m pip install -e ".[dev]"
+      - name: Verify no-tuning and finite-budget contracts
+        run: pytest -q tests/test_finite_budget_guarantees.py tests/test_generality_v8.py
+      - name: Run pre-registered V8 applicability map
+        run: python scripts/run_v8_generality.py
+      - name: Audit V8 output contract
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          protocol = json.loads(Path('benchmarks/v8_generality_protocol.json').read_text())
+          result = json.loads(Path('.v8/generality/v8_generality_result.json').read_text())
+          manifest = json.loads(Path('.v8/generality/v8_generality_manifest.json').read_text())
+          assert result['headline']['regime_count'] == 864
+          assert manifest['frozen_candidate'] == protocol['frozen_candidate']
+          assert manifest['frozen_candidate'] == {
+              'exploration': 0.50,
+              'evidence': 0.10,
+              'observability': 0.40,
+              'disagreement': 0.00,
+          }
+          assert len(result['applicability']) == 864
+          assert len(result['quality_correlation_slices']) == 27
+          assert not Path('.v7/run/v7_pixels.npz').exists()
+          print('V8_NO_V7_MATERIALISATION true')
+          print('V8_FROZEN_WEIGHTS_UNCHANGED true')
+          PY
+      - name: Upload V8 characterization artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: v8-generality-characterization
+          path: .v8/generality/
+          if-no-files-found: error
+          retention-days: 90
