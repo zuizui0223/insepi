@@ -1,17 +1,9 @@
 name: V8 generality benchmark
 
+# V8 is frozen after the canonical byte-identical characterization recorded in
+# docs/V8_REPRODUCIBILITY_CORRECTION.md. It is manual-only so later documentation
+# or manuscript edits cannot look like continued post-result exploration.
 on:
-  pull_request:
-    paths:
-      - "benchmarks/v8_generality_protocol.json"
-      - "docs/V8_GENERALITY_BENCHMARK_PROTOCOL.md"
-      - "src/interaction_sensing/finite_budget_guarantees.py"
-      - "src/interaction_sensing/simulation/generality_v8.py"
-      - "scripts/run_v8_generality.py"
-      - "tests/test_finite_budget_guarantees.py"
-      - "tests/test_generality_v8.py"
-      - "tests/test_generality_v8_determinism.py"
-      - ".github/workflows/v8-generality.yml"
   workflow_dispatch:
 
 permissions:
