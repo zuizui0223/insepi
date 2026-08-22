@@ -10,6 +10,7 @@ on:
       - "scripts/run_v8_generality.py"
       - "tests/test_finite_budget_guarantees.py"
       - "tests/test_generality_v8.py"
+      - "tests/test_generality_v8_determinism.py"
       - ".github/workflows/v8-generality.yml"
   workflow_dispatch:
 
@@ -26,10 +27,41 @@ jobs:
           python-version: "3.11"
       - name: Install package and tests
         run: python -m pip install -e ".[dev]"
-      - name: Verify no-tuning and finite-budget contracts
-        run: pytest -q tests/test_finite_budget_guarantees.py tests/test_generality_v8.py
-      - name: Run pre-registered V8 applicability map
-        run: python scripts/run_v8_generality.py
+      - name: Verify no-tuning, finite-budget, and hash-seed contracts
+        run: |
+          pytest -q \
+            tests/test_finite_budget_guarantees.py \
+            tests/test_generality_v8.py \
+            tests/test_generality_v8_determinism.py
+      - name: Run full pre-registered V8 twice under distinct hash seeds
+        run: |
+          PYTHONHASHSEED=1 python scripts/run_v8_generality.py --output-dir .v8/run-a
+          PYTHONHASHSEED=987654 python scripts/run_v8_generality.py --output-dir .v8/run-b
+      - name: Require byte-identical full V8 result
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          import shutil
+
+          a = json.loads(Path('.v8/run-a/v8_generality_manifest.json').read_text())
+          b = json.loads(Path('.v8/run-b/v8_generality_manifest.json').read_text())
+          keys = (
+              'protocol_sha256',
+              'result_sha256',
+              'metrics_csv_sha256',
+              'applicability_csv_sha256',
+              'slices_csv_sha256',
+          )
+          for key in keys:
+              assert a[key] == b[key], (key, a[key], b[key])
+          target = Path('.v8/generality')
+          if target.exists():
+              shutil.rmtree(target)
+          shutil.copytree('.v8/run-a', target)
+          print('V8_BYTE_IDENTICAL_RERUN true')
+          print('V8_CANONICAL_RESULT_SHA256', a['result_sha256'])
+          PY
       - name: Audit V8 output contract
         run: |
           python - <<'PY'
