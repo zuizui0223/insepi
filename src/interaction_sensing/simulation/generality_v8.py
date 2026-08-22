@@ -290,7 +290,9 @@ def _family_tv(world: Sequence[Window], selected: frozenset[int]) -> float:
         world_counts[row.family] += 1
     for index in selected:
         selected_counts[world[index].family] += 1
-    families = set(world_counts) | set(selected_counts)
+    # Fixed ordering prevents Python hash randomization from changing the final
+    # floating-point addition order and therefore the byte-level result hash.
+    families = sorted(set(world_counts) | set(selected_counts))
     return 0.5 * sum(
         abs(selected_counts[family] / len(selected) - world_counts[family] / len(world))
         for family in families
