@@ -7,6 +7,20 @@
     "result_sha256": "09b670fb7efa01681578791cc02ca30c9807d9cb7fa80bba3951a1fc6529f4ce",
     "artifact_zip_sha256": "5d1babec6bbfd667a3405f877d3a7394655b4b955ea0cd1c1a59776e0eb61b3d"
   },
+  "reproducibility_correction": {
+    "scientific_values_changed": false,
+    "observed_issue": "A later rerun reproduced all headline and regime-level scientific quantities but produced a different JSON result SHA because disturbance-family total-variation terms were accumulated by iterating an unordered Python set.",
+    "rerun_result_sha256_before_fix": "2e1e60501388b462704ab8d3e248bbb313bac268fbaa63ee22adfee1e20bc16d",
+    "cause": "Python hash randomization changed the floating-point addition order in family-TV accumulation at the least-significant-bit level.",
+    "fix_commit": "399dab96f0a966eda69eed209100e14cd37e340d",
+    "fix": "Sort disturbance-family labels before total-variation summation; no weights, grid, comparators, metrics, estimators, seeds or interpretation rules changed.",
+    "canonical_workflow_run_id": 32546799719,
+    "canonical_head_sha": "e38d1b2f7a0766bd081bb3ef3dd04bd39d6d3a9a",
+    "canonical_result_sha256": "5a6a828c5a48b8b1d73a466c4f933f5934dc7d9dc4c178d5867564720dbdeefe",
+    "canonical_artifact_zip_sha256": "d31d1e8b78018ecb5e2c517f2af8f854066b09c397954cb11addeaecac3d5587",
+    "determinism_gate": "Full 864-regime benchmark executed twice with PYTHONHASHSEED=1 and 987654; result JSON and all three CSV hashes were byte-identical.",
+    "determinism_contract_tests": 10
+  },
   "headline": {
     "regimes": 864,
     "v6_ge_uniform": 794,
