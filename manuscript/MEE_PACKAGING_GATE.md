@@ -21,13 +21,18 @@ This file tracks **submission-format and peer-review packaging** only. Scientifi
 | Supplementary Information | PASS pre-V7 | `SUPPLEMENTARY_INFORMATION_PRE_V7.md` contains V1–V6 tables, theorem derivation, hashes and seed-independent V7 preregistration; result fields remain placeholders |
 | Pre-V7 figures | PASS | deterministic Fig. 1–5 SVG/CSV package; V7 absent |
 | V7 final result | **BLOCKED** | exact frozen V5 observer branches not yet publicly reachable |
-| Open-source software licence | **BLOCKED — explicit author choice required** | repository currently has no root `LICENSE`, `LICENSE.txt`, `LICENSE.md` or `COPYING` |
+| PolliPi open-source licence | **BLOCKED — explicit author choice required** | no root `LICENSE`, `LICENSE.txt`, `LICENSE.md` or `COPYING`; root `package.json` is private and has no licence declaration |
+| InsePi open-source licence | **BLOCKED — explicit author choice required** | no root `LICENSE`, `LICENSE.txt`, `LICENSE.md` or `COPYING`; `pyproject.toml` has no licence metadata |
 | Stable public archive / DOI | PENDING after V7 | create immutable archive after locked result is preserved |
 | Final Data Availability statement | PENDING archive DOI | title page and final manuscript updated after archiving |
 
 ## Why the licence remains blocked
 
-Methods in Ecology and Evolution requires code accompanying submissions to carry an open-source software licence. Choosing MIT, BSD-3-Clause, GPL or another licence changes the legal permissions granted by the copyright holder, so the build system deliberately **does not choose one automatically**. Until an explicit licence is added at repository root, the anonymous bundle is labelled `license_ready=false` and must not be treated as submission-ready code.
+Methods in Ecology and Evolution requires code accompanying submissions to carry an open-source software licence. The method depends on **two separately executable repositories**, so both PolliPi and InsePi need explicit licensing before the public submission/archive package can be treated as complete.
+
+A repository-wide search found no existing SPDX header, Copyright notice or embedded project licence declaration that already settles the choice. That absence removes an obvious internal conflict but does **not** authorise an automatic licence grant. Choosing MIT, BSD-3-Clause, Apache-2.0, GPL or another licence changes the legal permissions granted by the copyright holder, so the build system deliberately does not choose one automatically.
+
+Until explicit root licences are added to both repositories, the publication package must remain `license_ready=false`.
 
 ## Double-anonymous handling
 
@@ -39,13 +44,13 @@ The review bundle removes repository ownership, email addresses, public observer
 
 ## V7 boundary
 
-No packaging task may insert, infer or simulate a V7 outcome. `[[V7_LOCKED_RESULT]]` remains unresolved until the one-shot execution ledger exists. Packaging CI may build manuscripts, supplementary information and figures from V1–V6 evidence, but it must not generate V7 seed, pixels, traces or reports.
+No packaging task may insert, infer or simulate a V7 outcome. The five context-specific `[[V7_LOCKED_RESULT:...]]` fields remain unresolved until the one-shot execution ledger exists. Packaging CI may build manuscripts, supplementary information and figures from V1–V6 evidence, but it must not generate V7 seed, pixels, traces or reports.
 
 ## Pre-submission blockers remaining
 
-Only two blockers remain outside ordinary title-page completion:
+Only two blocker classes remain outside ordinary title-page completion:
 
 1. make the exact frozen V5 observer commits externally reachable, then execute the already staged one-shot V7 workflow;
-2. select and add an open-source software licence explicitly.
+2. explicitly choose and add compatible open-source licences to **both** PolliPi and InsePi.
 
 Neither blocker may be bypassed by publication-packaging code.
