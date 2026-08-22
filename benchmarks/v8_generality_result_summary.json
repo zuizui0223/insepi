@@ -1,0 +1,46 @@
+{
+  "schema": "interaction-sensing-v8-generality-summary-v1",
+  "first_run": {
+    "workflow_run_id": 32546131520,
+    "head_sha": "5b41b99cc2f4d3f58f3db8dcffdc569564b8178b",
+    "protocol_sha256": "517958d2361f9fe5b6f8b962d5a5b5f552d942223b9cede8585253dde3fac6d2",
+    "result_sha256": "09b670fb7efa01681578791cc02ca30c9807d9cb7fa80bba3951a1fc6529f4ce",
+    "artifact_zip_sha256": "5d1babec6bbfd667a3405f877d3a7394655b4b955ea0cd1c1a59776e0eb61b3d"
+  },
+  "headline": {
+    "regimes": 864,
+    "v6_ge_uniform": 794,
+    "v6_ge_uniform_fraction": 0.9189814814814815,
+    "v6_best_same_alpha": 185,
+    "v6_best_same_alpha_fraction": 0.21412037037037038,
+    "mean_v6_joint_ratio": 1.4878501258460761,
+    "mean_v6_minus_best_same_alpha_joint": -0.4179469403999378,
+    "mean_v6_naive_prevalence_rmse": 0.05581013542599007,
+    "mean_v6_exploration_prevalence_rmse": 0.03940601781923415
+  },
+  "fixed_policy_robustness": {
+    "guarded_v6": {"min_joint": 0.660680, "mean_joint": 1.487850, "median_joint": 1.159689, "fraction_ge_uniform": 0.918981, "q05_joint": 0.965714, "q10_joint": 1.004833, "mean_tv": 0.258400, "max_tv": 0.395125},
+    "guarded_e_only": {"min_joint": 0.209776, "mean_joint": 1.453115, "median_joint": 0.642714, "fraction_ge_uniform": 0.410880, "q05_joint": 0.432961, "q10_joint": 0.465736, "mean_tv": 0.121174, "max_tv": 0.302875},
+    "guarded_o_only": {"min_joint": 0.257049, "mean_joint": 1.007555, "median_joint": 0.998633, "fraction_ge_uniform": 0.471065, "q05_joint": 0.819577, "q10_joint": 0.890239, "mean_tv": 0.322555, "max_tv": 0.464625},
+    "guarded_fused_20_80": {"min_joint": 0.365474, "mean_joint": 1.320621, "median_joint": 1.151745, "fraction_ge_uniform": 0.782407, "q05_joint": 0.561997, "q10_joint": 0.645529, "mean_tv": 0.286413, "max_tv": 0.398750},
+    "guarded_max": {"min_joint": 0.457475, "mean_joint": 1.275655, "median_joint": 1.106140, "fraction_ge_uniform": 0.712963, "q05_joint": 0.695363, "q10_joint": 0.794412, "mean_tv": 0.239602, "max_tv": 0.462125}
+  },
+  "by_event_prevalence": {
+    "0.02": {"fraction_v6_ge_uniform": 1.0, "fraction_v6_best_same_alpha": 0.064815, "mean_v6_joint": 2.255823, "naive_bias": 0.04872, "exploration_bias": -0.00095, "naive_rmse": 0.05114, "exploration_rmse": 0.01761, "mean_tv": 0.275682},
+    "0.10": {"fraction_v6_ge_uniform": 1.0, "fraction_v6_best_same_alpha": 0.138889, "mean_v6_joint": 1.626771, "naive_bias": 0.07780, "exploration_bias": 0.00000, "naive_rmse": 0.08181, "exploration_rmse": 0.03824, "mean_tv": 0.257976},
+    "0.50": {"fraction_v6_ge_uniform": 1.0, "fraction_v6_best_same_alpha": 0.236111, "mean_v6_joint": 1.092560, "naive_bias": 0.04602, "exploration_bias": 0.00029, "naive_rmse": 0.06314, "exploration_rmse": 0.06379, "mean_tv": 0.250753},
+    "0.90": {"fraction_v6_ge_uniform": 0.675926, "fraction_v6_best_same_alpha": 0.416667, "mean_v6_joint": 0.976246, "naive_bias": 0.00954, "exploration_bias": 0.00020, "naive_rmse": 0.02715, "exploration_rmse": 0.03798, "mean_tv": 0.249191}
+  },
+  "by_residual_correlation": {
+    "0.0": {"fraction_v6_ge_uniform": 0.972222, "fraction_v6_best_same_alpha": 0.208333, "mean_v6_joint": 1.354008},
+    "0.5": {"fraction_v6_ge_uniform": 0.951389, "fraction_v6_best_same_alpha": 0.243056, "mean_v6_joint": 1.455693},
+    "0.9": {"fraction_v6_ge_uniform": 0.833333, "fraction_v6_best_same_alpha": 0.190972, "mean_v6_joint": 1.653849}
+  },
+  "interpretation": {
+    "primary": "Frozen V6 is the most robust fixed targeted policy across unknown regimes in this abstract benchmark, but it is not the per-regime optimum.",
+    "failure_boundary": "Common event prevalence and strongly shared residual structure enlarge the failure region; at event prevalence 0.90 the mean V6 joint ratio is below uniform.",
+    "same_alpha": "The best same-alpha policy changes sharply with prevalence, demonstrating that exploration alone does not explain all gains but separate quotas are not universally optimal either.",
+    "ecological_inference": "The exploration-only prevalence estimator is nearly unbiased across prevalence regimes; the naive selected-sample estimator is positively biased, especially when events are rare. The exploration estimator pays a variance cost when prevalence is high.",
+    "tv": "The V8 maximum V6 disturbance-family TV is 0.395125, below the theorem's 0.5 half-exploration bound but above the V4/V7 empirical 0.25 criterion in many regimes. Therefore 0.25 must not be presented as a general theoretical guarantee."
+  }
+}
