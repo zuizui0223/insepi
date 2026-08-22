@@ -1,0 +1,48 @@
+name: V10 real-video source resolution
+
+on:
+  pull_request:
+    paths:
+      - "scripts/resolve_v10_figshare_source.py"
+      - "docs/V10_REAL_VIDEO_SOURCE_AUDIT.md"
+      - ".github/workflows/v10-source-resolution.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  resolve-source:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Resolve Figshare file metadata without downloading video bytes
+        run: python scripts/resolve_v10_figshare_source.py
+      - name: Audit source-resolution boundary
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p = Path('.v10/source-resolution.json')
+          obj = json.loads(p.read_text())
+          assert obj['schema'] == 'interaction-sensing-v10-source-resolution-v1'
+          assert obj['source']['article_id'] == 12895433
+          assert obj['source']['doi'].lower() == '10.26180/5f4c8d5815940'
+          assert obj['file_count'] > 0
+          assert obj['video_count'] > 0
+          assert not Path('.v10/video-bytes').exists()
+          assert not Path('.v7/run/v7_pixels.npz').exists()
+          print('V10_SOURCE_ONLY true')
+          print('V10_VIDEO_BYTES_DOWNLOADED false')
+          print('V10_V7_MATERIALISED false')
+          PY
+      - name: Upload resolved metadata only
+        uses: actions/upload-artifact@v4
+        with:
+          name: v10-real-video-source-resolution
+          path: .v10/source-resolution.json
+          if-no-files-found: error
+          retention-days: 30
