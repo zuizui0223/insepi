@@ -1,0 +1,55 @@
+{
+  "schema": "interaction-sensing-v8-generality-protocol-v1",
+  "status": "pre_registered_before_result_inspection",
+  "purpose": "Characterize when exploration-guarded dual-observer allocation helps, fails, or becomes unnecessary without retuning the frozen V6 weights.",
+  "frozen_candidate": {
+    "exploration": 0.50,
+    "evidence": 0.10,
+    "observability": 0.40,
+    "disagreement": 0.00
+  },
+  "no_tuning_rule": "V8 must not change the frozen 0.50/0.10/0.40/0.00 vector in response to V8 results.",
+  "world": {
+    "windows_per_regime": 800,
+    "paired_replicates": 10,
+    "event_prevalence": [0.02, 0.10, 0.50, 0.90],
+    "budget_fraction": [0.05, 0.10, 0.25, 0.50],
+    "evidence_quality": [0.60, 0.75, 0.90],
+    "observability_quality": [0.60, 0.75, 0.90],
+    "residual_correlation": [0.00, 0.50, 0.90],
+    "disturbance_prevalence": [0.10, 0.40]
+  },
+  "policies": [
+    "uniform",
+    "guarded_v6",
+    "guarded_e_only",
+    "guarded_o_only",
+    "guarded_fused_20_80",
+    "guarded_max"
+  ],
+  "same_alpha_comparators": {
+    "guarded_e_only": "0.50 exploration + 0.50 evidence",
+    "guarded_o_only": "0.50 exploration + 0.50 observability",
+    "guarded_fused_20_80": "0.50 exploration + 0.50 targeted scalar using 0.20 evidence + 0.80 observability",
+    "guarded_max": "0.50 exploration + 0.50 targeted max(evidence, observability)"
+  },
+  "primary_metrics": [
+    "true_event_recall",
+    "evidence_hidden_error_recall",
+    "disturbance_family_tv",
+    "joint_recovery_ratio_to_uniform"
+  ],
+  "ecological_inference_metrics": [
+    "naive_selected_prevalence_bias",
+    "naive_selected_prevalence_rmse",
+    "exploration_only_prevalence_bias",
+    "exploration_only_prevalence_rmse"
+  ],
+  "interpretation_rules": [
+    "Do not call guarded_v6 generally superior unless it improves both event and hidden-error recovery relative to uniform in the relevant region.",
+    "If same-alpha single-observer or fused policies match or exceed guarded_v6, attribute the gain to exploration and/or simpler targeting rather than dual-observer separation.",
+    "Use V8 to map applicability and failure regions, not to select new weights.",
+    "Ecological-inference conclusions compare the raw selected sample with the explicitly retained uniform exploration subset; no post-result estimator changes are allowed."
+  ],
+  "seed": 20260822
+}
