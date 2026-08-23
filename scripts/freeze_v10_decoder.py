@@ -49,7 +49,7 @@ def main() -> None:
             "ffmpeg_filter": FRAME_FILTER,
             "output_pixel_format": PIXEL_FORMAT,
             "output_container": "rawvideo to stdout",
-            "timestamp_resampling": false,
+            "timestamp_resampling": False,
             "expected_native_input": "1920x1080 AVC MP4 at exactly 60 fps from the frozen V10 container metadata"
         },
         "canonical_ffmpeg_argv_template": [
@@ -62,10 +62,10 @@ def main() -> None:
             "-pix_fmt", PIXEL_FORMAT,
             "pipe:1"
         ],
-        "video_bytes_accessed": false,
-        "video_pixels_decoded": false,
-        "observer_execution": false,
-        "v7_materialisation": false
+        "video_bytes_accessed": False,
+        "video_pixels_decoded": False,
+        "observer_execution": False,
+        "v7_materialisation": False
     }
     output = Path(".v10/v10_decoder_freeze.json")
     output.parent.mkdir(parents=True, exist_ok=True)
