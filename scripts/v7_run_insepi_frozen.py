@@ -3,7 +3,9 @@
 
 The script imports the frozen noise/observability implementation from an external
 checkout. Latent labels are never passed into the observer; they are attached to
-trace rows only after inference.
+trace rows only after inference. The frozen API requires a bookkeeping
+``frame_index``; before V7 materialisation the smoke test proves that
+decision-relevant outputs are invariant to that index on fixed pixels.
 """
 from __future__ import annotations
 
@@ -17,6 +19,7 @@ import numpy as np
 
 ARTIFACT_SCHEMA = "pollipi-insepi-v7-pixel-artifact-v1"
 TRACE_SCHEMA = "pollipi-insepi-v7-insepi-trace-v1"
+FRAME_INDEX_INVARIANCE_PROBES = (0, 1, 179)
 
 
 def _sha256_file(path: Path) -> str:
@@ -88,15 +91,54 @@ def _decide(source_root: Path, background: np.ndarray, frame: np.ndarray, frame_
     return observation, decision, structure_loss, threshold
 
 
+def _optional_float(value):
+    return None if value is None else float(value)
+
+
+def _decision_signature(observation, decision, structure_loss: float):
+    observation_signature = (
+        str(observation.source.value),
+        float(observation.confidence),
+        _optional_float(getattr(observation, "global_motion_score", None)),
+        _optional_float(getattr(observation, "coherent_foreground_motion_score", None)),
+        _optional_float(getattr(observation, "local_relative_motion_score", None)),
+        _optional_float(getattr(observation, "illumination_change", None)),
+        _optional_float(getattr(observation, "blur_score", None)),
+        _optional_float(getattr(observation, "occlusion_score", None)),
+        _optional_float(getattr(observation, "clutter_score", None)),
+        json.dumps(getattr(observation, "sensor_scores", {}), sort_keys=True),
+        json.dumps(getattr(observation, "metadata", {}), sort_keys=True),
+        float(structure_loss),
+    )
+    decision_signature = (
+        str(decision.state.value),
+        float(decision.false_event_risk),
+        float(decision.missed_event_risk),
+        float(decision.attribution_risk),
+        bool(decision.capture_audit),
+        bool(decision.record_high_resolution_context),
+        tuple(decision.reasons),
+    )
+    return observation_signature, decision_signature
+
+
 def smoke_test(source_root: Path) -> None:
     yy, xx = np.mgrid[:96, :128]
     background = np.clip(95 + 12 * np.sin(xx * 0.08) + 9 * np.cos(yy * 0.12), 0, 255).astype(np.uint8)
     frame = background.copy()
     frame[:, 48:80] = np.clip(frame[:, 48:80].astype(np.float32) - 28, 0, 255).astype(np.uint8)
-    observation, decision, _, threshold = _decide(source_root, background, frame, 0)
+    results = [_decide(source_root, background, frame, index) for index in FRAME_INDEX_INVARIANCE_PROBES]
+    signatures = [_decision_signature(observation, decision, structure_loss) for observation, decision, structure_loss, _ in results]
+    if any(signature != signatures[0] for signature in signatures[1:]):
+        raise RuntimeError(
+            "exact frozen InsePi decision-relevant outputs depend on frame_index; "
+            "V7 image-only observer boundary is not satisfied"
+        )
+    observation, decision, _structure_loss, threshold = results[0]
     if not hasattr(observation, "source") or not hasattr(decision, "state"):
         raise RuntimeError("frozen InsePi observer does not expose expected decision contract")
     print("INSEPI_FROZEN_ADAPTER_SMOKE PASS", observation.source.value, decision.state.value, threshold)
+    print("V7_INSEPI_FRAME_INDEX_INVARIANCE PASS", *FRAME_INDEX_INVARIANCE_PROBES)
 
 
 def run(source_root: Path, source_commit: str, npz_path: Path, manifest_path: Path, output: Path) -> None:
@@ -124,7 +166,9 @@ def run(source_root: Path, source_commit: str, npz_path: Path, manifest_path: Pa
     with output.open("w", encoding="utf-8") as handle:
         handle.write(json.dumps(provenance, sort_keys=True) + "\n")
         for index, meta in enumerate(metadata):
-            # Only images and deterministic frame index enter the frozen observer.
+            # Only images and the pre-registered deterministic bookkeeping index
+            # enter the frozen observer. The pre-materialisation smoke gate above
+            # requires decision-relevant outputs to be invariant to this index.
             observation = infer_noise_observation(backgrounds[index], frames[index], index)
             structure_loss = float(local_structure_loss(backgrounds[index], frames[index], observation))
             observation = apply_local_audit(observation, structure_loss, threshold)
