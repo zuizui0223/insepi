@@ -8,11 +8,20 @@
   "capture_timing": "After exact frozen observer checkouts and PolliPi dependency installation, but before either exact observer smoke test, before master-seed derivation and before V7 pixel materialisation.",
   "implementation_last_change_commits": {
     "scripts/v7_capture_runtime_environment.py": "c00cf1af17662db233089032aa965786ecadea5b",
-    "scripts/v7_evaluate_locked.py": "7d6e337105577ff1f7c07987310b214a71601dff"
+    "scripts/v7_evaluate_locked.py": "7d6e337105577ff1f7c07987310b214a71601dff",
+    "scripts/v7_audit_frozen_observer_independence.py": "64885d404d2b157c9da529f365f7a0e243d57494"
   },
   "execution_file_git_blob_sha1": {
     "scripts/v7_run_pollipi_frozen.py": "80942036e2683f9ae16208da718f86b3579c32b4",
     "scripts/v7_run_insepi_frozen.py": "537d1e331f3dca7f5d886500e1ceb482c408f6eb"
+  },
+  "software_independence_gate": {
+    "timing": "after exact V5 checkouts and before dependency installation, smoke tests, seed derivation or V7 pixel materialisation",
+    "pollipi_forbidden_import_prefix": "interaction_sensing",
+    "insepi_forbidden_import_prefix": "pollipi_analysis",
+    "scope": "static Python imports plus literal dynamic imports in the frozen observer source trees",
+    "interpretation": "software-level implementation separation only; this is not a claim of statistical independence of observer errors",
+    "failure_action": "Block V7 before master-seed derivation and pixel materialisation."
   },
   "insepi_frame_index_gate": {
     "probe_indices": [0, 1, 179],
