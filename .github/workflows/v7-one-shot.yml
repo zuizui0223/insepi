@@ -7,6 +7,7 @@ on:
       - "benchmarks/v7_runtime_freeze.json"
       - "scripts/v7_capture_runtime_environment.py"
       - "scripts/v7_evaluate_locked.py"
+      - "tests/test_v7_runtime_freeze.py"
       - ".github/workflows/v7-one-shot.yml"
   workflow_dispatch:
 
@@ -61,7 +62,7 @@ jobs:
           test "$generator_last" = "$FROZEN_GENERATOR_SHA" || { echo "generator drift: $generator_last"; exit 1; }
           test "$evaluator_last" = "$FROZEN_EVALUATOR_SHA" || { echo "evaluator drift: $evaluator_last"; exit 1; }
           test "$materializer_last" = "$FROZEN_MATERIALIZER_SHA" || { echo "materializer drift: $materializer_last"; exit 1; }
-          python - <<'PY'
+          python - <<'PY' > /tmp/v7-runtime-implementation.tsv
           import json
           from pathlib import Path
           freeze = json.loads(Path('benchmarks/v7_runtime_freeze.json').read_text())
@@ -69,7 +70,13 @@ jobs:
           assert freeze['status'] == 'pre-materialisation-frozen'
           assert freeze['python_version'] == '3.11.16'
           assert freeze['numpy_version'] == '2.4.6'
+          for path, expected in freeze['implementation_last_change_commits'].items():
+              print(path, expected, sep='\t')
           PY
+          while IFS=$'\t' read -r path expected; do
+            actual="$(git log -1 --format=%H -- "$path")"
+            test "$actual" = "$expected" || { echo "V7 runtime implementation drift: $path $actual != $expected"; exit 1; }
+          done < /tmp/v7-runtime-implementation.tsv
           python -m py_compile scripts/v7_capture_runtime_environment.py scripts/v7_evaluate_locked.py
           echo "V7_FROZEN_FILE_PROVENANCE PASS"
           echo "V7_RUNTIME_FREEZE PASS"
@@ -77,6 +84,15 @@ jobs:
           echo "generator $generator_last"
           echo "evaluator $evaluator_last"
           echo "materializer $materializer_last"
+
+      - name: Verify V7 runtime and locked-validation contracts before lock read
+        run: |
+          pytest -q \
+            tests/test_v7_runtime_freeze.py \
+            tests/test_v7_lock.py \
+            tests/test_v7_artifact.py \
+            tests/test_v7_materialization.py \
+            tests/test_v7_evaluator.py
 
       - name: Read lock state without deriving seed
         id: lock
