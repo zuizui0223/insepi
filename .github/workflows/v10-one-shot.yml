@@ -1,0 +1,258 @@
+name: V10 one-shot real-pixel validation
+
+on:
+  pull_request:
+    paths:
+      - "benchmarks/v10_execution_implementation_freeze.json"
+      - "scripts/v10_trace_common.py"
+      - "scripts/v10_run_pollipi_frozen.py"
+      - "scripts/v10_run_insepi_frozen.py"
+      - "src/interaction_sensing/simulation/v10_evaluator.py"
+      - "scripts/v10_evaluate_locked.py"
+      - "tests/test_v10_execution_contract.py"
+      - ".github/workflows/v10-one-shot.yml"
+  workflow_dispatch:
+    inputs:
+      v7_run_id:
+        description: "Completed V7 locked-validation run id; required only once exact V5 observers are reachable"
+        required: false
+        type: string
+
+permissions:
+  contents: read
+  actions: read
+
+env:
+  EXPECTED_POLLIPI_SHA: d58d0a86034a6c2d53f90efbe4245370fd7cd2e9
+  EXPECTED_INSEPI_SHA: 980813bab996909020140fad5bd83b055eb3db9c
+  POLLIPI_FROZEN_BRANCH: frozen/v5-method
+  INSEPI_FROZEN_BRANCH: frozen/v5-method
+  V10_PIXEL_RUN_ID: "32616509747"
+  V10_PIXEL_ARTIFACT: v10-frozen-real-pixel-artifact
+  EXPECTED_V10_PIXEL_SHA: b971caa2b0c06b45ccf114df99d6515765ea9ec5fb8e58ded226b424f8afad66
+
+jobs:
+  preflight-or-one-shot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install current evaluator/test environment
+        run: python -m pip install -e ".[dev]"
+
+      - name: Verify pre-observer execution implementation freeze
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import hashlib, json
+          from pathlib import Path
+          freeze = json.loads(Path('benchmarks/v10_execution_implementation_freeze.json').read_text())
+          protocol = Path('benchmarks/v10_real_video_protocol.json').read_bytes()
+          assert hashlib.sha256(protocol).hexdigest() == freeze['protocol_sha256']
+          assert freeze['pixel_npz_sha256'] == 'b971caa2b0c06b45ccf114df99d6515765ea9ec5fb8e58ded226b424f8afad66'
+          assert freeze['status'] == 'pre-observer-frozen'
+          PY
+          python - <<'PY' > /tmp/v10-last-change.tsv
+          import json
+          from pathlib import Path
+          freeze = json.loads(Path('benchmarks/v10_execution_implementation_freeze.json').read_text())
+          for path, expected in freeze['last_change_commits'].items():
+              print(path, expected, sep='\t')
+          PY
+          while IFS=$'\t' read -r path expected; do
+            actual="$(git log -1 --format=%H -- "$path")"
+            test "$actual" = "$expected" || { echo "V10 execution drift: $path $actual != $expected"; exit 1; }
+          done < /tmp/v10-last-change.tsv
+          expected_blob="$(python - <<'PY'
+          import json
+          print(json.load(open('benchmarks/v10_execution_implementation_freeze.json'))['generic_guarded_portfolio_git_blob_sha1'])
+          PY
+          )"
+          actual_blob="$(git hash-object src/interaction_sensing/guarded_portfolio.py)"
+          test "$actual_blob" = "$expected_blob" || { echo "guarded selector drift: $actual_blob"; exit 1; }
+          echo "V10_EXECUTION_IMPLEMENTATION_FREEZE PASS"
+
+      - name: Verify V10 execution contracts
+        run: pytest -q tests/test_v10_execution_contract.py tests/test_real_video_v10.py tests/test_v10_real_video_protocol.py
+
+      - name: Determine exact frozen-observer reachability
+        id: reachability
+        shell: bash
+        run: |
+          set -euo pipefail
+          pollipi_tip="$(git ls-remote https://github.com/zuizui0223/pollipi.git "refs/heads/${POLLIPI_FROZEN_BRANCH}" | awk '{print $1}')"
+          insepi_tip="$(git ls-remote https://github.com/zuizui0223/insepi.git "refs/heads/${INSEPI_FROZEN_BRANCH}" | awk '{print $1}')"
+          if [ -n "$pollipi_tip" ] && [ "$pollipi_tip" != "$EXPECTED_POLLIPI_SHA" ]; then
+            echo "PolliPi frozen branch exists at wrong SHA: $pollipi_tip"; exit 1
+          fi
+          if [ -n "$insepi_tip" ] && [ "$insepi_tip" != "$EXPECTED_INSEPI_SHA" ]; then
+            echo "InsePi frozen branch exists at wrong SHA: $insepi_tip"; exit 1
+          fi
+          if [ "$pollipi_tip" = "$EXPECTED_POLLIPI_SHA" ] && [ "$insepi_tip" = "$EXPECTED_INSEPI_SHA" ]; then
+            ready=true
+            echo "V10_EXACT_OBSERVERS REACHABLE"
+          else
+            ready=false
+            echo "V10_ONE_SHOT BLOCKED_SAFE"
+            echo "PolliPi tip: ${pollipi_tip:-ABSENT}"
+            echo "InsePi tip: ${insepi_tip:-ABSENT}"
+          fi
+          echo "ready=$ready" >> "$GITHUB_OUTPUT"
+
+      - name: Require manual dispatch and prior V7 locked execution
+        if: github.event_name == 'workflow_dispatch' && steps.reachability.outputs.ready == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "${{ inputs.v7_run_id }}" || {
+            echo "Exact observers are reachable, but V7 must be executed before V10. Supply v7_run_id."; exit 1;
+          }
+
+      - name: Download prior V7 locked-validation evidence
+        if: github.event_name == 'workflow_dispatch' && steps.reachability.outputs.ready == 'true'
+        uses: actions/download-artifact@v4
+        with:
+          name: v7-locked-validation-evidence
+          path: .v10/v7-prereq
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: ${{ inputs.v7_run_id }}
+
+      - name: Verify V7 precedence evidence without conditioning on its scientific outcome
+        if: github.event_name == 'workflow_dispatch' && steps.reachability.outputs.ready == 'true'
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          matches = list(Path('.v10/v7-prereq').rglob('v7_execution_ledger.json'))
+          if len(matches) != 1:
+              raise SystemExit(f'expected exactly one V7 ledger, found {matches}')
+          ledger = json.loads(matches[0].read_text())
+          assert ledger['schema'] == 'pollipi-insepi-v7-execution-ledger-v1'
+          assert ledger['pollipi_source_commit'] == 'd58d0a86034a6c2d53f90efbe4245370fd7cd2e9'
+          assert ledger['insepi_source_commit'] == '980813bab996909020140fad5bd83b055eb3db9c'
+          print('V10_V7_PRECEDENCE PASS')
+          print('V7_PRIOR_CLAIM_LEVEL', ledger['claim_level'])
+          print('V7_PRIOR_GATE', 'PASS' if ledger['gate_passed'] else 'FAIL')
+          PY
+
+      - name: Checkout exact frozen observer repositories
+        if: github.event_name == 'workflow_dispatch' && steps.reachability.outputs.ready == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p .v10/checkouts
+          git clone --depth=1 --branch "$POLLIPI_FROZEN_BRANCH" https://github.com/zuizui0223/pollipi.git .v10/checkouts/pollipi
+          git clone --depth=1 --branch "$INSEPI_FROZEN_BRANCH" https://github.com/zuizui0223/insepi.git .v10/checkouts/insepi
+          test "$(git -C .v10/checkouts/pollipi rev-parse HEAD)" = "$EXPECTED_POLLIPI_SHA"
+          test "$(git -C .v10/checkouts/insepi rev-parse HEAD)" = "$EXPECTED_INSEPI_SHA"
+
+      - name: Install exact frozen PolliPi analysis runtime
+        if: github.event_name == 'workflow_dispatch' && steps.reachability.outputs.ready == 'true'
+        run: python -m pip install -e ".v10/checkouts/pollipi/packages/analysis"
+
+      - name: Smoke-test exact observer APIs before reading V10 pixels
+        if: github.event_name == 'workflow_dispatch' && steps.reachability.outputs.ready == 'true'
+        run: |
+          python scripts/v10_run_pollipi_frozen.py --source-root .v10/checkouts/pollipi --smoke-test
+          python scripts/v10_run_insepi_frozen.py --source-root .v10/checkouts/insepi --smoke-test
+          echo "V10_EXACT_OBSERVER_SMOKE PASS"
+
+      - name: Download byte-frozen V10 real-pixel artifact
+        if: github.event_name == 'workflow_dispatch' && steps.reachability.outputs.ready == 'true'
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ env.V10_PIXEL_ARTIFACT }}
+          path: .v10/artifact-download
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: ${{ env.V10_PIXEL_RUN_ID }}
+
+      - name: Locate and verify canonical V10 artifact
+        if: github.event_name == 'workflow_dispatch' && steps.reachability.outputs.ready == 'true'
+        id: artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          receipt="$(find .v10/artifact-download -name v10_real_pixel_receipt.json -print -quit)"
+          test -n "$receipt"
+          root="$(dirname "$receipt")"
+          test -f "$root/v10_real_pixel_artifact.npz"
+          actual="$(sha256sum "$root/v10_real_pixel_artifact.npz" | awk '{print $1}')"
+          test "$actual" = "$EXPECTED_V10_PIXEL_SHA" || { echo "V10 pixel mismatch: $actual"; exit 1; }
+          echo "root=$root" >> "$GITHUB_OUTPUT"
+          echo "V10_CANONICAL_PIXEL_ARTIFACT PASS $actual"
+
+      - name: Run exact frozen PolliPi on V10 pixels
+        if: github.event_name == 'workflow_dispatch' && steps.reachability.outputs.ready == 'true'
+        run: |
+          mkdir -p .v10/run
+          python scripts/v10_run_pollipi_frozen.py \
+            --source-root .v10/checkouts/pollipi \
+            --artifact-dir "${{ steps.artifact.outputs.root }}" \
+            --freeze benchmarks/v10_real_pixel_artifact_freeze.json \
+            --output .v10/run/pollipi_v10_trace.jsonl
+
+      - name: Run exact frozen InsePi on V10 pixels
+        if: github.event_name == 'workflow_dispatch' && steps.reachability.outputs.ready == 'true'
+        run: |
+          python scripts/v10_run_insepi_frozen.py \
+            --source-root .v10/checkouts/insepi \
+            --artifact-dir "${{ steps.artifact.outputs.root }}" \
+            --freeze benchmarks/v10_real_pixel_artifact_freeze.json \
+            --output .v10/run/insepi_v10_trace.jsonl
+
+      - name: Evaluate frozen V10 traces and assign preregistered claim level
+        if: github.event_name == 'workflow_dispatch' && steps.reachability.outputs.ready == 'true'
+        run: |
+          python scripts/v10_evaluate_locked.py \
+            --artifact-dir "${{ steps.artifact.outputs.root }}" \
+            --pollipi-trace .v10/run/pollipi_v10_trace.jsonl \
+            --insepi-trace .v10/run/insepi_v10_trace.jsonl \
+            --output .v10/run/v10_report.json \
+            --receipt .v10/run/v10_evaluation_receipt.json | tee .v10/run/v10_console_summary.txt
+          cp benchmarks/v10_execution_implementation_freeze.json .v10/run/
+          cp benchmarks/v10_evaluator_freeze.json .v10/run/
+          cp benchmarks/v10_real_pixel_artifact_freeze.json .v10/run/
+          cp benchmarks/v10_real_video_protocol_freeze.json .v10/run/
+
+      - name: Write V10 scientific summary
+        if: github.event_name == 'workflow_dispatch' && steps.reachability.outputs.ready == 'true'
+        run: |
+          python - <<'PY' >> "$GITHUB_STEP_SUMMARY"
+          import json
+          from pathlib import Path
+          report = json.loads(Path('.v10/run/v10_report.json').read_text())
+          print('# V10 real-pixel locked validation')
+          print()
+          print(f"- Claim level: **{report['claim']['level']}** — `{report['claim']['label']}`")
+          print(f"- Positive high-tier families: `{report['observer_transfer']['positive_high_tier_family_count']}/6`")
+          print(f"- Dose-monotone families: `{report['observer_transfer']['dose_monotone_family_count']}/6`")
+          print(f"- Global high-tier median risk delta: `{report['observer_transfer']['global_high_tier_median_risk_delta']:.6f}`")
+          print(f"- V6 allocation cells >= paired uniform: `{report['allocation_transfer']['v6_cell_pass_count']}/54`")
+          print(f"- V6 overall mean paired-uniform ratio: `{report['allocation_transfer']['v6_overall_mean_paired_uniform_recall_ratio']:.6f}`")
+          print('- Biological-event accuracy claim: **forbidden by protocol**')
+          PY
+
+      - name: Upload immutable V10 scientific evidence
+        if: github.event_name == 'workflow_dispatch' && steps.reachability.outputs.ready == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: v10-locked-real-pixel-evidence
+          path: .v10/run/
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Confirm PR/precondition path produced no V10 observer result
+        if: github.event_name != 'workflow_dispatch' || steps.reachability.outputs.ready != 'true'
+        run: |
+          test ! -e .v10/run/pollipi_v10_trace.jsonl
+          test ! -e .v10/run/insepi_v10_trace.jsonl
+          test ! -e .v10/run/v10_report.json
+          echo "V10_ONE_SHOT REMAINS_BLOCKED_OR_PREFLIGHT_ONLY"
