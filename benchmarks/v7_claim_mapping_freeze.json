@@ -1,0 +1,44 @@
+{
+  "schema": "pollipi-insepi-v7-claim-mapping-v1",
+  "status": "pre-result-frozen",
+  "valid_scientific_claim_levels": ["A", "B", "C", "D"],
+  "execution_integrity_failure": {
+    "claim_level": null,
+    "status": "no_valid_v7_claim",
+    "rule": "If runtime/provenance/trace/artifact/hash/truth-boundary validation fails, V7 is an invalid execution rather than a scientific negative result. The workflow must fail closed and no V7 claim level may be assigned."
+  },
+  "mapping_precedence": [
+    {
+      "level": "A",
+      "when": "locked hard gate passes",
+      "interpretation": "strong standalone simulation allocation-method claim"
+    },
+    {
+      "level": "D",
+      "when": "either observer-arm removal strictly dominates full V6, or max TV exceeds 0.25",
+      "interpretation": "no superior dual-allocation claim; retain contradiction-guided diagnostic methodology at most"
+    },
+    {
+      "level": "C",
+      "when": "max TV <= 0.25 and V6 mean joint ratio <= 1.0",
+      "interpretation": "safe-exploration / bias-control claim only"
+    },
+    {
+      "level": "B",
+      "when": "max TV <= 0.25, V6 mean joint ratio > 1.0, and failure is a regime joint-ratio floor or legacy worst-joint superiority rule",
+      "interpretation": "conditional allocation benefit without full robustness"
+    },
+    {
+      "level": "D",
+      "when": "any remaining valid-execution failure pattern not captured above",
+      "interpretation": "diagnostic/negative locked validation; no allocator-superiority claim"
+    }
+  ],
+  "non_rules": [
+    "Observer complementarity disappearance is not assigned a separate claim level because V7 has no preregistered quantitative complementarity threshold.",
+    "A provenance or reproducibility failure is not claim level E; it invalidates the V7 execution and produces no scientific claim.",
+    "V7 scientific failure must never be repaired by changing V6 weights, adding disagreement quota, changing thresholds or editing this mapping within the same generation."
+  ],
+  "implementation": "scripts/v7_evaluate_locked.py::_claim_level",
+  "scientific_evaluator_unchanged": "src/interaction_sensing/simulation/v7_evaluator.py at frozen commit 6860fa973ce8f25b25028f49723710e8a920709c"
+}
