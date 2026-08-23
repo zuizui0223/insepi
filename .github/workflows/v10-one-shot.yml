@@ -7,10 +7,12 @@ on:
       - "scripts/v10_trace_common.py"
       - "scripts/v10_run_pollipi_frozen.py"
       - "scripts/v10_run_insepi_frozen.py"
+      - "scripts/v10_audit_frozen_observer_independence.py"
       - "src/interaction_sensing/simulation/v10_evaluator.py"
       - "scripts/v10_evaluate_locked.py"
       - "tests/test_v10_execution_contract.py"
       - "tests/test_v10_independent_oracle.py"
+      - "tests/test_v10_observer_independence_audit.py"
       - ".github/workflows/v10-one-shot.yml"
   workflow_dispatch:
     inputs:
@@ -87,6 +89,7 @@ jobs:
             scripts/v10_trace_common.py \
             scripts/v10_run_pollipi_frozen.py \
             scripts/v10_run_insepi_frozen.py \
+            scripts/v10_audit_frozen_observer_independence.py \
             scripts/v10_evaluate_locked.py
           echo "V10_EXECUTION_SCRIPTS_COMPILE PASS"
 
@@ -95,6 +98,7 @@ jobs:
           pytest -q \
             tests/test_v10_execution_contract.py \
             tests/test_v10_independent_oracle.py \
+            tests/test_v10_observer_independence_audit.py \
             tests/test_real_video_v10.py \
             tests/test_v10_real_video_protocol.py
 
@@ -168,6 +172,13 @@ jobs:
           git clone --depth=1 --branch "$INSEPI_FROZEN_BRANCH" https://github.com/zuizui0223/insepi.git .v10/checkouts/insepi
           test "$(git -C .v10/checkouts/pollipi rev-parse HEAD)" = "$EXPECTED_POLLIPI_SHA"
           test "$(git -C .v10/checkouts/insepi rev-parse HEAD)" = "$EXPECTED_INSEPI_SHA"
+
+      - name: Audit exact frozen observer software independence before V10 pixels
+        if: github.event_name == 'workflow_dispatch' && steps.reachability.outputs.ready == 'true'
+        run: |
+          python scripts/v10_audit_frozen_observer_independence.py \
+            --pollipi-root .v10/checkouts/pollipi \
+            --insepi-root .v10/checkouts/insepi
 
       - name: Install exact frozen PolliPi analysis runtime
         if: github.event_name == 'workflow_dispatch' && steps.reachability.outputs.ready == 'true'
