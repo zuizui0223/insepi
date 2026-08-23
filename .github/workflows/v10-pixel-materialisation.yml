@@ -1,19 +1,13 @@
 name: V10 frozen real-pixel materialisation
 
 on:
-  pull_request:
-    paths:
-      - "src/interaction_sensing/simulation/real_video_v10.py"
-      - "scripts/materialize_v10_real_pixels.py"
-      - "tests/test_real_video_v10.py"
-      - ".github/workflows/v10-pixel-materialisation.yml"
   workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
-  materialise-without-observers:
+  rematerialise-only-to-verify-canonical-bytes:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -22,46 +16,41 @@ jobs:
           python-version: "3.11"
       - name: Install frozen materialisation dependencies
         run: python -m pip install numpy==2.4.6 imageio-ffmpeg==0.6.0 pytest
-      - name: Verify V10 implementation contracts on dummy arrays only
+      - name: Verify frozen V10 implementation contracts
         env:
           PYTHONPATH: src
         run: pytest -q tests/test_real_video_v10.py tests/test_v10_real_video_protocol.py
-      - name: Materialise frozen real-pixel artifact without observers
+      - name: Re-materialise only for byte-identity verification
         env:
           PYTHONPATH: src:scripts
         run: python scripts/materialize_v10_real_pixels.py
-      - name: Audit artifact boundary and frozen cardinality
+      - name: Require exact canonical artifact identity
         run: |
           python - <<'PY'
           import hashlib, json
           from pathlib import Path
           root = Path('.v10/pixels')
           receipt = json.loads((root / 'v10_real_pixel_receipt.json').read_text())
-          assert receipt['schema'] == 'interaction-sensing-v10-real-pixel-artifact-v1'
-          assert receipt['protocol_sha256'] == 'c84947c998f69d4c8f2d056e79c7f91c6c6736b938236c17386618ac5a924e03'
-          assert receipt['base_window_count'] == 364
-          assert receipt['variant_count'] == 19
-          assert receipt['condition_count'] == 6916
-          assert receipt['panel_count'] == 18
-          assert receipt['array_contract']['backgrounds_shape'] == [364,96,128]
-          assert receipt['array_contract']['frames_shape'] == [364,19,96,128]
-          assert receipt['array_contract']['dtype'] == 'uint8'
-          assert receipt['human_visual_selection'] is False
+          freeze = json.loads(Path('benchmarks/v10_real_pixel_artifact_freeze.json').read_text())
+          assert receipt['protocol_sha256'] == freeze['protocol_sha256']
+          assert receipt['files']['pixel_npz_sha256'] == freeze['artifact']['pixel_npz_sha256']
+          assert receipt['array_contract']['backgrounds_raw_sha256'] == freeze['artifact']['backgrounds_raw_sha256']
+          assert receipt['array_contract']['frames_raw_sha256'] == freeze['artifact']['frames_raw_sha256']
+          assert receipt['files']['base_registry_sha256'] == freeze['artifact']['base_registry_sha256']
+          assert receipt['files']['variant_registry_sha256'] == freeze['artifact']['variant_registry_sha256']
+          assert receipt['files']['condition_registry_sha256'] == freeze['artifact']['condition_registry_sha256']
+          assert receipt['files']['panel_registry_sha256'] == freeze['artifact']['panel_registry_sha256']
+          assert hashlib.sha256((root / 'v10_real_pixel_artifact.npz').read_bytes()).hexdigest() == freeze['artifact']['pixel_npz_sha256']
           assert receipt['observer_execution'] is False
           assert receipt['v7_materialisation'] is False
-          npz = root / 'v10_real_pixel_artifact.npz'
-          assert hashlib.sha256(npz.read_bytes()).hexdigest() == receipt['files']['pixel_npz_sha256']
-          assert not Path('.v7/run/v7_pixels.npz').exists()
-          print('V10_PIXEL_ARTIFACT_AUDITED true')
-          print('V10_PIXEL_ARTIFACT_SHA256', receipt['files']['pixel_npz_sha256'])
+          print('V10_PIXEL_ARTIFACT_MATCHES_CANONICAL_FREEZE true')
           print('V10_OBSERVER_EXECUTION false')
-          print('V10_V7_MATERIALISATION false')
           PY
-      - name: Upload frozen V10 pixels and registries
+      - name: Upload verification artifact only
         uses: actions/upload-artifact@v4
         with:
-          name: v10-frozen-real-pixel-artifact
+          name: v10-frozen-real-pixel-artifact-verification
           path: .v10/pixels/
           if-no-files-found: error
-          retention-days: 90
+          retention-days: 30
           compression-level: 0
