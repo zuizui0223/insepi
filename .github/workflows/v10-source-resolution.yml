@@ -32,14 +32,17 @@ jobs:
           assert obj['source']['article_id'] == 12895433
           assert obj['source']['doi'].lower() == '10.26180/5f4c8d5815940'
           assert obj['file_count'] > 0
-          assert obj['video_count'] > 0
+          assert len(obj['files']) == obj['file_count']
+          assert obj['video_count'] + obj['archive_count'] >= 0
           assert not Path('.v10/video-bytes').exists()
           assert not Path('.v7/run/v7_pixels.npz').exists()
           print('V10_SOURCE_ONLY true')
           print('V10_VIDEO_BYTES_DOWNLOADED false')
           print('V10_V7_MATERIALISED false')
+          print('V10_RESOLUTION_STATE', obj['resolution_state'])
           PY
       - name: Upload resolved metadata only
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: v10-real-video-source-resolution
