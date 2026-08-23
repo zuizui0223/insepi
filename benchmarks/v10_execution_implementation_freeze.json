@@ -1,0 +1,26 @@
+{
+  "schema": "interaction-sensing-v10-execution-implementation-freeze-v1",
+  "status": "pre-observer-frozen",
+  "scientific_semantics_freeze": "benchmarks/v10_evaluator_freeze.json",
+  "protocol_sha256": "c84947c998f69d4c8f2d056e79c7f91c6c6736b938236c17386618ac5a924e03",
+  "pixel_npz_sha256": "b971caa2b0c06b45ccf114df99d6515765ea9ec5fb8e58ded226b424f8afad66",
+  "required_observer_commits": {
+    "pollipi": "d58d0a86034a6c2d53f90efbe4245370fd7cd2e9",
+    "insepi": "980813bab996909020140fad5bd83b055eb3db9c"
+  },
+  "last_change_commits": {
+    "scripts/v10_trace_common.py": "ba62a5d72b3e8a784e3531fd2338fa285f5d9f2a",
+    "scripts/v10_run_pollipi_frozen.py": "8136f42ea4135b88e5ff8cb65653ace81b7ea3af",
+    "scripts/v10_run_insepi_frozen.py": "aceeb8919d6bc99eaeaac00982e34f1800f7985b",
+    "src/interaction_sensing/simulation/v10_evaluator.py": "8d112b7fcfd760548358ca840260d5714422dd85",
+    "scripts/v10_evaluate_locked.py": "f3adb1d11d0991346e60493d98a672bf756b2f8b"
+  },
+  "generic_guarded_portfolio_git_blob_sha1": "a6397383c0d713026631b197d4aeb135222200ef",
+  "execution_order_rule": "V7 locked validation must be executed first once both exact V5 observer commits are reachable. V10 execution order is operational only and does not condition or alter V10 scientific thresholds.",
+  "forbidden_after_observer_output": [
+    "changing any listed execution implementation file under the same V10 generation",
+    "changing the generic guarded selector bytes under the same V10 generation",
+    "changing the evaluator semantic freeze",
+    "changing score mappings, budgets, replicates, comparators, perturbations, panels or claim precedence"
+  ]
+}
