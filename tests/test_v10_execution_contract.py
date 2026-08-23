@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import hashlib
+import importlib.util
 import json
 from pathlib import Path
+import sys
 from types import SimpleNamespace
 
 import pytest
@@ -187,3 +189,101 @@ def test_v10_complete_frozen_evaluator_plumbing_on_synthetic_traces(monkeypatch)
     assert 0 <= allocation["v6_cell_pass_count"] <= 54
     assert allocation["v6_overall_mean_paired_uniform_recall_ratio"] > 0.0
     assert {row["policy"] for row in allocation["cells"]} == set(v10.POLICIES)
+
+
+def _load_v10_evaluation_script():
+    path = ROOT / "scripts/v10_evaluate_locked.py"
+    spec = importlib.util.spec_from_file_location("v10_evaluate_locked_test_module", path)
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def test_v10_evaluation_receipt_binds_complete_execution_provenance(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    module = _load_v10_evaluation_script()
+    implementation = tmp_path / "implementation.json"
+    evaluator = tmp_path / "evaluator.json"
+    pixel = tmp_path / "pixel.json"
+    protocol = tmp_path / "protocol.json"
+    v7_ledger = tmp_path / "v7_execution_ledger.json"
+    implementation.write_text(json.dumps({
+        "schema": "interaction-sensing-v10-execution-implementation-freeze-v1"
+    }) + "\n")
+    evaluator.write_text(json.dumps({
+        "schema": "interaction-sensing-v10-evaluator-freeze-v1"
+    }) + "\n")
+    pixel.write_text(json.dumps({
+        "schema": "interaction-sensing-v10-real-pixel-artifact-freeze-v1"
+    }) + "\n")
+    protocol.write_text(json.dumps({
+        "schema": "interaction-sensing-v10-real-video-protocol-freeze-v1"
+    }) + "\n")
+    v7_ledger.write_text(json.dumps({
+        "schema": "pollipi-insepi-v7-execution-ledger-v1",
+        "claim_level": "B",
+        "gate_passed": False,
+    }) + "\n")
+
+    fake_report = {
+        "schema": "interaction-sensing-v10-locked-report-v1",
+        "claim": {"level": "C", "label": "partial_or_family_specific_transfer"},
+        "provenance": {
+            "pollipi_trace_sha256": "1" * 64,
+            "insepi_trace_sha256": "2" * 64,
+            "pixel_artifact_sha256": "3" * 64,
+        },
+        "observer_transfer": {
+            "positive_high_tier_family_count": 3,
+            "dose_monotone_family_count": 2,
+        },
+        "allocation_transfer": {
+            "v6_cell_pass_count": 20,
+            "v6_overall_mean_paired_uniform_recall_ratio": 0.95,
+        },
+    }
+    monkeypatch.setattr(module, "evaluate_v10", lambda *_args, **_kwargs: fake_report.copy())
+
+    report_path = tmp_path / "v10_report.json"
+    receipt_path = tmp_path / "out" / "v10_evaluation_receipt.json"
+    orchestrator = "a" * 40
+    monkeypatch.setattr(sys, "argv", [
+        "v10_evaluate_locked.py",
+        "--artifact-dir", str(tmp_path / "unused-artifact"),
+        "--pollipi-trace", str(tmp_path / "unused-pollipi.jsonl"),
+        "--insepi-trace", str(tmp_path / "unused-insepi.jsonl"),
+        "--output", str(report_path),
+        "--receipt", str(receipt_path),
+        "--orchestrator-sha", orchestrator,
+        "--implementation-freeze", str(implementation),
+        "--evaluator-freeze", str(evaluator),
+        "--pixel-freeze", str(pixel),
+        "--protocol-freeze", str(protocol),
+        "--v7-ledger", str(v7_ledger),
+    ])
+    module.main()
+
+    report = json.loads(report_path.read_text())
+    receipt = json.loads(receipt_path.read_text())
+    copied_v7 = receipt_path.parent / "v7_prerequisite_execution_ledger.json"
+    assert copied_v7.read_bytes() == v7_ledger.read_bytes()
+    expected = {
+        "orchestrator_sha": orchestrator,
+        "implementation_freeze_sha256": module.sha256_file(implementation),
+        "evaluator_freeze_sha256": module.sha256_file(evaluator),
+        "pixel_freeze_sha256": module.sha256_file(pixel),
+        "protocol_freeze_sha256": module.sha256_file(protocol),
+        "v7_prerequisite_ledger_sha256": module.sha256_file(v7_ledger),
+        "v7_prerequisite_claim_level": "B",
+        "v7_prerequisite_gate_passed": False,
+    }
+    assert report["execution_provenance"] == expected
+    for key, value in expected.items():
+        assert receipt[key] == value
+    assert receipt["report_sha256"] == hashlib.sha256(report_path.read_bytes()).hexdigest()
+    assert receipt["pollipi_trace_sha256"] == "1" * 64
+    assert receipt["insepi_trace_sha256"] == "2" * 64
+    assert receipt["pixel_artifact_sha256"] == "3" * 64
