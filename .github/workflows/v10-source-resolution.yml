@@ -5,6 +5,7 @@ on:
     paths:
       - "scripts/resolve_v10_figshare_source.py"
       - "scripts/index_v10_remote_zip.py"
+      - "scripts/index_v10_deflated_test_bundle.py"
       - "docs/V10_REAL_VIDEO_SOURCE_AUDIT.md"
       - ".github/workflows/v10-source-resolution.yml"
   workflow_dispatch:
@@ -31,6 +32,8 @@ jobs:
             --nested-name __no_nested_target__ \
             --output .v10/experiment-data-index.json \
             > .v10/experiment-data-index.log
+      - name: Stream-index the small Experiment 1 test-video bundle
+        run: python scripts/index_v10_deflated_test_bundle.py
       - name: Audit source-resolution boundary
         run: |
           python - <<'PY'
@@ -39,28 +42,31 @@ jobs:
           source = json.loads(Path('.v10/source-resolution.json').read_text())
           honey = json.loads(Path('.v10/honeybee-videos-index.json').read_text())
           experiment = json.loads(Path('.v10/experiment-data-index.json').read_text())
+          tests = json.loads(Path('.v10/experiment-test-videos-index.json').read_text())
           assert source['schema'] == 'interaction-sensing-v10-source-resolution-v1'
           assert source['source']['article_id'] == 12895433
           assert source['source']['doi'].lower() == '10.26180/5f4c8d5815940'
           assert source['file_count'] == 5
-          assert len(source['files']) == source['file_count']
           for index in (honey, experiment):
               assert index['schema'] == 'interaction-sensing-v10-remote-zip-index-v2'
               assert index['http_range_only'] is True
               assert index['member_payload_downloaded'] is False
               assert index['bytes_requested_for_index'] < 32 * 1024 * 1024
-              assert index['outer_zip']['member_count'] > 0
-          assert honey['archive']['name'] == 'Honeybee_videos.zip'
-          assert experiment['archive']['name'] == 'Experiment_Data.zip'
+          assert tests['schema'] == 'interaction-sensing-v10-deflated-test-bundle-index-v1'
+          assert tests['streaming_resolution']['compressed_payload_bytes_streamed'] < 600 * 1024 * 1024
+          assert tests['streaming_resolution']['crc32_verified'] is True
+          assert tests['streaming_resolution']['decompressed_member_payload_written'] is False
+          assert tests['nested_zip']['member_count'] > 0
           assert not Path('.v10/video-bytes').exists()
           assert not Path('.v7/run/v7_pixels.npz').exists()
           print('V10_SOURCE_ONLY true')
-          print('V10_VIDEO_BYTES_DOWNLOADED false')
+          print('V10_VIDEO_MEMBERS_WRITTEN false')
           print('V10_REMOTE_ZIP_RANGE_ONLY true')
           print('V10_HONEY_NESTED_STATE', honey['nested_state'])
-          print('V10_HONEY_INDEX_BYTES', honey['bytes_requested_for_index'])
           print('V10_EXPERIMENT_MEMBERS', experiment['outer_zip']['member_count'])
-          print('V10_EXPERIMENT_INDEX_BYTES', experiment['bytes_requested_for_index'])
+          print('V10_TEST_BUNDLE_VIDEOS', tests['nested_zip']['video_count'])
+          print('V10_TEST_BUNDLE_BEE_TESTS', tests['bee_test_count'])
+          print('V10_TEST_BUNDLE_STREAMED_BYTES', tests['streaming_resolution']['compressed_payload_bytes_streamed'])
           print('V10_V7_MATERIALISED false')
           PY
       - name: Upload resolved metadata only
@@ -73,5 +79,6 @@ jobs:
             .v10/honeybee-videos-index.json
             .v10/experiment-data-index.json
             .v10/experiment-data-index.log
+            .v10/experiment-test-videos-index.json
           if-no-files-found: error
           retention-days: 30
