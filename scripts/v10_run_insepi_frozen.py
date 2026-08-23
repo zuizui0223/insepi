@@ -5,7 +5,8 @@ The current repository's ``interaction_sensing`` package is intentionally never
 imported before the frozen checkout is placed first on ``sys.path``.  The frozen
 pixel estimator requires a ``frame_index`` bookkeeping argument, but V10 fixes it
 to zero for every condition so condition ordering cannot leak family/tier truth
-into the observer.  Only the two image arrays vary across decisions.
+into the observer.  Before any V10 pixel is read, the smoke test also requires
+that decision-relevant frozen outputs are invariant to the bookkeeping index.
 """
 from __future__ import annotations
 
@@ -26,6 +27,7 @@ from v10_trace_common import (
 
 TRACE_SCHEMA = "pollipi-insepi-v10-insepi-trace-v1"
 OBSERVER_FRAME_INDEX = 0
+FRAME_INDEX_INVARIANCE_PROBES = (0, 1, 6915)
 
 
 def _import_frozen(source_root: Path):
@@ -54,6 +56,52 @@ def _components(source_root: Path):
     return NoiseFirstPolicy(), float(calibrate()), infer_noise_observation, local_structure_loss, apply_audit
 
 
+def _optional_float(value):
+    return None if value is None else float(value)
+
+
+def _decision_signature(
+    policy,
+    threshold: float,
+    infer_noise_observation,
+    local_structure_loss,
+    apply_audit,
+    background: np.ndarray,
+    frame: np.ndarray,
+    frame_index: int,
+):
+    observation = infer_noise_observation(background, frame, frame_index)
+    structure_loss = float(local_structure_loss(background, frame, observation))
+    observation = apply_audit(observation, structure_loss, threshold)
+    decision = policy.decide(observation)
+    if not hasattr(decision, "false_event_risk") or not hasattr(decision, "state"):
+        raise RuntimeError("frozen InsePi decision contract differs from V10 freeze")
+    observation_signature = (
+        str(observation.source.value),
+        float(observation.confidence),
+        _optional_float(getattr(observation, "global_motion_score", None)),
+        _optional_float(getattr(observation, "coherent_foreground_motion_score", None)),
+        _optional_float(getattr(observation, "local_relative_motion_score", None)),
+        _optional_float(getattr(observation, "illumination_change", None)),
+        _optional_float(getattr(observation, "blur_score", None)),
+        _optional_float(getattr(observation, "occlusion_score", None)),
+        _optional_float(getattr(observation, "clutter_score", None)),
+        json.dumps(getattr(observation, "sensor_scores", {}), sort_keys=True),
+        json.dumps(getattr(observation, "metadata", {}), sort_keys=True),
+        structure_loss,
+    )
+    decision_signature = (
+        str(decision.state.value),
+        float(decision.false_event_risk),
+        float(decision.missed_event_risk),
+        float(decision.attribution_risk),
+        bool(decision.capture_audit),
+        bool(decision.record_high_resolution_context),
+        tuple(decision.reasons),
+    )
+    return observation_signature, decision_signature
+
+
 def smoke_test(source_root: Path) -> None:
     verify_exact_checkout(source_root, INSEPI_COMMIT)
     policy, threshold, infer_noise_observation, local_structure_loss, apply_audit = _components(source_root)
@@ -61,13 +109,32 @@ def smoke_test(source_root: Path) -> None:
     background = np.clip(95 + 9 * np.sin(xx * 0.08) + 7 * np.cos(yy * 0.12), 0, 255).astype(np.uint8)
     frame = background.copy()
     frame[:, 45:82] = np.clip(frame[:, 45:82].astype(np.int16) - 30, 0, 255).astype(np.uint8)
-    observation = infer_noise_observation(background, frame, OBSERVER_FRAME_INDEX)
-    structure_loss = float(local_structure_loss(background, frame, observation))
-    observation = apply_audit(observation, structure_loss, threshold)
-    decision = policy.decide(observation)
-    if not hasattr(decision, "false_event_risk") or not hasattr(decision, "state"):
-        raise RuntimeError("frozen InsePi decision contract differs from V10 freeze")
-    print("V10_INSEPI_FROZEN_SMOKE PASS", observation.source.value, decision.state.value, threshold)
+
+    signatures = [
+        _decision_signature(
+            policy,
+            threshold,
+            infer_noise_observation,
+            local_structure_loss,
+            apply_audit,
+            background,
+            frame,
+            frame_index,
+        )
+        for frame_index in FRAME_INDEX_INVARIANCE_PROBES
+    ]
+    if any(signature != signatures[0] for signature in signatures[1:]):
+        raise RuntimeError(
+            "exact frozen InsePi decision-relevant outputs depend on frame_index; "
+            "V10 pixel-only observer contract is not satisfied"
+        )
+    print(
+        "V10_INSEPI_FROZEN_SMOKE PASS",
+        signatures[0][0][0],
+        signatures[0][1][0],
+        threshold,
+    )
+    print("V10_INSEPI_FRAME_INDEX_INVARIANCE PASS", *FRAME_INDEX_INVARIANCE_PROBES)
 
 
 def run(source_root: Path, artifact_dir: Path, freeze_path: Path, output: Path) -> None:
