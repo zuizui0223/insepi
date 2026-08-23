@@ -6,6 +6,7 @@ import argparse
 import hashlib
 import json
 from pathlib import Path
+import shutil
 
 from interaction_sensing.simulation.v7_evaluator import (
     INSEPI_TRACE_SCHEMA,
@@ -18,6 +19,10 @@ from interaction_sensing.simulation.v7_evaluator import (
 )
 
 LEDGER_SCHEMA = "pollipi-insepi-v7-execution-ledger-v1"
+RUNTIME_SCHEMA = "pollipi-insepi-v7-runtime-environment-v1"
+RUNTIME_FREEZE_SCHEMA = "pollipi-insepi-v7-runtime-freeze-v1"
+EXPECTED_PYTHON = "3.11.16"
+EXPECTED_NUMPY = "2.4.6"
 
 
 def _sha256_file(path: Path) -> str:
@@ -46,6 +51,33 @@ def _claim_level(gate) -> str:
     return "D"
 
 
+def _load_runtime(runtime_path: Path, pip_freeze_path: Path, freeze_path: Path):
+    for path in (runtime_path, pip_freeze_path, freeze_path):
+        if not path.is_file():
+            raise FileNotFoundError(path)
+    runtime = json.loads(runtime_path.read_text(encoding="utf-8"))
+    freeze = json.loads(freeze_path.read_text(encoding="utf-8"))
+    if runtime.get("schema") != RUNTIME_SCHEMA:
+        raise ValueError("unexpected V7 runtime environment schema")
+    if freeze.get("schema") != RUNTIME_FREEZE_SCHEMA:
+        raise ValueError("unexpected V7 runtime freeze schema")
+    if runtime.get("python_version") != EXPECTED_PYTHON:
+        raise ValueError("V7 runtime Python version differs from frozen runtime")
+    if runtime.get("numpy_version") != EXPECTED_NUMPY:
+        raise ValueError("V7 runtime NumPy version differs from frozen runtime")
+    if freeze.get("python_version") != EXPECTED_PYTHON or freeze.get("numpy_version") != EXPECTED_NUMPY:
+        raise ValueError("V7 runtime freeze version contract changed")
+    if runtime.get("master_seed_derived") is not False:
+        raise ValueError("V7 runtime manifest was not captured before seed derivation")
+    if runtime.get("v7_pixels_materialised") is not False:
+        raise ValueError("V7 runtime manifest was not captured before pixel materialisation")
+    if runtime.get("observer_output_inspected") is not False:
+        raise ValueError("V7 runtime manifest was not captured before observer output")
+    if runtime.get("pip_freeze_sha256") != _sha256_file(pip_freeze_path):
+        raise ValueError("V7 pip-freeze bytes differ from runtime manifest")
+    return runtime, freeze
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--receipt", required=True, type=Path)
@@ -57,7 +89,28 @@ def main() -> None:
     parser.add_argument("--orchestrator-sha", required=True)
     parser.add_argument("--evaluator-freeze-sha", required=True)
     parser.add_argument("--materializer-freeze-sha", required=True)
+    parser.add_argument(
+        "--runtime-manifest",
+        type=Path,
+        default=Path(".v7/run/v7_runtime_environment.json"),
+    )
+    parser.add_argument(
+        "--runtime-pip-freeze",
+        type=Path,
+        default=Path(".v7/run/v7_pip_freeze.txt"),
+    )
+    parser.add_argument(
+        "--runtime-freeze",
+        type=Path,
+        default=Path("benchmarks/v7_runtime_freeze.json"),
+    )
     args = parser.parse_args()
+
+    runtime, _runtime_freeze = _load_runtime(
+        args.runtime_manifest,
+        args.runtime_pip_freeze,
+        args.runtime_freeze,
+    )
 
     receipt = json.loads(args.receipt.read_text(encoding="utf-8"))
     world_fingerprint = str(receipt["world_fingerprint"])
@@ -119,10 +172,16 @@ def main() -> None:
         "orchestrator_sha": args.orchestrator_sha,
         "evaluator_freeze_sha": args.evaluator_freeze_sha,
         "materializer_freeze_sha": args.materializer_freeze_sha,
+        "runtime_environment_sha256": _sha256_file(args.runtime_manifest),
+        "runtime_pip_freeze_sha256": _sha256_file(args.runtime_pip_freeze),
+        "runtime_freeze_sha256": _sha256_file(args.runtime_freeze),
+        "runtime_python_version": str(runtime["python_version"]),
+        "runtime_numpy_version": str(runtime["numpy_version"]),
     }
     report = build_report(metrics=metrics, gate=gate, provenance=provenance)
     report["claim_level"] = claim_level
     args.report.parent.mkdir(parents=True, exist_ok=True)
+    args.ledger.parent.mkdir(parents=True, exist_ok=True)
     args.report.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
     ledger = {
@@ -135,11 +194,23 @@ def main() -> None:
         **provenance,
     }
     args.ledger.write_text(json.dumps(ledger, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+    # Keep the exact pre-materialisation runtime contract beside the final V7
+    # evidence so the execution remains auditable after workflow environments
+    # change. Runtime environment and pip-freeze already live in .v7/run.
+    runtime_freeze_copy = args.ledger.parent / "v7_runtime_freeze.json"
+    if runtime_freeze_copy.resolve() != args.runtime_freeze.resolve():
+        shutil.copyfile(args.runtime_freeze, runtime_freeze_copy)
+    if _sha256_file(runtime_freeze_copy) != provenance["runtime_freeze_sha256"]:
+        raise ValueError("copied V7 runtime-freeze hash changed")
+
     print("V7_GATE", "PASS" if gate.passed else "FAIL")
     print("V7_CLAIM_LEVEL", claim_level)
     print("V7_WORST_JOINT", gate.v6.worst_joint_ratio)
     print("V7_MEAN_JOINT", gate.v6.mean_joint_ratio)
     print("V7_MAX_TV", gate.v6.max_tv)
+    print("V7_RUNTIME_PYTHON", provenance["runtime_python_version"])
+    print("V7_RUNTIME_NUMPY", provenance["runtime_numpy_version"])
     for failure in gate.failures:
         print("V7_FAILURE", failure)
     print("V7_REPORT_SHA256", ledger["report_sha256"])
