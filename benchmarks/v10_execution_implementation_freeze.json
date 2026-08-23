@@ -11,11 +11,13 @@
   "last_change_commits": {
     "scripts/v10_trace_common.py": "ba62a5d72b3e8a784e3531fd2338fa285f5d9f2a",
     "scripts/v10_run_pollipi_frozen.py": "8136f42ea4135b88e5ff8cb65653ace81b7ea3af",
-    "scripts/v10_run_insepi_frozen.py": "aceeb8919d6bc99eaeaac00982e34f1800f7985b",
+    "scripts/v10_run_insepi_frozen.py": "31e512666a7d3c466f4692abd95c5a39bb38defa",
     "src/interaction_sensing/simulation/v10_evaluator.py": "8d112b7fcfd760548358ca840260d5714422dd85",
     "scripts/v10_evaluate_locked.py": "f3adb1d11d0991346e60493d98a672bf756b2f8b"
   },
   "generic_guarded_portfolio_git_blob_sha1": "a6397383c0d713026631b197d4aeb135222200ef",
+  "insepi_bookkeeping_frame_index": 0,
+  "insepi_bookkeeping_rule": "The frozen pixel estimator requires a frame_index field, but V10 fixes it to zero for every condition so condition ordering cannot encode family/tier truth. Only frame/background pixels vary across observer calls.",
   "execution_order_rule": "V7 locked validation must be executed first once both exact V5 observer commits are reachable. V10 execution order is operational only and does not condition or alter V10 scientific thresholds.",
   "forbidden_after_observer_output": [
     "changing any listed execution implementation file under the same V10 generation",
