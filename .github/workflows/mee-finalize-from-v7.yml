@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       v7_run_id:
-        description: "Successful V7 one-shot workflow run ID containing v7-locked-validation-evidence"
+        description: "Successful valid V7 one-shot workflow run ID containing v7-locked-validation-evidence"
         required: true
         type: string
 
@@ -39,6 +39,13 @@ jobs:
           test -f .v7/final-evidence/v7_report.json
           echo "MEE_FINALIZER_V7_RUN $V7_RUN_ID"
 
+      - name: Require valid A-D locked V7 evidence before any publication transform
+        run: |
+          python scripts/validate_v7_publication_evidence.py \
+            --ledger .v7/final-evidence/v7_execution_ledger.json \
+            --report .v7/final-evidence/v7_report.json
+          echo "MEE_V7_INVALID_EXECUTION_TO_MANUSCRIPT forbidden"
+
       - name: Rebuild exact pre-V7 reviewer manuscript
         run: python scripts/build_mee_submission_manuscript.py
 
@@ -67,7 +74,7 @@ jobs:
           assert '[[V7_LOCKED_RESULT' not in manuscript
           assert '[[V7_LOCKED_RESULT' not in supplement
           assert '[[V7_' not in cover
-          assert receipt['claim_level'] in {'A','B','C','D','E'}
+          assert receipt['claim_level'] in {'A','B','C','D'}
           assert Path('manuscript/figures/generated/fig6_v7_locked_validation.svg').exists()
           assert Path('manuscript/figures/generated/fig6_v7_locked_validation.csv').exists()
           print('MEE_FINAL_CLAIM_LEVEL', receipt['claim_level'])
@@ -93,7 +100,7 @@ jobs:
         run: |
           echo "## Finalized MEE package" >> "$GITHUB_STEP_SUMMARY"
           echo "" >> "$GITHUB_STEP_SUMMARY"
-          echo "Source locked V7 workflow run: \`${{ inputs.v7_run_id }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "Source valid locked V7 workflow run: \`${{ inputs.v7_run_id }}\`" >> "$GITHUB_STEP_SUMMARY"
           python - <<'PY' >> "$GITHUB_STEP_SUMMARY"
           import json
           from pathlib import Path
