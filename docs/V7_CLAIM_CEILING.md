@@ -1,9 +1,17 @@
 # V7 claim ceiling — interpretation fixed before result inspection
 
-This document maps locked V7 outcomes to the strongest claim the methods paper is
-allowed to make. It exists to prevent post-result narrative inflation.
+This document maps a **valid locked V7 scientific execution** to the strongest
+claim the methods paper is allowed to make. It exists to prevent post-result
+narrative inflation. The machine-readable mapping is frozen in
+`benchmarks/v7_claim_mapping_freeze.json` and implemented by
+`scripts/v7_evaluate_locked.py::_claim_level`.
 
-## Claim levels
+A runtime, provenance, trace, artifact, hash or truth-boundary failure is **not a
+scientific negative result**. It invalidates the V7 execution, the workflow fails
+closed, and **no V7 claim level is assigned**. This is intentionally separate from
+levels A–D below.
+
+## Valid scientific claim levels
 
 ### Level A — strong standalone allocation-method claim
 
@@ -22,22 +30,24 @@ This is still a simulation-method claim, not a field-accuracy claim.
 
 ### Level B — conditional allocation-method claim
 
-Use if mean joint benefit and TV control pass, but at least one prevalence x budget
-regime falls below the locked 0.98 joint-ratio floor.
+Use when TV control and mean joint benefit remain favorable but at least one
+locked robustness rule prevents claim A, for example a prevalence × budget regime
+below the 0.98 joint-ratio floor or a legacy comparator with materially better
+worst-joint robustness.
 
 Permitted claim:
 
 > Exploration-guarded dual-observer allocation improves average simulation
-> performance but is not prevalence/budget robust; deployment requires explicit
-> regime conditions or adaptive estimation not established here.
+> performance but is not fully robust across the tested prevalence/budget regimes;
+> deployment therefore requires explicit regime conditions or adaptive estimation
+> not established here.
 
 Do not describe V6 as generally robust.
 
 ### Level C — bias-control / safe-exploration claim only
 
-Use if the performance advantage fails but the exploration architecture keeps
-selection distortion within the locked TV criterion and prevents the V5-style
-concentration failure.
+Use if the general performance advantage fails while the frozen portfolio remains
+within the TV ceiling and the mean joint ratio is not above uniform.
 
 Permitted claim:
 
@@ -46,49 +56,68 @@ Permitted claim:
 > ranking, but the tested observer portfolio does not establish a general recovery
 > advantage.
 
-The analytical mixture bound may remain a theoretical result.
+The analytical mixture and finite-budget guarantees remain theoretical results.
 
-### Level D — independent-observer diagnostic methodology
+### Level D — diagnostic / negative locked validation
 
-Use if allocation benefit fails or a single-arm removal dominates, while the two
-independent observers continue to expose complementary failure families.
-
-Permitted claim:
-
-> Maintaining epistemically distinct observation programs and testing their
-> contradictions is useful for falsifying allocation assumptions and localising
-> observation-process failures, even though the resulting dual-observer allocation
-> policy is not superior.
-
-This returns the paper centre to contradiction-guided development rather than
-allocation performance.
-
-### Level E — benchmark/falsification paper
-
-Use if observer complementarity itself does not generalise in V7, or provenance /
-reproducibility gates fail.
+Use if a single-arm removal strictly dominates full V6, the TV ceiling is
+violated, or a remaining valid-execution failure pattern does not support A–C.
 
 Permitted claim:
 
-> A sequence of locked simulations falsifies progressively stronger adaptive
-> sensing hypotheses and identifies the conditions under which apparent gains do
-> not generalise.
+> The locked validation does not support superior dual-observer allocation. The
+> defensible contribution is contradiction-guided development, explicit sampling
+> safeguards, and a reproducible negative validation that localises where the
+> stronger allocation claim failed.
 
-No best-programming claim is permitted.
+If the frozen traces still show interpretable observer contrasts, they may be
+discussed diagnostically. V7 does **not** contain a preregistered quantitative
+threshold that would justify a separate claim level based on “observer
+complementarity disappearance.”
+
+## Invalid execution — no claim level
+
+The following are execution-integrity failures rather than scientific outcomes:
+
+- latent-truth / decision-input boundary failure;
+- frozen runtime mismatch;
+- world, pixel, trace, registry or provenance hash mismatch;
+- wrong frozen observer commit or scientific implementation drift;
+- runtime captured after seed/pixels/observer output;
+- any other fail-closed condition that prevents a valid locked report/ledger.
+
+In those cases **do not assign A, B, C or D** and do not manufacture a
+“benchmark/falsification” claim from invalid evidence. Correct the execution
+infrastructure only if doing so does not alter the frozen scientific generation;
+otherwise start a new validation generation.
+
+## Executable precedence
+
+The pre-result mapping is:
+
+1. hard gate passes → **A**;
+2. arm-removal strict dominance or `max TV > 0.25` → **D**;
+3. `max TV <= 0.25` and mean joint ratio `<= 1.0` → **C**;
+4. `max TV <= 0.25`, mean joint ratio `> 1.0`, with regime-floor or legacy
+   worst-joint failure → **B**;
+5. any remaining valid-execution failure → **D**.
+
+This matches `scripts/v7_evaluate_locked.py::_claim_level` exactly. The frozen
+scientific evaluator itself remains unchanged at
+`6860fa973ce8f25b25028f49723710e8a920709c`.
 
 ## Failure-to-claim mapping
 
-| V7 outcome | Maximum claim level | Interpretation |
+| V7 outcome | Maximum claim | Interpretation |
 | --- | --- | --- |
 | all hard rules pass | A | frozen V6 survives locked generalisation |
-| any regime joint ratio < 0.98, but mean > 1 and TV passes | B | average gain, no prevalence robustness |
-| mean joint <= 1, TV passes | C | exploration/bias control only |
-| V6 arm-removal strictly dominates full V6 | D | dual allocation unnecessary; observers may remain diagnostic |
-| legacy targeted policy materially exceeds V6 worst-joint robustness | B or C | V6 not best allocator; depends on remaining bias/mean benefit |
-| TV > 0.25 | D at most | frozen allocation does not control selection bias sufficiently |
-| latent-truth leakage invariant fails | E | evaluation invalid for methodology claim |
-| world/trace/provenance hashes diverge | E | reproducibility/parity failure |
-| frozen observer complementarity disappears broadly | E or D | depends on whether contradiction still localises reproducible failures |
+| any regime joint ratio < 0.98, mean > 1 and TV passes | B | average gain, no full prevalence/budget robustness |
+| legacy targeted comparator materially exceeds V6 worst-joint robustness, mean > 1 and TV passes | B | V6 is not the strongest tested allocator |
+| mean joint <= 1 and TV passes | C | exploration/bias-control claim only |
+| V6 arm-removal strictly dominates full V6 | D | full dual allocation unnecessary under locked test |
+| TV > 0.25 | D | frozen allocation fails its sampling-distortion ceiling |
+| other valid-execution hard-gate failure | D | negative locked validation / diagnostic framing |
+| runtime / truth-boundary / provenance / hash failure | **no claim** | invalid V7 execution; fail closed |
 
 ## Specific handling of disagreement
 
@@ -102,7 +131,7 @@ Therefore:
 - V7 failure must not be repaired by adding disagreement quota under the same
   validation generation;
 - disagreement may be discussed as a diagnostic and falsification variable if
-  supported by the frozen traces.
+  supported by valid frozen traces.
 
 ## Specific handling of observer-arm ablations
 
@@ -125,6 +154,7 @@ Those remain empirical validation questions for subsequent deployment data.
 
 ## One-shot interpretation rule
 
-After V7 result inspection, select the highest claim level whose prerequisites are
-satisfied. Do not edit this mapping to rescue a preferred conclusion. Any revised
-method after V7 becomes a new generation requiring a new validation generation.
+After a **valid** V7 result is produced, select the claim level mechanically from
+the frozen A–D mapping. Do not edit this mapping to rescue a preferred conclusion.
+Any revised method after V7 becomes a new generation requiring a new validation
+generation.
