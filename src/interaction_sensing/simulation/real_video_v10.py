@@ -7,7 +7,7 @@ a new validation generation rather than a silent V10 edit.
 from __future__ import annotations
 
 import hashlib
-from typing import Mapping, Sequence
+from typing import Sequence
 
 import numpy as np
 
@@ -32,11 +32,7 @@ def _clip_uint8(frame: np.ndarray) -> np.ndarray:
 
 
 def canonicalize_rgb24(rgb: np.ndarray) -> np.ndarray:
-    """Convert one frozen 1920x1080 RGB24 frame to 96x128 uint8.
-
-    The transform is exact integer grayscale, non-overlapping 15x15 block mean,
-    then 12-row edge padding above/below. No crop or interpolating resize occurs.
-    """
+    """Convert one frozen 1920x1080 RGB24 frame to 96x128 uint8."""
     array = np.asarray(rgb)
     if array.shape != (1080, 1920, 3):
         raise ValueError(f"expected RGB24 shape (1080,1920,3), got {array.shape}")
@@ -75,45 +71,54 @@ def perturbation_seed(
     return int.from_bytes(hashlib.sha256(text.encode("utf-8")).digest()[:8], "big")
 
 
-def _smooth(frame: np.ndarray, *, rounds: int) -> np.ndarray:
-    out = frame.astype(float)
+def _smooth(frame: np.ndarray, amount: float, rounds: int) -> np.ndarray:
+    """Exact V7 iterative blur formula."""
+    result = frame
     for _ in range(rounds):
-        out = (
-            out
-            + np.roll(out, 1, axis=0)
-            + np.roll(out, -1, axis=0)
-            + np.roll(out, 1, axis=1)
-            + np.roll(out, -1, axis=1)
-        ) / 5.0
-    return out
+        smoothed = (
+            result
+            + np.roll(result, 1, 0)
+            + np.roll(result, -1, 0)
+            + np.roll(result, 1, 1)
+            + np.roll(result, -1, 1)
+        ) / 5
+        result = (1 - amount) * result + amount * smoothed
+    return result
 
 
-def _shift_frame(frame: np.ndarray, *, dy: int, dx: int) -> np.ndarray:
+def _framing_drift(frame: np.ndarray, background: np.ndarray, strength: float) -> np.ndarray:
+    """Exact V7 non-wrapping framing drift, with V10 native background as V7 base."""
     height, width = frame.shape
-    out = np.full_like(frame, np.median(frame))
-    y_src0 = max(0, -dy)
-    y_src1 = min(height, height - dy)
-    x_src0 = max(0, -dx)
-    x_src1 = min(width, width - dx)
-    y_dst0 = max(0, dy)
-    y_dst1 = y_dst0 + (y_src1 - y_src0)
-    x_dst0 = max(0, dx)
-    x_dst1 = x_dst0 + (x_src1 - x_src0)
-    out[y_dst0:y_dst1, x_dst0:x_dst1] = frame[y_src0:y_src1, x_src0:x_src1]
-    return out
+    dy = int(np.clip(round(4 * strength), 1, 7))
+    dx = int(np.clip(round(-6 * strength), -9, -1))
+    shifted = np.full_like(frame, float(np.median(background)))
+    y_src = slice(0, height - dy)
+    y_dst = slice(dy, height)
+    if dx < 0:
+        x_src = slice(-dx, width)
+        x_dst = slice(0, width + dx)
+    else:
+        x_src = slice(0, width - dx)
+        x_dst = slice(dx, width)
+    shifted[y_dst, x_dst] = frame[y_src, x_src]
+    return shifted
 
 
 def apply_perturbation(
     frame: np.ndarray,
+    background: np.ndarray,
     *,
     family: str,
     tier_index: int,
     seed: int,
 ) -> np.ndarray:
-    """Apply one preregistered V7-derived generic perturbation."""
+    """Apply one preregistered generic perturbation using frozen V7 formulas."""
     source = np.asarray(frame)
+    base = np.asarray(background)
     if source.shape != CANONICAL_SHAPE or source.dtype != np.uint8:
-        raise ValueError("V10 perturbations require a 96x128 uint8 canonical frame")
+        raise ValueError("V10 perturbations require a 96x128 uint8 current frame")
+    if base.shape != CANONICAL_SHAPE or base.dtype != np.uint8:
+        raise ValueError("V10 perturbations require a 96x128 uint8 native background")
     if family not in FAMILIES:
         raise ValueError(f"unknown V10 family: {family}")
     if not 0 <= tier_index < len(INTENSITY_TIERS):
@@ -121,58 +126,48 @@ def apply_perturbation(
     strength = float(INTENSITY_TIERS[tier_index])
     rng = np.random.default_rng(int(seed))
     height, width = source.shape
+    yy, xx = np.mgrid[:height, :width]
+    working = source.astype(float)
 
     if family == "shadow":
-        _yy, xx = np.mgrid[:height, :width]
-        center = rng.uniform(width * 0.42, width * 0.64)
-        sigma = width * 0.15
-        shadow = np.exp(-((xx - center) ** 2) / (2.0 * sigma**2))
-        return _clip_uint8(source.astype(float) - 39.0 * strength * shadow)
+        center = width * rng.uniform(0.42, 0.64)
+        working -= 39 * strength * np.exp(
+            -((xx - center) ** 2) / (2 * (width * 0.20) ** 2)
+        )
 
-    if family == "occlusion":
-        out = source.copy().astype(float)
+    elif family == "occlusion":
         patch_h = int(rng.integers(13, 20))
         patch_w = int(rng.integers(13, 20))
-        center_y = height // 2
-        center_x = width // 2
-        y0 = max(0, center_y - patch_h // 2)
-        y1 = min(height, y0 + patch_h)
-        x0 = max(0, center_x - patch_w // 2)
-        x1 = min(width, x0 + patch_w)
+        cy, cx = height // 2, width // 2
+        ys = slice(cy - patch_h // 2, cy - patch_h // 2 + patch_h)
+        xs = slice(cx - patch_w // 2, cx - patch_w // 2 + patch_w)
+        patch = 96 + rng.normal(0, 2.5, (patch_h, patch_w))
         amount = min(1.0, 0.78 * strength)
-        patch = 96.0 + rng.normal(0.0, 2.5, size=(y1 - y0, x1 - x0))
-        out[y0:y1, x0:x1] = (1.0 - amount) * out[y0:y1, x0:x1] + amount * patch
-        return _clip_uint8(out)
+        working[ys, xs] = (1 - amount) * working[ys, xs] + amount * patch
 
-    if family == "blur":
+    elif family == "blur":
         amount = min(1.0, 0.72 * strength)
-        rounds = max(1, int(round(2 + 2 * strength)))
-        smooth = _smooth(source, rounds=rounds)
-        return _clip_uint8((1.0 - amount) * source.astype(float) + amount * smooth)
+        working = _smooth(working, amount, max(1, round(2 + 2 * strength)))
 
-    if family == "sensor_banding":
-        yy = np.mgrid[:height, :width][0]
+    elif family == "sensor_banding":
         phase = rng.uniform(-np.pi, np.pi)
-        freq = rng.uniform(0.40, 0.62)
-        banding = 20.0 * strength * np.sin(yy * freq + phase)
-        return _clip_uint8(source.astype(float) + banding)
+        band = np.sin(yy * rng.uniform(0.40, 0.62) + phase)
+        working += 20 * strength * band
 
-    if family == "glare":
-        yy, xx = np.mgrid[:height, :width]
-        center_x = rng.uniform(width * 0.2, width * 0.8)
-        center_y = rng.uniform(height * 0.2, height * 0.8)
-        sigma = rng.uniform(0.08, 0.14) * min(height, width)
-        glare = np.exp(
-            -((xx - center_x) ** 2 + (yy - center_y) ** 2) / (2.0 * sigma**2)
-        )
-        return _clip_uint8(source.astype(float) + 150.0 * strength * glare)
+    elif family == "glare":
+        cy = int(rng.integers(height // 5, 4 * height // 5))
+        cx = int(rng.integers(width // 5, 4 * width // 5))
+        sigma = min(height, width) * rng.uniform(0.08, 0.14)
+        glare = np.exp(-((xx - cx) ** 2 + (yy - cy) ** 2) / (2 * sigma**2))
+        working += 150 * strength * glare
 
-    if family == "framing_drift":
-        dy = int(np.clip(round(4 * strength), 1, 7))
-        dx = int(np.clip(round(-6 * strength), -9, -1))
-        return _shift_frame(source, dy=dy, dx=dx)
+    elif family == "framing_drift":
+        working = _framing_drift(working, base.astype(float), strength)
 
-    raise AssertionError("unreachable V10 family")
+    else:
+        raise AssertionError("unreachable V10 family")
+
+    return _clip_uint8(working)
 
 
 def variant_registry() -> tuple[dict[str, object], ...]:
@@ -197,6 +192,7 @@ def variant_registry() -> tuple[dict[str, object], ...]:
 
 def condition_frames(
     native: np.ndarray,
+    background: np.ndarray,
     *,
     video_sha256: str,
     current_native_frame_index: int,
@@ -215,6 +211,7 @@ def condition_frames(
         )
         variants[int(row["variant_index"])] = apply_perturbation(
             native,
+            background,
             family=family,
             tier_index=tier_index,
             seed=seed,
