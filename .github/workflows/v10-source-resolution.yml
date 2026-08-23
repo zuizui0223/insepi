@@ -1,13 +1,6 @@
 name: V10 real-video source resolution
 
 on:
-  pull_request:
-    paths:
-      - "scripts/resolve_v10_figshare_source.py"
-      - "scripts/index_v10_remote_zip.py"
-      - "scripts/index_v10_deflated_test_bundle.py"
-      - "docs/V10_REAL_VIDEO_SOURCE_AUDIT.md"
-      - ".github/workflows/v10-source-resolution.yml"
   workflow_dispatch:
 
 permissions:
@@ -56,17 +49,15 @@ jobs:
           assert tests['streaming_resolution']['compressed_payload_bytes_streamed'] < 600 * 1024 * 1024
           assert tests['streaming_resolution']['crc32_verified'] is True
           assert tests['streaming_resolution']['decompressed_member_payload_written'] is False
-          assert tests['nested_zip']['member_count'] > 0
+          assert tests['nested_zip']['video_count'] == 7
+          assert tests['bee_test_count'] == 7
           assert not Path('.v10/video-bytes').exists()
           assert not Path('.v7/run/v7_pixels.npz').exists()
           print('V10_SOURCE_ONLY true')
           print('V10_VIDEO_MEMBERS_WRITTEN false')
           print('V10_REMOTE_ZIP_RANGE_ONLY true')
-          print('V10_HONEY_NESTED_STATE', honey['nested_state'])
-          print('V10_EXPERIMENT_MEMBERS', experiment['outer_zip']['member_count'])
           print('V10_TEST_BUNDLE_VIDEOS', tests['nested_zip']['video_count'])
           print('V10_TEST_BUNDLE_BEE_TESTS', tests['bee_test_count'])
-          print('V10_TEST_BUNDLE_STREAMED_BYTES', tests['streaming_resolution']['compressed_payload_bytes_streamed'])
           print('V10_V7_MATERIALISED false')
           PY
       - name: Upload resolved metadata only
