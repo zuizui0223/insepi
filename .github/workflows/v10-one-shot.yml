@@ -8,6 +8,7 @@ on:
       - "scripts/v10_run_pollipi_frozen.py"
       - "scripts/v10_run_insepi_frozen.py"
       - "scripts/v10_audit_frozen_observer_independence.py"
+      - "scripts/v10_capture_runtime_environment.py"
       - "src/interaction_sensing/simulation/v10_evaluator.py"
       - "scripts/v10_evaluate_locked.py"
       - "tests/test_v10_execution_contract.py"
@@ -34,6 +35,8 @@ env:
   V10_PIXEL_RUN_ID: "32616509747"
   V10_PIXEL_ARTIFACT: v10-frozen-real-pixel-artifact
   EXPECTED_V10_PIXEL_SHA: b971caa2b0c06b45ccf114df99d6515765ea9ec5fb8e58ded226b424f8afad66
+  V10_PYTHON_VERSION: "3.11.16"
+  V10_NUMPY_VERSION: "2.4.6"
 
 jobs:
   preflight-or-one-shot:
@@ -46,10 +49,18 @@ jobs:
 
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: "3.11.16"
 
-      - name: Install current evaluator/test environment
-        run: python -m pip install -e ".[dev]"
+      - name: Install pinned current evaluator/test environment
+        run: |
+          python -m pip install "numpy==${V10_NUMPY_VERSION}"
+          python -m pip install -e ".[dev]"
+          python - <<'PY'
+          import platform, numpy as np
+          assert platform.python_version() == '3.11.16'
+          assert np.__version__ == '2.4.6'
+          print('V10_PINNED_PREFLIGHT_RUNTIME PASS', platform.python_version(), np.__version__)
+          PY
 
       - name: Verify pre-observer execution implementation freeze
         shell: bash
@@ -63,6 +74,8 @@ jobs:
           assert hashlib.sha256(protocol).hexdigest() == freeze['protocol_sha256']
           assert freeze['pixel_npz_sha256'] == 'b971caa2b0c06b45ccf114df99d6515765ea9ec5fb8e58ded226b424f8afad66'
           assert freeze['status'] == 'pre-observer-frozen'
+          assert freeze['runtime_contract']['python_version'] == '3.11.16'
+          assert freeze['runtime_contract']['numpy_version'] == '2.4.6'
           PY
           python - <<'PY' > /tmp/v10-last-change.tsv
           import json
@@ -91,6 +104,7 @@ jobs:
             scripts/v10_run_pollipi_frozen.py \
             scripts/v10_run_insepi_frozen.py \
             scripts/v10_audit_frozen_observer_independence.py \
+            scripts/v10_capture_runtime_environment.py \
             scripts/v10_evaluate_locked.py
           echo "V10_EXECUTION_SCRIPTS_COMPILE PASS"
 
@@ -182,9 +196,20 @@ jobs:
             --pollipi-root .v10/checkouts/pollipi \
             --insepi-root .v10/checkouts/insepi
 
-      - name: Install exact frozen PolliPi analysis runtime
+      - name: Install exact frozen PolliPi analysis runtime without changing pinned NumPy
         if: github.event_name == 'workflow_dispatch' && steps.reachability.outputs.ready == 'true'
-        run: python -m pip install -e ".v10/checkouts/pollipi/packages/analysis"
+        run: |
+          python -m pip install -e ".v10/checkouts/pollipi/packages/analysis"
+          python - <<'PY'
+          import platform, numpy as np
+          assert platform.python_version() == '3.11.16'
+          assert np.__version__ == '2.4.6'
+          print('V10_PINNED_OBSERVER_RUNTIME PASS', platform.python_version(), np.__version__)
+          PY
+
+      - name: Capture exact pre-observer runtime before reading V10 pixels
+        if: github.event_name == 'workflow_dispatch' && steps.reachability.outputs.ready == 'true'
+        run: python scripts/v10_capture_runtime_environment.py
 
       - name: Smoke-test exact observer APIs and InsePi frame-index invariance before reading V10 pixels
         if: github.event_name == 'workflow_dispatch' && steps.reachability.outputs.ready == 'true'
