@@ -1,0 +1,50 @@
+{
+  "schema": "interaction-sensing-v10-real-pixel-artifact-freeze-v1",
+  "status": "pixels-frozen; observer-execution-blocked-on-exact-v5-commits",
+  "canonical_materialisation": {
+    "workflow_run_id": 32616509747,
+    "head_sha": "5520d4fc452ef69aec4188eecb91ae60484e3875",
+    "workflow_artifact_id": 9487128293,
+    "workflow_artifact_name": "v10-frozen-real-pixel-artifact",
+    "workflow_artifact_size_bytes": 91243731,
+    "workflow_artifact_zip_sha256": "638c72a98a72fba6de5dd1e7464d8ecd88d5571c19e6c3adb4b92736deb22141"
+  },
+  "protocol_sha256": "c84947c998f69d4c8f2d056e79c7f91c6c6736b938236c17386618ac5a924e03",
+  "source_lock_sha256_at_materialisation": "347bf5110343e19928d89321ec5e177992d383c2f222d6c207dde14b5b573293",
+  "decoder_executable_sha256": "e7e7fb30477f717e6f55f9180a70386c62677ef8a4d4d1a5d948f4098aa3eb99",
+  "numpy_version": "2.4.6",
+  "artifact": {
+    "receipt_sha256": "59fab9a0a503f7302d0f1c6c227850e94eef8d780eda9786f66f090c164bedeb",
+    "pixel_npz_sha256": "b971caa2b0c06b45ccf114df99d6515765ea9ec5fb8e58ded226b424f8afad66",
+    "backgrounds_raw_sha256": "9c3324d6b9becc9443a29f3d2cc0731a6eeab4b5641d2412e9fb749a4e5bd41b",
+    "frames_raw_sha256": "f67057142861f0a97945b3cb7ab279e832b50a918a12b3760ab97e15b97ba639",
+    "base_registry_sha256": "4b2ce9441a66e533d3f364c87162e10bd3343149e049c06331bc0a7b8c04002d",
+    "variant_registry_sha256": "99d3cba2f62b61eca676a61de9526908ca4a9e1094ba63d15b0050e6db0320f9",
+    "condition_registry_sha256": "1689f5ce102abfef722e3e8667e8c6e290a42fe1d4563c1655b7f14520cde393",
+    "panel_registry_sha256": "b1e59cda67977e5ab8d09e1ea28236b442d72c616c92df0c22adca89122cac8a"
+  },
+  "cardinality": {
+    "base_windows": 364,
+    "variants_per_base_window": 19,
+    "conditions": 6916,
+    "allocation_panels": 18,
+    "background_shape": [364, 96, 128],
+    "frame_variant_shape": [364, 19, 96, 128],
+    "dtype": "uint8"
+  },
+  "canonical_materialisation_checks": {
+    "dummy_and_protocol_contract_tests_passed": 12,
+    "v7_derived_operator_parity_checked_before_real_pixels": true,
+    "human_visual_selection": false,
+    "pollipi_execution": false,
+    "insepi_execution": false,
+    "v7_materialisation": false
+  },
+  "hard_rules": [
+    "This exact NPZ/registry identity is the only V10 real-pixel evidence generation. Do not regenerate or replace it after observer results are available.",
+    "Every observer adapter must fail closed unless pixel/registry/receipt hashes match this freeze.",
+    "PolliPi and InsePi must read the same canonical artifact bytes and receive only frame/background pixels as decision inputs.",
+    "Exact PolliPi V5 commit d58d0a86034a6c2d53f90efbe4245370fd7cd2e9 and InsePi V5 commit 980813bab996909020140fad5bd83b055eb3db9c must both be reachable before any V10 observer execution.",
+    "V10 cannot alter V6 weights, V7 locked validation, V8/V9 results, the source-video set, perturbation registry, metrics, comparators or claim ceiling."
+  ]
+}
