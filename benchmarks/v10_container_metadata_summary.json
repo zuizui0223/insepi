@@ -1,0 +1,32 @@
+{
+  "schema": "interaction-sensing-v10-container-metadata-summary-v1",
+  "canonical_workflow_run_id": 32615716825,
+  "canonical_head_sha": "58d6e5e70d9d7f951cbe040fba78960b90f686e3",
+  "workflow_artifact_zip_sha256": "2e49434b0e58131cb3549992993b18d38b20fe1cecf740f673769cb1dfdea5a7",
+  "container_metadata_json_sha256": "7f5c3f17b76e75f0709082a5b9cb2de5ba4708bd29bb1d7093248a5e8f79b7d",
+  "parser": "python-standard-library-iso-bmff-v1",
+  "video_pixels_decoded": false,
+  "observer_execution": false,
+  "v7_materialisation": false,
+  "common": {
+    "container": "ISO-BMFF/MP4",
+    "codec_fourcc": "avc1",
+    "width": 1920,
+    "height": 1080,
+    "timescale": 15360,
+    "sample_delta": 256,
+    "fps": 60.0
+  },
+  "videos": [
+    {"index": 1, "frame_count": 3540, "duration_seconds": 59.0, "sha256": "3223f41041629bcba84d2686f74c08c3d8e03b5cfef27ec74198eb5e72f69de0"},
+    {"index": 2, "frame_count": 2940, "duration_seconds": 49.0, "sha256": "1d39f369ab5c4a6bf015fec69c8aaf65ec10f618c50fda69e947c510e89959fe"},
+    {"index": 3, "frame_count": 3600, "duration_seconds": 60.0, "sha256": "6193736d994ad1ec0a94558aed41d7d93643c6bc830fb9d5ed1d5b21e9dbf433"},
+    {"index": 4, "frame_count": 2820, "duration_seconds": 47.0, "sha256": "c0a9c8219d0e588a976aa57dbb35ec66b1efadf927223e13f2f10ccfdf8f15f9"},
+    {"index": 5, "frame_count": 3480, "duration_seconds": 58.0, "sha256": "eb24100057410ec31dc4bd452507b6457abcd3c4e5ba629d65501f9ad7e6c49c"},
+    {"index": 6, "frame_count": 4260, "duration_seconds": 71.0, "sha256": "bc325107cedafbeae508f118be563a11605a6dbae1e19a0d981bfcf49f51707f"},
+    {"index": 7, "frame_count": 1620, "duration_seconds": 27.0, "sha256": "ce19e09cca6681d400c868597269ad207d2ddfcf43d151523d19f9f40bdb4448"}
+  ],
+  "total_frames": 22260,
+  "total_duration_seconds": 371.0,
+  "cross_check": "Frame counts match Experiment1-Results.xlsx Total Frames for all seven videos; total duration is 6 min 11 s."
+}
