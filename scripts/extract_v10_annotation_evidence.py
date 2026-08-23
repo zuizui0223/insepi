@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
-"""Extract small Experiment 1 annotation/result artifacts for V10 provenance audit.
+"""Extract small annotation/result artifacts for V10 provenance audit.
 
 This script does not access video pixels or run either observer. It uses HTTP
-Range reads into the byte-frozen Experiment_Data.zip and extracts only three
-small pre-existing result bundles needed to determine whether reusable human
-reference labels are available or whether files are algorithm outputs only.
+Range reads into the byte-frozen Experiment_Data.zip and extracts small
+pre-existing artifacts needed to distinguish Experiment 1 algorithm outputs and
+aggregate summaries from an explicitly named human observation record supplied
+for Experiment 2.
 """
 from __future__ import annotations
 
@@ -21,6 +22,7 @@ TARGETS = (
     "Experiment_Data/Experiment_1/Experiment1-Results.xlsx",
     "Experiment_Data/Experiment_1/Experiment_1-HyDaT_Results/Experiment_1-CSV_HyDaT.zip",
     "Experiment_Data/Experiment_1/Experiment_1-YOLO_Results/Experiment_1-CSV_YOLO.zip",
+    "Experiment_Data/Experiment_2/Experiment_2 - Observations_Record.xlsx",
 )
 MAX_MEMBER_BYTES = 4 * 1024 * 1024
 
@@ -118,7 +120,7 @@ def main() -> None:
         "video_pixels_accessed": False,
         "observer_execution": False,
         "v7_materialisation": False,
-        "interpretation": "Extraction only. HyDaT/YOLO files remain algorithm outputs unless an independent human-reference provenance is established.",
+        "interpretation": "Extraction only. Experiment 1 HyDaT/YOLO files remain algorithm outputs unless independent human-reference provenance is established; the explicitly named Experiment 2 observation record is extracted only as a provenance-format comparator and is not a label source for the seven Experiment 1 videos.",
     }
     (out_dir / "manifest.json").write_text(
         json.dumps(manifest, sort_keys=True, indent=2) + "\n", encoding="utf-8"
