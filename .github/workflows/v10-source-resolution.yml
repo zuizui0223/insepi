@@ -24,32 +24,43 @@ jobs:
         run: python scripts/resolve_v10_figshare_source.py
       - name: Index Honeybee and nested Scaevola ZIPs by HTTP Range only
         run: python scripts/index_v10_remote_zip.py
+      - name: Index Experiment Data ZIP by HTTP Range only
+        run: |
+          python scripts/index_v10_remote_zip.py \
+            --archive-name Experiment_Data.zip \
+            --nested-name __no_nested_target__ \
+            --output .v10/experiment-data-index.json \
+            > .v10/experiment-data-index.log
       - name: Audit source-resolution boundary
         run: |
           python - <<'PY'
           import json
           from pathlib import Path
           source = json.loads(Path('.v10/source-resolution.json').read_text())
-          index = json.loads(Path('.v10/honeybee-videos-index.json').read_text())
+          honey = json.loads(Path('.v10/honeybee-videos-index.json').read_text())
+          experiment = json.loads(Path('.v10/experiment-data-index.json').read_text())
           assert source['schema'] == 'interaction-sensing-v10-source-resolution-v1'
           assert source['source']['article_id'] == 12895433
           assert source['source']['doi'].lower() == '10.26180/5f4c8d5815940'
           assert source['file_count'] == 5
           assert len(source['files']) == source['file_count']
-          assert index['schema'] == 'interaction-sensing-v10-remote-zip-index-v2'
-          assert index['archive']['name'] == 'Honeybee_videos.zip'
-          assert index['http_range_only'] is True
-          assert index['member_payload_downloaded'] is False
-          assert index['bytes_requested_for_index'] < 32 * 1024 * 1024
-          assert index['outer_zip']['member_count'] > 0
+          for index in (honey, experiment):
+              assert index['schema'] == 'interaction-sensing-v10-remote-zip-index-v2'
+              assert index['http_range_only'] is True
+              assert index['member_payload_downloaded'] is False
+              assert index['bytes_requested_for_index'] < 32 * 1024 * 1024
+              assert index['outer_zip']['member_count'] > 0
+          assert honey['archive']['name'] == 'Honeybee_videos.zip'
+          assert experiment['archive']['name'] == 'Experiment_Data.zip'
           assert not Path('.v10/video-bytes').exists()
           assert not Path('.v7/run/v7_pixels.npz').exists()
           print('V10_SOURCE_ONLY true')
           print('V10_VIDEO_BYTES_DOWNLOADED false')
           print('V10_REMOTE_ZIP_RANGE_ONLY true')
-          print('V10_NESTED_STATE', index['nested_state'])
-          print('V10_BEE_TEST_COUNT', index['bee_test_count'])
-          print('V10_INDEX_BYTES', index['bytes_requested_for_index'])
+          print('V10_HONEY_NESTED_STATE', honey['nested_state'])
+          print('V10_HONEY_INDEX_BYTES', honey['bytes_requested_for_index'])
+          print('V10_EXPERIMENT_MEMBERS', experiment['outer_zip']['member_count'])
+          print('V10_EXPERIMENT_INDEX_BYTES', experiment['bytes_requested_for_index'])
           print('V10_V7_MATERIALISED false')
           PY
       - name: Upload resolved metadata only
@@ -60,5 +71,7 @@ jobs:
           path: |
             .v10/source-resolution.json
             .v10/honeybee-videos-index.json
+            .v10/experiment-data-index.json
+            .v10/experiment-data-index.log
           if-no-files-found: error
           retention-days: 30
