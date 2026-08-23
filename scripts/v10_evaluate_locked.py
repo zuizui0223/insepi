@@ -135,6 +135,7 @@ def main() -> None:
     payload = json_bytes(report)
     report_sha256 = hashlib.sha256(payload).hexdigest()
     args.output.parent.mkdir(parents=True, exist_ok=True)
+    args.receipt.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_bytes(payload)
     receipt = {
         "schema": "interaction-sensing-v10-evaluation-receipt-v1",
