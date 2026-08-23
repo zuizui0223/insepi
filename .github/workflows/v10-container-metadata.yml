@@ -18,9 +18,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - name: Confirm ffprobe availability
-        run: ffprobe -version | head -1
-      - name: Probe all seven byte-frozen MP4 containers
+      - name: Probe all seven byte-frozen MP4 containers without pixel decoding
         run: python scripts/probe_v10_video_container_metadata.py
       - name: Audit pre-pixel boundary
         run: |
@@ -31,11 +29,14 @@ jobs:
           assert obj['schema'] == 'interaction-sensing-v10-container-metadata-v1'
           assert obj['video_count'] == 7
           assert len(obj['videos']) == 7
+          assert obj['parser'] == 'python-standard-library-iso-bmff-v1'
           assert obj['video_pixels_decoded'] is False
           assert obj['observer_execution'] is False
           assert obj['v7_materialisation'] is False
           assert obj['transport']['temporary_mp4_files_deleted'] is True
           assert all(len(row['sha256']) == 64 for row in obj['videos'])
+          assert all(row['metadata']['frame_sample_count'] > 0 for row in obj['videos'])
+          assert all(row['metadata']['duration_seconds'] > 0 for row in obj['videos'])
           assert not Path('.v7/run/v7_pixels.npz').exists()
           print('V10_CONTAINER_METADATA_ONLY true')
           print('V10_VIDEO_PIXELS_DECODED false')
