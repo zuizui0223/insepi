@@ -22,7 +22,7 @@ jobs:
           python-version: "3.11"
       - name: Resolve Figshare file metadata without downloading video bytes
         run: python scripts/resolve_v10_figshare_source.py
-      - name: Index Honeybee ZIP by HTTP Range only
+      - name: Index Honeybee and nested Scaevola ZIPs by HTTP Range only
         run: python scripts/index_v10_remote_zip.py
       - name: Audit source-resolution boundary
         run: |
@@ -36,18 +36,18 @@ jobs:
           assert source['source']['doi'].lower() == '10.26180/5f4c8d5815940'
           assert source['file_count'] == 5
           assert len(source['files']) == source['file_count']
-          assert index['schema'] == 'interaction-sensing-v10-remote-zip-index-v1'
+          assert index['schema'] == 'interaction-sensing-v10-remote-zip-index-v2'
           assert index['archive']['name'] == 'Honeybee_videos.zip'
           assert index['http_range_only'] is True
-          assert index['archive_payload_downloaded'] is False
+          assert index['member_payload_downloaded'] is False
           assert index['bytes_requested_for_index'] < 32 * 1024 * 1024
-          assert index['member_count'] > 0
-          assert index['bee_test_count'] > 0
+          assert index['outer_zip']['member_count'] > 0
           assert not Path('.v10/video-bytes').exists()
           assert not Path('.v7/run/v7_pixels.npz').exists()
           print('V10_SOURCE_ONLY true')
           print('V10_VIDEO_BYTES_DOWNLOADED false')
           print('V10_REMOTE_ZIP_RANGE_ONLY true')
+          print('V10_NESTED_STATE', index['nested_state'])
           print('V10_BEE_TEST_COUNT', index['bee_test_count'])
           print('V10_INDEX_BYTES', index['bytes_requested_for_index'])
           print('V10_V7_MATERIALISED false')
