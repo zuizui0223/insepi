@@ -8,14 +8,22 @@
     "pollipi": "d58d0a86034a6c2d53f90efbe4245370fd7cd2e9",
     "insepi": "980813bab996909020140fad5bd83b055eb3db9c"
   },
+  "runtime_contract": {
+    "python_version": "3.11.16",
+    "numpy_version": "2.4.6",
+    "capture_before_observer_smoke": true,
+    "capture_before_canonical_v10_pixel_download": true,
+    "pip_freeze_required": true
+  },
   "last_change_commits": {
     "scripts/v10_trace_common.py": "ba62a5d72b3e8a784e3531fd2338fa285f5d9f2a",
     "scripts/v10_run_pollipi_frozen.py": "8136f42ea4135b88e5ff8cb65653ace81b7ea3af",
     "scripts/v10_run_insepi_frozen.py": "3fe1eba427fa7a7ea468553365309312e806b88d",
     "scripts/v10_audit_frozen_observer_independence.py": "06f0615fbd99918d5f14ce7d0f60378229eea7af",
+    "scripts/v10_capture_runtime_environment.py": "37c8f3a225de905a1f8f6296f732c11bc2c4129a",
     "src/interaction_sensing/simulation/v10_evaluator.py": "8d112b7fcfd760548358ca840260d5714422dd85",
-    "scripts/v10_evaluate_locked.py": "bf1c4f1032c2824fce06c6ce956980d524333772",
-    ".github/workflows/v10-one-shot.yml": "855c29bf8f9b5335297381dd9533515f1df1047f"
+    "scripts/v10_evaluate_locked.py": "7c1047b785f0ea8ba0254039d63ff9b4d024699a",
+    ".github/workflows/v10-one-shot.yml": "16ca28940a6c042f8cad0db2afec370a141e32e5"
   },
   "generic_guarded_portfolio_git_blob_sha1": "a6397383c0d713026631b197d4aeb135222200ef",
   "insepi_bookkeeping_frame_index": 0,
@@ -28,7 +36,7 @@
     "independent_allocator_oracle": "Required in one-shot preflight; cross-checks exact selected-index sets for all six policies across frozen budgets and multiple seeds without calling the production selector in the reference implementation.",
     "uniform_seed_grid_check": "Required in one-shot preflight; 18 panels x 200 replicates x 3 budgets must remain within five standard errors of the SRSWOR finite-population expectation on a balanced synthetic truth set.",
     "trace_tamper_resistance": "Required in one-shot preflight; injected truth keys, row-count changes, condition order/id changes and frozen provenance identity changes must be rejected by the trace-only evaluator.",
-    "execution_script_compile": "All five V10 execution/audit scripts must py_compile successfully before external frozen checkouts or canonical pixel download.",
+    "execution_script_compile": "All six V10 execution/audit/runtime scripts must py_compile successfully before external frozen checkouts or canonical pixel download.",
     "software_independence_gate": "After exact V5 checkout and before dependency installation or canonical pixel download, PolliPi analysis source must contain no static or literal-dynamic import of interaction_sensing and InsePi source must contain no static or literal-dynamic import of pollipi_analysis. This supports software-level epistemic separation only and is not a claim of statistical error independence."
   },
   "evaluation_receipt_provenance": {
@@ -38,19 +46,22 @@
       "evaluator freeze SHA-256",
       "pixel freeze SHA-256",
       "protocol freeze SHA-256",
+      "runtime environment SHA-256",
+      "runtime pip-freeze SHA-256 and copied files",
       "V7 prerequisite ledger SHA-256 and copied ledger",
       "PolliPi trace SHA-256",
       "InsePi trace SHA-256",
       "canonical pixel artifact SHA-256",
       "final report SHA-256"
     ],
-    "rule": "The V10 scientific artifact must remain independently auditable after upstream Actions artifacts expire; the exact V7 prerequisite ledger is copied beside the V10 evaluation receipt."
+    "rule": "The V10 scientific artifact must remain independently auditable after upstream Actions artifacts expire; exact runtime files and the V7 prerequisite ledger are copied beside the V10 evaluation receipt."
   },
   "execution_order_rule": "V7 locked validation must be executed first once both exact V5 observer commits are reachable. V10 execution order is operational only and does not condition or alter V10 scientific thresholds.",
   "forbidden_after_observer_output": [
     "changing any listed execution implementation file under the same V10 generation",
     "changing the generic guarded selector bytes under the same V10 generation",
     "changing the evaluator semantic freeze",
+    "changing the pinned Python/NumPy runtime under the same V10 generation",
     "changing score mappings, budgets, replicates, comparators, perturbations, panels or claim precedence"
   ]
 }
