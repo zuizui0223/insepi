@@ -1,0 +1,52 @@
+name: V10 real-video byte lock
+
+on:
+  pull_request:
+    paths:
+      - "scripts/materialize_v10_video_hashes.py"
+      - ".github/workflows/v10-byte-lock.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-seven-video-bytes:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Compute all seven frozen video SHA-256 values
+        run: python scripts/materialize_v10_video_hashes.py
+      - name: Audit byte-lock receipt and scientific boundary
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          lock = json.loads(Path('benchmarks/v10_real_video_source_lock.json').read_text())
+          receipt = json.loads(Path('.v10/v10_video_hash_receipt.json').read_text())
+          assert lock['selected_video_count'] == 7
+          assert receipt['schema'] == 'interaction-sensing-v10-video-byte-receipt-v1'
+          assert receipt['selected_video_count'] == 7
+          assert len(receipt['videos']) == 7
+          assert receipt['observer_execution'] is False
+          assert receipt['v7_materialisation'] is False
+          assert receipt['transport']['individual_video_files_written'] is False
+          assert receipt['transport']['temporary_nested_zip_deleted_after_verification'] is True
+          assert all(len(row['sha256']) == 64 for row in receipt['videos'])
+          assert [row['name'] for row in receipt['videos']] == [row['name'] for row in lock['videos']]
+          assert not Path('.v10/video-bytes').exists()
+          assert not Path('.v7/run/v7_pixels.npz').exists()
+          print('V10_ALL_SEVEN_SHA256_RESOLVED true')
+          print('V10_OBSERVER_EXECUTION false')
+          print('V10_V7_MATERIALISED false')
+          PY
+      - name: Upload byte identity receipt only
+        uses: actions/upload-artifact@v4
+        with:
+          name: v10-real-video-byte-receipt
+          path: .v10/v10_video_hash_receipt.json
+          if-no-files-found: error
+          retention-days: 30
