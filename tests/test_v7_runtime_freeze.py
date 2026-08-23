@@ -64,9 +64,32 @@ def test_v7_runtime_freeze_is_pre_materialisation_and_lock_still_blocked() -> No
     assert freeze["status"] == "pre-materialisation-frozen"
     assert freeze["python_version"] == "3.11.16"
     assert freeze["numpy_version"] == "2.4.6"
+    assert freeze["insepi_frame_index_gate"]["probe_indices"] == [0, 1, 179]
     assert lock["status"] == "blocked"
     for key in ("master_seed_hex", "world_fingerprint", "pollipi_trace_sha256", "cross_report_sha256"):
         assert lock.get(key) in (None, "")
+
+
+def test_v7_frozen_observer_runner_blobs_match_runtime_freeze() -> None:
+    freeze = json.loads((ROOT / "benchmarks/v7_runtime_freeze.json").read_text())
+    for relative, expected in freeze["execution_file_git_blob_sha1"].items():
+        payload = (ROOT / relative).read_bytes()
+        # Git blob SHA-1 = SHA1("blob <len>\\0" + payload).
+        header = f"blob {len(payload)}\0".encode()
+        actual = hashlib.sha1(header + payload).hexdigest()  # noqa: S324 - Git object identity, not security.
+        assert actual == expected
+
+
+def test_v7_insepi_runner_declares_pre_materialisation_index_invariance_gate() -> None:
+    path = ROOT / "scripts/v7_run_insepi_frozen.py"
+    spec = importlib.util.spec_from_file_location("v7_insepi_runner_contract_test", path)
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    assert module.FRAME_INDEX_INVARIANCE_PROBES == (0, 1, 179)
+    text = path.read_text(encoding="utf-8")
+    assert "decision-relevant outputs depend on frame_index" in text
+    assert "V7_INSEPI_FRAME_INDEX_INVARIANCE PASS" in text
 
 
 def test_v7_runtime_loader_accepts_exact_pre_materialisation_environment(tmp_path: Path) -> None:
