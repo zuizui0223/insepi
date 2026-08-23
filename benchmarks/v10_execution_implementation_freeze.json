@@ -15,7 +15,7 @@
     "scripts/v10_audit_frozen_observer_independence.py": "06f0615fbd99918d5f14ce7d0f60378229eea7af",
     "src/interaction_sensing/simulation/v10_evaluator.py": "8d112b7fcfd760548358ca840260d5714422dd85",
     "scripts/v10_evaluate_locked.py": "bf1c4f1032c2824fce06c6ce956980d524333772",
-    ".github/workflows/v10-one-shot.yml": "6ec2bd0e4866eef56219c36ddfa21845055bc767"
+    ".github/workflows/v10-one-shot.yml": "855c29bf8f9b5335297381dd9533515f1df1047f"
   },
   "generic_guarded_portfolio_git_blob_sha1": "a6397383c0d713026631b197d4aeb135222200ef",
   "insepi_bookkeeping_frame_index": 0,
@@ -27,6 +27,7 @@
   "pre_observer_validation": {
     "independent_allocator_oracle": "Required in one-shot preflight; cross-checks exact selected-index sets for all six policies across frozen budgets and multiple seeds without calling the production selector in the reference implementation.",
     "uniform_seed_grid_check": "Required in one-shot preflight; 18 panels x 200 replicates x 3 budgets must remain within five standard errors of the SRSWOR finite-population expectation on a balanced synthetic truth set.",
+    "trace_tamper_resistance": "Required in one-shot preflight; injected truth keys, row-count changes, condition order/id changes and frozen provenance identity changes must be rejected by the trace-only evaluator.",
     "execution_script_compile": "All five V10 execution/audit scripts must py_compile successfully before external frozen checkouts or canonical pixel download.",
     "software_independence_gate": "After exact V5 checkout and before dependency installation or canonical pixel download, PolliPi analysis source must contain no static or literal-dynamic import of interaction_sensing and InsePi source must contain no static or literal-dynamic import of pollipi_analysis. This supports software-level epistemic separation only and is not a claim of statistical error independence."
   },
