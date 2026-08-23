@@ -54,5 +54,6 @@ def test_v7_independence_audit_detects_literal_dynamic_import(tmp_path: Path) ->
 
 def test_v7_independence_audit_does_not_claim_statistical_independence() -> None:
     text = (ROOT / "scripts/v7_audit_frozen_observer_independence.py").read_text(encoding="utf-8")
-    assert "does not claim statistical independence" in text
+    normalized = " ".join(text.split())
+    assert "does not claim statistical independence" in normalized
     assert "V7_STATISTICAL_ERROR_INDEPENDENCE_CLAIM false" in text
