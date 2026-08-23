@@ -18,7 +18,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - name: Extract small Experiment 1 result artifacts only
+      - name: Extract small result/reference artifacts only
         run: python scripts/extract_v10_annotation_evidence.py
       - name: Audit no-video/no-observer boundary
         run: |
@@ -27,15 +27,17 @@ jobs:
           from pathlib import Path
           manifest = json.loads(Path('.v10/annotation-audit/manifest.json').read_text())
           assert manifest['schema'] == 'interaction-sensing-v10-annotation-audit-extraction-v1'
-          assert len(manifest['extracted_files']) == 3
+          assert len(manifest['extracted_files']) == 4
           assert manifest['video_pixels_accessed'] is False
           assert manifest['observer_execution'] is False
           assert manifest['v7_materialisation'] is False
           assert Path('.v10/annotation-audit/Experiment1-Results.xlsx').exists()
           assert Path('.v10/annotation-audit/Experiment_1-CSV_HyDaT.zip').exists()
           assert Path('.v10/annotation-audit/Experiment_1-CSV_YOLO.zip').exists()
+          assert Path('.v10/annotation-audit/Experiment_2 - Observations_Record.xlsx').exists()
           assert not Path('.v7/run/v7_pixels.npz').exists()
           print('V10_ANNOTATION_EXTRACTION_ONLY true')
+          print('V10_EXPLICIT_HUMAN_RECORD_COMPARATOR true')
           print('V10_VIDEO_PIXELS_ACCESSED false')
           print('V10_OBSERVER_EXECUTION false')
           PY
