@@ -6,6 +6,8 @@ import argparse
 import hashlib
 import json
 from pathlib import Path
+import shutil
+import subprocess
 
 from interaction_sensing.simulation.v10_evaluator import evaluate_v10
 
@@ -22,11 +24,32 @@ def sha256_file(path: Path) -> str:
     return digest.hexdigest()
 
 
-def require_sha(value: str, label: str) -> str:
+def require_git_sha(value: str, label: str) -> str:
     lowered = value.strip().lower()
     if len(lowered) != 40 or any(char not in "0123456789abcdef" for char in lowered):
         raise ValueError(f"{label} must be an exact 40-hex git commit")
     return lowered
+
+
+def current_git_head() -> str:
+    completed = subprocess.run(
+        ["git", "rev-parse", "HEAD"],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    return require_git_sha(completed.stdout.strip(), "orchestrator HEAD")
+
+
+def resolve_v7_ledger(explicit: Path | None) -> Path:
+    if explicit is not None:
+        if not explicit.is_file():
+            raise FileNotFoundError(explicit)
+        return explicit
+    matches = sorted(Path(".v10/v7-prereq").rglob("v7_execution_ledger.json"))
+    if len(matches) != 1:
+        raise RuntimeError(f"expected exactly one V7 prerequisite ledger, found {matches}")
+    return matches[0]
 
 
 def main() -> None:
@@ -36,21 +59,42 @@ def main() -> None:
     parser.add_argument("--insepi-trace", required=True, type=Path)
     parser.add_argument("--output", required=True, type=Path)
     parser.add_argument("--receipt", required=True, type=Path)
-    parser.add_argument("--orchestrator-sha", required=True)
-    parser.add_argument("--implementation-freeze", required=True, type=Path)
-    parser.add_argument("--evaluator-freeze", required=True, type=Path)
-    parser.add_argument("--pixel-freeze", required=True, type=Path)
-    parser.add_argument("--protocol-freeze", required=True, type=Path)
-    parser.add_argument("--v7-ledger", required=True, type=Path)
+    parser.add_argument("--orchestrator-sha", default="")
+    parser.add_argument(
+        "--implementation-freeze",
+        type=Path,
+        default=Path("benchmarks/v10_execution_implementation_freeze.json"),
+    )
+    parser.add_argument(
+        "--evaluator-freeze",
+        type=Path,
+        default=Path("benchmarks/v10_evaluator_freeze.json"),
+    )
+    parser.add_argument(
+        "--pixel-freeze",
+        type=Path,
+        default=Path("benchmarks/v10_real_pixel_artifact_freeze.json"),
+    )
+    parser.add_argument(
+        "--protocol-freeze",
+        type=Path,
+        default=Path("benchmarks/v10_real_video_protocol_freeze.json"),
+    )
+    parser.add_argument("--v7-ledger", type=Path)
     args = parser.parse_args()
 
-    orchestrator_sha = require_sha(args.orchestrator_sha, "orchestrator_sha")
+    orchestrator_sha = (
+        require_git_sha(args.orchestrator_sha, "orchestrator_sha")
+        if args.orchestrator_sha
+        else current_git_head()
+    )
+    v7_ledger_path = resolve_v7_ledger(args.v7_ledger)
     for path in (
         args.implementation_freeze,
         args.evaluator_freeze,
         args.pixel_freeze,
         args.protocol_freeze,
-        args.v7_ledger,
+        v7_ledger_path,
     ):
         if not path.is_file():
             raise FileNotFoundError(path)
@@ -59,7 +103,7 @@ def main() -> None:
     evaluator_freeze = json.loads(args.evaluator_freeze.read_text(encoding="utf-8"))
     pixel_freeze = json.loads(args.pixel_freeze.read_text(encoding="utf-8"))
     protocol_freeze = json.loads(args.protocol_freeze.read_text(encoding="utf-8"))
-    v7_ledger = json.loads(args.v7_ledger.read_text(encoding="utf-8"))
+    v7_ledger = json.loads(v7_ledger_path.read_text(encoding="utf-8"))
 
     if implementation_freeze.get("schema") != "interaction-sensing-v10-execution-implementation-freeze-v1":
         raise RuntimeError("unexpected V10 implementation-freeze schema")
@@ -79,7 +123,7 @@ def main() -> None:
         "evaluator_freeze_sha256": sha256_file(args.evaluator_freeze),
         "pixel_freeze_sha256": sha256_file(args.pixel_freeze),
         "protocol_freeze_sha256": sha256_file(args.protocol_freeze),
-        "v7_prerequisite_ledger_sha256": sha256_file(args.v7_ledger),
+        "v7_prerequisite_ledger_sha256": sha256_file(v7_ledger_path),
         "v7_prerequisite_claim_level": str(v7_ledger["claim_level"]),
         "v7_prerequisite_gate_passed": bool(v7_ledger["gate_passed"]),
     }
@@ -103,6 +147,16 @@ def main() -> None:
         **execution_provenance,
     }
     args.receipt.write_bytes(json_bytes(receipt))
+
+    # Keep the exact V7 prerequisite evidence alongside the V10 receipt so a
+    # downloaded V10 artifact remains auditable even if the upstream Actions
+    # artifact is later expired.
+    v7_copy = args.receipt.parent / "v7_prerequisite_execution_ledger.json"
+    if v7_copy.resolve() != v7_ledger_path.resolve():
+        shutil.copyfile(v7_ledger_path, v7_copy)
+    if sha256_file(v7_copy) != execution_provenance["v7_prerequisite_ledger_sha256"]:
+        raise RuntimeError("copied V7 prerequisite ledger hash changed")
+
     print("V10_REPORT_SHA256", report_sha256)
     print("V10_CLAIM_LEVEL", report["claim"]["level"])
     print("V10_CLAIM_LABEL", report["claim"]["label"])
