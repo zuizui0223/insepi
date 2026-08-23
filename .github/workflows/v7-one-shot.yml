@@ -8,8 +8,10 @@ on:
       - "scripts/v7_capture_runtime_environment.py"
       - "scripts/v7_run_pollipi_frozen.py"
       - "scripts/v7_run_insepi_frozen.py"
+      - "scripts/v7_audit_frozen_observer_independence.py"
       - "scripts/v7_evaluate_locked.py"
       - "tests/test_v7_runtime_freeze.py"
+      - "tests/test_v7_observer_independence_audit.py"
       - ".github/workflows/v7-one-shot.yml"
   workflow_dispatch:
 
@@ -94,6 +96,7 @@ jobs:
             scripts/v7_capture_runtime_environment.py \
             scripts/v7_run_pollipi_frozen.py \
             scripts/v7_run_insepi_frozen.py \
+            scripts/v7_audit_frozen_observer_independence.py \
             scripts/v7_evaluate_locked.py
           echo "V7_FROZEN_FILE_PROVENANCE PASS"
           echo "V7_RUNTIME_FREEZE PASS"
@@ -106,6 +109,7 @@ jobs:
         run: |
           pytest -q \
             tests/test_v7_runtime_freeze.py \
+            tests/test_v7_observer_independence_audit.py \
             tests/test_v7_lock.py \
             tests/test_v7_artifact.py \
             tests/test_v7_materialization.py \
@@ -164,6 +168,13 @@ jobs:
           git clone --depth=1 --branch "$INSEPI_FROZEN_BRANCH" https://github.com/zuizui0223/insepi.git .v7/insepi-frozen
           test "$(git -C .v7/pollipi-frozen rev-parse HEAD)" = "$EXPECTED_POLLIPI_SHA"
           test "$(git -C .v7/insepi-frozen rev-parse HEAD)" = "$EXPECTED_INSEPI_SHA"
+
+      - name: Audit exact frozen observer software independence before V7 runtime or pixels
+        if: steps.lock.outputs.ready == 'true'
+        run: |
+          python scripts/v7_audit_frozen_observer_independence.py \
+            --pollipi-root .v7/pollipi-frozen \
+            --insepi-root .v7/insepi-frozen
 
       - name: Install exact frozen PolliPi runtime without changing pinned NumPy
         if: steps.lock.outputs.ready == 'true'
