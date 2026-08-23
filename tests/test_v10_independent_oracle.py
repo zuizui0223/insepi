@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections import Counter
-from math import floor
+from math import floor, sqrt
 from random import Random
 
 import pytest
@@ -247,3 +247,43 @@ def test_v10_claim_precedence_matches_exhaustive_independent_oracle() -> None:
                         {"v6_allocation_pass": allocation_pass},
                     )
                     assert actual == expected
+
+
+def test_v10_frozen_uniform_seed_grid_matches_finite_population_expectation() -> None:
+    """The preregistered seed grid should behave like SRSWOR, not a biased panel draw."""
+    n_population = 364
+    n_disturbed = 182
+    disturbed = set(range(n_disturbed))
+    rows = _score_rows()
+    panel_ids = [
+        f"{family}:tier{tier}"
+        for family in ("shadow", "occlusion", "blur", "sensor_banding", "glare", "framing_drift")
+        for tier in range(3)
+    ]
+    for budget, token in v10.BUDGETS:
+        recalls: list[float] = []
+        for panel_id in panel_ids:
+            for replicate in range(v10.REPLICATES):
+                selected, _counts = select_guarded_indices(
+                    rows,
+                    budget_fraction=budget,
+                    portfolio=v10._policy("uniform"),
+                    seed=v10.selection_seed(panel_id, token, replicate),
+                )
+                recalls.append(len(selected & disturbed) / n_disturbed)
+
+        selected_n = max(1, round(n_population * budget))
+        expectation = selected_n / n_population
+        # Hypergeometric variance for hit count under SRSWOR, transformed to
+        # recall and then to the mean across the frozen 18*200 seed grid.
+        p = n_disturbed / n_population
+        hit_variance = (
+            selected_n
+            * p
+            * (1.0 - p)
+            * (n_population - selected_n)
+            / (n_population - 1)
+        )
+        mean_standard_error = sqrt(hit_variance) / n_disturbed / sqrt(len(recalls))
+        observed = sum(recalls) / len(recalls)
+        assert abs(observed - expectation) <= 5.0 * mean_standard_error
