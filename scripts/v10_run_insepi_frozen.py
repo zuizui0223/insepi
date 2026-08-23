@@ -2,7 +2,10 @@
 """Run exact frozen InsePi against the byte-frozen V10 real-pixel artifact.
 
 The current repository's ``interaction_sensing`` package is intentionally never
-imported before the frozen checkout is placed first on ``sys.path``.
+imported before the frozen checkout is placed first on ``sys.path``.  The frozen
+pixel estimator requires a ``frame_index`` bookkeeping argument, but V10 fixes it
+to zero for every condition so condition ordering cannot leak family/tier truth
+into the observer.  Only the two image arrays vary across decisions.
 """
 from __future__ import annotations
 
@@ -22,6 +25,7 @@ from v10_trace_common import (
 )
 
 TRACE_SCHEMA = "pollipi-insepi-v10-insepi-trace-v1"
+OBSERVER_FRAME_INDEX = 0
 
 
 def _import_frozen(source_root: Path):
@@ -57,7 +61,7 @@ def smoke_test(source_root: Path) -> None:
     background = np.clip(95 + 9 * np.sin(xx * 0.08) + 7 * np.cos(yy * 0.12), 0, 255).astype(np.uint8)
     frame = background.copy()
     frame[:, 45:82] = np.clip(frame[:, 45:82].astype(np.int16) - 30, 0, 255).astype(np.uint8)
-    observation = infer_noise_observation(background, frame, 0)
+    observation = infer_noise_observation(background, frame, OBSERVER_FRAME_INDEX)
     structure_loss = float(local_structure_loss(background, frame, observation))
     observation = apply_audit(observation, structure_loss, threshold)
     decision = policy.decide(observation)
@@ -77,7 +81,8 @@ def run(source_root: Path, artifact_dir: Path, freeze_path: Path, output: Path) 
         handle.write(json.dumps(prov, sort_keys=True) + "\n")
         for condition_index, condition_id in condition_keys:
             frame, background = pixels_for_condition(backgrounds, frames, condition_index)
-            observation = infer_noise_observation(background, frame, condition_index)
+            # Keep the observer bookkeeping index constant so only pixels vary.
+            observation = infer_noise_observation(background, frame, OBSERVER_FRAME_INDEX)
             structure_loss = float(local_structure_loss(background, frame, observation))
             observation = apply_audit(observation, structure_loss, threshold)
             decision = policy.decide(observation)
@@ -97,6 +102,7 @@ def run(source_root: Path, artifact_dir: Path, freeze_path: Path, output: Path) 
             handle.write(json.dumps(row, sort_keys=True) + "\n")
     print("V10_INSEPI_TRACE_ROWS", len(condition_keys))
     print("V10_INSEPI_SOURCE_COMMIT", INSEPI_COMMIT)
+    print("V10_INSEPI_FRAME_INDEX_CONSTANT", OBSERVER_FRAME_INDEX)
 
 
 def main() -> None:
