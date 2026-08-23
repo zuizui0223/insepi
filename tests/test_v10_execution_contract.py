@@ -209,6 +209,10 @@ def test_v10_evaluation_receipt_binds_complete_execution_provenance(
     evaluator = tmp_path / "evaluator.json"
     pixel = tmp_path / "pixel.json"
     protocol = tmp_path / "protocol.json"
+    runtime_dir = tmp_path / "runtime"
+    runtime_dir.mkdir()
+    runtime_manifest = runtime_dir / "runtime_environment.json"
+    pip_freeze = runtime_dir / "pip_freeze.txt"
     v7_ledger = tmp_path / "v7_execution_ledger.json"
     implementation.write_text(json.dumps({
         "schema": "interaction-sensing-v10-execution-implementation-freeze-v1"
@@ -221,6 +225,15 @@ def test_v10_evaluation_receipt_binds_complete_execution_provenance(
     }) + "\n")
     protocol.write_text(json.dumps({
         "schema": "interaction-sensing-v10-real-video-protocol-freeze-v1"
+    }) + "\n")
+    pip_freeze.write_text("numpy==2.4.6\npollipi-analysis==0.2.0\n")
+    runtime_manifest.write_text(json.dumps({
+        "schema": "interaction-sensing-v10-runtime-environment-v1",
+        "python_version": "3.11.16",
+        "numpy_version": "2.4.6",
+        "pip_freeze_sha256": hashlib.sha256(pip_freeze.read_bytes()).hexdigest(),
+        "observer_output_inspected": False,
+        "canonical_v10_pixels_read": False,
     }) + "\n")
     v7_ledger.write_text(json.dumps({
         "schema": "pollipi-insepi-v7-execution-ledger-v1",
@@ -262,6 +275,7 @@ def test_v10_evaluation_receipt_binds_complete_execution_provenance(
         "--evaluator-freeze", str(evaluator),
         "--pixel-freeze", str(pixel),
         "--protocol-freeze", str(protocol),
+        "--runtime-manifest", str(runtime_manifest),
         "--v7-ledger", str(v7_ledger),
     ])
     module.main()
@@ -269,13 +283,21 @@ def test_v10_evaluation_receipt_binds_complete_execution_provenance(
     report = json.loads(report_path.read_text())
     receipt = json.loads(receipt_path.read_text())
     copied_v7 = receipt_path.parent / "v7_prerequisite_execution_ledger.json"
+    copied_runtime = receipt_path.parent / "runtime_environment.json"
+    copied_freeze = receipt_path.parent / "runtime_pip_freeze.txt"
     assert copied_v7.read_bytes() == v7_ledger.read_bytes()
+    assert copied_runtime.read_bytes() == runtime_manifest.read_bytes()
+    assert copied_freeze.read_bytes() == pip_freeze.read_bytes()
     expected = {
         "orchestrator_sha": orchestrator,
         "implementation_freeze_sha256": module.sha256_file(implementation),
         "evaluator_freeze_sha256": module.sha256_file(evaluator),
         "pixel_freeze_sha256": module.sha256_file(pixel),
         "protocol_freeze_sha256": module.sha256_file(protocol),
+        "runtime_environment_sha256": module.sha256_file(runtime_manifest),
+        "runtime_pip_freeze_sha256": module.sha256_file(pip_freeze),
+        "runtime_python_version": "3.11.16",
+        "runtime_numpy_version": "2.4.6",
         "v7_prerequisite_ledger_sha256": module.sha256_file(v7_ledger),
         "v7_prerequisite_claim_level": "B",
         "v7_prerequisite_gate_passed": False,
