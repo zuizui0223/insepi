@@ -6,6 +6,8 @@ on:
       - "benchmarks/v7_lock_manifest.json"
       - "benchmarks/v7_runtime_freeze.json"
       - "scripts/v7_capture_runtime_environment.py"
+      - "scripts/v7_run_pollipi_frozen.py"
+      - "scripts/v7_run_insepi_frozen.py"
       - "scripts/v7_evaluate_locked.py"
       - "tests/test_v7_runtime_freeze.py"
       - ".github/workflows/v7-one-shot.yml"
@@ -77,7 +79,22 @@ jobs:
             actual="$(git log -1 --format=%H -- "$path")"
             test "$actual" = "$expected" || { echo "V7 runtime implementation drift: $path $actual != $expected"; exit 1; }
           done < /tmp/v7-runtime-implementation.tsv
-          python -m py_compile scripts/v7_capture_runtime_environment.py scripts/v7_evaluate_locked.py
+          python - <<'PY' > /tmp/v7-runtime-blobs.tsv
+          import json
+          from pathlib import Path
+          freeze = json.loads(Path('benchmarks/v7_runtime_freeze.json').read_text())
+          for path, expected in freeze['execution_file_git_blob_sha1'].items():
+              print(path, expected, sep='\t')
+          PY
+          while IFS=$'\t' read -r path expected; do
+            actual="$(git hash-object "$path")"
+            test "$actual" = "$expected" || { echo "V7 execution-file drift: $path $actual != $expected"; exit 1; }
+          done < /tmp/v7-runtime-blobs.tsv
+          python -m py_compile \
+            scripts/v7_capture_runtime_environment.py \
+            scripts/v7_run_pollipi_frozen.py \
+            scripts/v7_run_insepi_frozen.py \
+            scripts/v7_evaluate_locked.py
           echo "V7_FROZEN_FILE_PROVENANCE PASS"
           echo "V7_RUNTIME_FREEZE PASS"
           echo "allocator $allocator_last"
@@ -165,7 +182,7 @@ jobs:
           mkdir -p .v7/run
           python scripts/v7_capture_runtime_environment.py
 
-      - name: Smoke-test both exact frozen observer APIs before V7 materialisation
+      - name: Smoke-test both exact frozen observer APIs and index invariance before V7 materialisation
         if: steps.lock.outputs.ready == 'true'
         shell: bash
         run: |
