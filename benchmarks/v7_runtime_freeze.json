@@ -1,0 +1,31 @@
+{
+  "schema": "pollipi-insepi-v7-runtime-freeze-v1",
+  "status": "pre-materialisation-frozen",
+  "python_version": "3.11.16",
+  "numpy_version": "2.4.6",
+  "capture_path": ".v7/run/v7_runtime_environment.json",
+  "pip_freeze_path": ".v7/run/v7_pip_freeze.txt",
+  "capture_timing": "After exact frozen observer checkouts and PolliPi dependency installation, but before either exact observer smoke test, before master-seed derivation and before V7 pixel materialisation.",
+  "required_pre_capture_absence": [
+    ".v7/run/v7_pixels.npz",
+    ".v7/run/v7_pixels_manifest.json",
+    ".v7/run/v7_materialisation_receipt.json",
+    ".v7/run/pollipi_v7_trace.jsonl",
+    ".v7/run/insepi_v7_trace.jsonl",
+    ".v7/run/v7_report.json",
+    ".v7/run/v7_execution_ledger.json"
+  ],
+  "required_runtime_assertions": [
+    "CPython version equals 3.11.16 exactly",
+    "NumPy version equals 2.4.6 exactly after installing the exact PolliPi runtime",
+    "pip freeze --all is captured before observer output",
+    "runtime manifest records master_seed_derived=false",
+    "runtime manifest records v7_pixels_materialised=false",
+    "runtime manifest records observer_output_inspected=false"
+  ],
+  "scientific_non_interference": [
+    "This freeze changes no V7 generator, allocator, evaluator, materialiser, baseline, metric, threshold, policy or claim rule.",
+    "No V7 master seed has been derived by adding this freeze.",
+    "No V7 pixel artifact has been materialised by adding this freeze."
+  ]
+}
