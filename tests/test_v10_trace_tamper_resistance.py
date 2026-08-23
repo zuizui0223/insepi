@@ -127,12 +127,12 @@ def test_v10_trace_reader_rejects_missing_or_extra_rows(tmp_path: Path) -> None:
     missing = _pollipi_payloads()[:-1]
     path = tmp_path / "missing.jsonl"
     _write(path, missing)
-    with pytest.raises(RuntimeError, match="provenance \+ 6916 results"):
+    with pytest.raises(RuntimeError, match=r"provenance \+ 6916 results"):
         _load(path)
 
     extra = _pollipi_payloads()
     extra.append(dict(extra[-1]))
     path = tmp_path / "extra.jsonl"
     _write(path, extra)
-    with pytest.raises(RuntimeError, match="provenance \+ 6916 results"):
+    with pytest.raises(RuntimeError, match=r"provenance \+ 6916 results"):
         _load(path)
