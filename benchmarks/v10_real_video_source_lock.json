@@ -1,0 +1,123 @@
+{
+  "schema": "interaction-sensing-v10-real-video-source-lock-v1",
+  "status": "member-identities-frozen-by-repository-container; byte-sha256-pending",
+  "scientific_use": "source provenance only; observer execution forbidden until every selected video has a verified SHA-256",
+  "selection_rule": "Use every video member in the repository's Experiment_1-Test_Videos.zip whose basename is bee_test_*.mp4. No clip was excluded, ranked, previewed, or selected using observer performance.",
+  "selected_video_count": 7,
+  "repository": {
+    "title": "Honeybee video tracking data",
+    "authors": "Malika Nisal Ratnayake; Adrian Dyer; Alan Dorin",
+    "doi": "10.26180/5f4c8d5815940",
+    "figshare_article_id": 12895433,
+    "figshare_article_version": 1,
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/"
+  },
+  "derivation_chain": {
+    "repository_file": {
+      "figshare_file_id": 24528083,
+      "name": "Experiment_Data.zip",
+      "size_bytes": 10912414618,
+      "computed_md5": "885f88ec6075ed357f77615a13aff362",
+      "download_url": "https://ndownloader.figshare.com/files/24528083"
+    },
+    "nested_test_bundle": {
+      "name": "Experiment_Data/Experiment_1/Experiment_1-Test_Videos.zip",
+      "compression_method": 8,
+      "compressed_size": 463692433,
+      "uncompressed_size": 463635092,
+      "crc32_hex": "8a7f6f61",
+      "local_header_offset": 8206802872,
+      "full_stream_crc32_verified": true,
+      "decompressed_member_payload_written_during_source_resolution": false
+    }
+  },
+  "canonical_source_resolution": {
+    "workflow_run_id": 32614581275,
+    "pre_lock_head_sha": "05923e5a48ef10be94bbb9dc00891235952f5023",
+    "workflow_artifact_zip_sha256": "12ff6f92a09b8114f87088245359bd6a5d993795c04c390c19a1a4ac8864acef",
+    "source_resolution_json_sha256": "d71b922c2350e17c932b2958a1aae09db1ccc3a728659c70947bd412600dae2e",
+    "experiment_data_index_json_sha256": "3482120a84c34318df007608f87af09db6c9096cb028889c3e2811efbafbb28d",
+    "test_bundle_index_json_sha256": "aef593dc941c3265b469d15639af9bee5a27352fd0104a9d4b33d061837f14bd"
+  },
+  "videos": [
+    {
+      "index": 1,
+      "name": "Experiment_1-Test_Videos/bee_test_1.mp4",
+      "compression_method": 8,
+      "compressed_size": 69366017,
+      "uncompressed_size": 69416364,
+      "crc32_hex": "be8e6756",
+      "local_header_offset": 55,
+      "sha256": null
+    },
+    {
+      "index": 2,
+      "name": "Experiment_1-Test_Videos/bee_test_2.mp4",
+      "compression_method": 8,
+      "compressed_size": 59575431,
+      "uncompressed_size": 59616748,
+      "crc32_hex": "b5d82f12",
+      "local_header_offset": 69366141,
+      "sha256": null
+    },
+    {
+      "index": 3,
+      "name": "Experiment_1-Test_Videos/bee_test_3.mp4",
+      "compression_method": 8,
+      "compressed_size": 73459641,
+      "uncompressed_size": 73510301,
+      "crc32_hex": "b4075043",
+      "local_header_offset": 128941641,
+      "sha256": null
+    },
+    {
+      "index": 4,
+      "name": "Experiment_1-Test_Videos/bee_test_4.mp4",
+      "compression_method": 8,
+      "compressed_size": 61443077,
+      "uncompressed_size": 61481726,
+      "crc32_hex": "f2003132",
+      "local_header_offset": 202401351,
+      "sha256": null
+    },
+    {
+      "index": 5,
+      "name": "Experiment_1-Test_Videos/bee_test_5.mp4",
+      "compression_method": 8,
+      "compressed_size": 74693757,
+      "uncompressed_size": 74741879,
+      "crc32_hex": "7087e0f0",
+      "local_header_offset": 263844497,
+      "sha256": null
+    },
+    {
+      "index": 6,
+      "name": "Experiment_1-Test_Videos/bee_test_6.mp4",
+      "compression_method": 8,
+      "compressed_size": 89390525,
+      "uncompressed_size": 89449937,
+      "crc32_hex": "17091e35",
+      "local_header_offset": 338538323,
+      "sha256": null
+    },
+    {
+      "index": 7,
+      "name": "Experiment_1-Test_Videos/bee_test_7.mp4",
+      "compression_method": 8,
+      "compressed_size": 35705130,
+      "uncompressed_size": 35727534,
+      "crc32_hex": "c8c0caa4",
+      "local_header_offset": 427928917,
+      "sha256": null
+    }
+  ],
+  "hard_rules_before_scientific_v10": [
+    "Download and verify all seven selected videos; do not inspect observer performance before the seven SHA-256 values are frozen.",
+    "For every video, require exact uncompressed byte size and ZIP CRC32 to match this lock before recording SHA-256.",
+    "Do not drop, reorder, replace, or cherry-pick videos after byte verification.",
+    "Freeze frame/window extraction, any perturbation registry, observer adapters, metrics, comparators, and interpretation rules before running either observer.",
+    "V10 must not alter V6 weights or V7 generator, seed, pixels, traces, gate, or claim ceiling.",
+    "V10 cannot rescue or reinterpret a failing V7 result."
+  ]
+}
