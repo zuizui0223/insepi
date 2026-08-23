@@ -19,6 +19,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+      - name: Install test runner only
+        run: python -m pip install pytest
       - name: Validate V10 protocol contracts
         run: pytest -q tests/test_v10_real_video_protocol.py
       - name: Print frozen protocol identity
