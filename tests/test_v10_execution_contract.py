@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
@@ -113,3 +114,76 @@ def test_v10_claim_precedence_is_frozen(
 def test_v10_score_rows_do_not_receive_truth() -> None:
     rows = v10._score_rows([0.0, 0.7, 1.0], [0.2, 0.4, 0.9])
     assert all(set(row) == {"evidence", "observability", "fused", "maximum"} for row in rows)
+
+
+def _synthetic_v10_artifact_and_traces():
+    families = ("shadow", "occlusion", "blur", "sensor_banding", "glare", "framing_drift")
+    variants = [{"variant_index": 0, "family": None, "tier_index": None}]
+    variant_index = 1
+    for family in families:
+        for tier in range(3):
+            variants.append({"variant_index": variant_index, "family": family, "tier_index": tier})
+            variant_index += 1
+
+    base_registry = [
+        {
+            "base_index": base,
+            "video_index": base % 7,
+            "temporal_quartile": (base // 7) % 4,
+        }
+        for base in range(364)
+    ]
+    panel_registry = [
+        {
+            "panel_id": f"{family}:tier{tier}",
+            "family": family,
+            "tier_index": tier,
+            "disturbed_base_indices": list(range(182)),
+        }
+        for family in families
+        for tier in range(3)
+    ]
+
+    pollipi_rows = []
+    insepi_rows = []
+    for base in range(364):
+        for variant in variants:
+            tier = variant["tier_index"]
+            native = variant["variant_index"] == 0
+            pollipi_rows.append({
+                "pollipi_state": "no_activity" if native else "environmental_noise",
+            })
+            risk = 0.10 if native else 0.20 + 0.20 * int(tier)
+            insepi_rows.append({
+                "false_event_risk": risk,
+                "missed_event_risk": risk * 0.8,
+                "attribution_risk": risk * 0.6,
+            })
+    artifact = SimpleNamespace(
+        variant_registry=tuple(variants),
+        base_registry=tuple(base_registry),
+        panel_registry=tuple(panel_registry),
+    )
+    pollipi = v10.TraceData(provenance={}, rows=tuple(pollipi_rows), sha256="p" * 64)
+    insepi = v10.TraceData(provenance={}, rows=tuple(insepi_rows), sha256="i" * 64)
+    return artifact, pollipi, insepi
+
+
+def test_v10_complete_frozen_evaluator_plumbing_on_synthetic_traces(monkeypatch) -> None:
+    """Exercise all families, panels, budgets and policies without real observer results."""
+    artifact, pollipi, insepi = _synthetic_v10_artifact_and_traces()
+    observer = v10._observer_transfer(artifact, pollipi, insepi)
+    assert observer["positive_high_tier_family_count"] == 6
+    assert observer["dose_monotone_family_count"] == 6
+    assert observer["global_high_tier_median_risk_delta"] > 0.0
+    assert len(observer["family_tier"]) == 18
+
+    # Two paired replicates are sufficient to test the complete wiring; the
+    # scientific V10 value remains frozen at 200 and is checked separately.
+    monkeypatch.setattr(v10, "REPLICATES", 2)
+    allocation = v10._allocation_transfer(artifact, pollipi, insepi)
+    assert allocation["v6_cell_count"] == 54
+    assert len(allocation["cells"]) == 18 * 3 * 6
+    assert 0 <= allocation["v6_cell_pass_count"] <= 54
+    assert allocation["v6_overall_mean_paired_uniform_recall_ratio"] > 0.0
+    assert {row["policy"] for row in allocation["cells"]} == set(v10.POLICIES)
