@@ -13,7 +13,7 @@
     "scripts/v10_run_pollipi_frozen.py": "8136f42ea4135b88e5ff8cb65653ace81b7ea3af",
     "scripts/v10_run_insepi_frozen.py": "3fe1eba427fa7a7ea468553365309312e806b88d",
     "src/interaction_sensing/simulation/v10_evaluator.py": "8d112b7fcfd760548358ca840260d5714422dd85",
-    "scripts/v10_evaluate_locked.py": "f3adb1d11d0991346e60493d98a672bf756b2f8b",
+    "scripts/v10_evaluate_locked.py": "605b2f25db5749f53172e20a29168ebe04ea4967",
     ".github/workflows/v10-one-shot.yml": "d01b3aac3e5af6595c0437701f29c21b1d10cab9"
   },
   "generic_guarded_portfolio_git_blob_sha1": "a6397383c0d713026631b197d4aeb135222200ef",
@@ -27,6 +27,21 @@
     "independent_allocator_oracle": "Required in one-shot preflight; cross-checks exact selected-index sets for all six policies across frozen budgets and multiple seeds without calling the production selector in the reference implementation.",
     "uniform_seed_grid_check": "Required in one-shot preflight; 18 panels x 200 replicates x 3 budgets must remain within five standard errors of the SRSWOR finite-population expectation on a balanced synthetic truth set.",
     "execution_script_compile": "All four V10 execution scripts must py_compile successfully before external frozen checkouts or canonical pixel download."
+  },
+  "evaluation_receipt_provenance": {
+    "required": [
+      "orchestrator git HEAD",
+      "implementation freeze SHA-256",
+      "evaluator freeze SHA-256",
+      "pixel freeze SHA-256",
+      "protocol freeze SHA-256",
+      "V7 prerequisite ledger SHA-256 and copied ledger",
+      "PolliPi trace SHA-256",
+      "InsePi trace SHA-256",
+      "canonical pixel artifact SHA-256",
+      "final report SHA-256"
+    ],
+    "rule": "The V10 scientific artifact must remain independently auditable after upstream Actions artifacts expire; the exact V7 prerequisite ledger is copied beside the V10 evaluation receipt."
   },
   "execution_order_rule": "V7 locked validation must be executed first once both exact V5 observer commits are reachable. V10 execution order is operational only and does not condition or alter V10 scientific thresholds.",
   "forbidden_after_observer_output": [
