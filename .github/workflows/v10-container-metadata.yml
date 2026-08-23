@@ -1,0 +1,50 @@
+name: V10 container metadata probe
+
+on:
+  pull_request:
+    paths:
+      - "scripts/probe_v10_video_container_metadata.py"
+      - ".github/workflows/v10-container-metadata.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probe-byte-frozen-mp4-containers:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Confirm ffprobe availability
+        run: ffprobe -version | head -1
+      - name: Probe all seven byte-frozen MP4 containers
+        run: python scripts/probe_v10_video_container_metadata.py
+      - name: Audit pre-pixel boundary
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          obj = json.loads(Path('.v10/v10_container_metadata.json').read_text())
+          assert obj['schema'] == 'interaction-sensing-v10-container-metadata-v1'
+          assert obj['video_count'] == 7
+          assert len(obj['videos']) == 7
+          assert obj['video_pixels_decoded'] is False
+          assert obj['observer_execution'] is False
+          assert obj['v7_materialisation'] is False
+          assert obj['transport']['temporary_mp4_files_deleted'] is True
+          assert all(len(row['sha256']) == 64 for row in obj['videos'])
+          assert not Path('.v7/run/v7_pixels.npz').exists()
+          print('V10_CONTAINER_METADATA_ONLY true')
+          print('V10_VIDEO_PIXELS_DECODED false')
+          print('V10_OBSERVER_EXECUTION false')
+          PY
+      - name: Upload container metadata only
+        uses: actions/upload-artifact@v4
+        with:
+          name: v10-container-metadata
+          path: .v10/v10_container_metadata.json
+          if-no-files-found: error
+          retention-days: 30
