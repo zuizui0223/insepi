@@ -13,7 +13,8 @@
     "scripts/v10_run_pollipi_frozen.py": "8136f42ea4135b88e5ff8cb65653ace81b7ea3af",
     "scripts/v10_run_insepi_frozen.py": "3fe1eba427fa7a7ea468553365309312e806b88d",
     "src/interaction_sensing/simulation/v10_evaluator.py": "8d112b7fcfd760548358ca840260d5714422dd85",
-    "scripts/v10_evaluate_locked.py": "f3adb1d11d0991346e60493d98a672bf756b2f8b"
+    "scripts/v10_evaluate_locked.py": "f3adb1d11d0991346e60493d98a672bf756b2f8b",
+    ".github/workflows/v10-one-shot.yml": "d01b3aac3e5af6595c0437701f29c21b1d10cab9"
   },
   "generic_guarded_portfolio_git_blob_sha1": "a6397383c0d713026631b197d4aeb135222200ef",
   "insepi_bookkeeping_frame_index": 0,
@@ -21,6 +22,11 @@
   "insepi_pre_pixel_frame_index_invariance_gate": {
     "probe_indices": [0, 1, 6915],
     "required_result": "All decision-relevant observation fields, local-structure loss, and final risk/state/action outputs must be exactly identical on the same smoke-test pixels across all probe indices. Failure blocks V10 before the canonical real-pixel artifact is downloaded."
+  },
+  "pre_observer_validation": {
+    "independent_allocator_oracle": "Required in one-shot preflight; cross-checks exact selected-index sets for all six policies across frozen budgets and multiple seeds without calling the production selector in the reference implementation.",
+    "uniform_seed_grid_check": "Required in one-shot preflight; 18 panels x 200 replicates x 3 budgets must remain within five standard errors of the SRSWOR finite-population expectation on a balanced synthetic truth set.",
+    "execution_script_compile": "All four V10 execution scripts must py_compile successfully before external frozen checkouts or canonical pixel download."
   },
   "execution_order_rule": "V7 locked validation must be executed first once both exact V5 observer commits are reachable. V10 execution order is operational only and does not condition or alter V10 scientific thresholds.",
   "forbidden_after_observer_output": [
