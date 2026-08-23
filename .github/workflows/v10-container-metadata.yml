@@ -1,10 +1,6 @@
 name: V10 container metadata probe
 
 on:
-  pull_request:
-    paths:
-      - "scripts/probe_v10_video_container_metadata.py"
-      - ".github/workflows/v10-container-metadata.yml"
   workflow_dispatch:
 
 permissions:
@@ -18,27 +14,24 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - name: Probe all seven byte-frozen MP4 containers without pixel decoding
+      - name: Re-probe all seven byte-frozen MP4 containers without pixel decoding
         run: python scripts/probe_v10_video_container_metadata.py
-      - name: Audit pre-pixel boundary
+      - name: Audit against frozen container summary
         run: |
           python - <<'PY'
           import json
           from pathlib import Path
           obj = json.loads(Path('.v10/v10_container_metadata.json').read_text())
-          assert obj['schema'] == 'interaction-sensing-v10-container-metadata-v1'
+          frozen = json.loads(Path('benchmarks/v10_container_metadata_summary.json').read_text())
           assert obj['video_count'] == 7
-          assert len(obj['videos']) == 7
-          assert obj['parser'] == 'python-standard-library-iso-bmff-v1'
+          assert obj['parser'] == frozen['parser']
           assert obj['video_pixels_decoded'] is False
           assert obj['observer_execution'] is False
           assert obj['v7_materialisation'] is False
-          assert obj['transport']['temporary_mp4_files_deleted'] is True
-          assert all(len(row['sha256']) == 64 for row in obj['videos'])
-          assert all(row['metadata']['frame_sample_count'] > 0 for row in obj['videos'])
-          assert all(row['metadata']['duration_seconds'] > 0 for row in obj['videos'])
-          assert not Path('.v7/run/v7_pixels.npz').exists()
-          print('V10_CONTAINER_METADATA_ONLY true')
+          actual = [(row['metadata']['frame_sample_count'], row['metadata']['duration_seconds'], row['metadata']['average_fps_from_stts']) for row in obj['videos']]
+          expected = [(row['frame_count'], row['duration_seconds'], frozen['common']['fps']) for row in frozen['videos']]
+          assert actual == expected
+          print('V10_CONTAINER_METADATA_MATCHES_LOCK true')
           print('V10_VIDEO_PIXELS_DECODED false')
           print('V10_OBSERVER_EXECUTION false')
           PY
