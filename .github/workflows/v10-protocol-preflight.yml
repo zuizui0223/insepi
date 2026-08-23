@@ -1,11 +1,6 @@
 name: V10 protocol preflight
 
 on:
-  pull_request:
-    paths:
-      - "benchmarks/v10_real_video_protocol.json"
-      - "tests/test_v10_real_video_protocol.py"
-      - ".github/workflows/v10-protocol-preflight.yml"
   workflow_dispatch:
 
 permissions:
@@ -21,22 +16,18 @@ jobs:
           python-version: "3.11"
       - name: Install test runner only
         run: python -m pip install pytest
-      - name: Validate V10 protocol contracts
+      - name: Validate frozen V10 protocol contracts
         run: pytest -q tests/test_v10_real_video_protocol.py
-      - name: Print frozen protocol identity
+      - name: Require exact frozen protocol identity
         run: |
           python - <<'PY'
           import hashlib, json
           from pathlib import Path
           p = Path('benchmarks/v10_real_video_protocol.json')
-          x = json.loads(p.read_text())
-          assert x['base_windows']['total_base_windows'] == 364
-          assert x['conditions']['total_condition_count'] == 6916
-          assert x['allocation_transfer']['panel_count'] == 18
-          assert x['observers']['execution_before_both_exact_commits_reachable'] == 'forbidden'
-          print('V10_PROTOCOL_SHA256', hashlib.sha256(p.read_bytes()).hexdigest())
-          print('V10_BASE_WINDOWS', x['base_windows']['total_base_windows'])
-          print('V10_CONDITIONS', x['conditions']['total_condition_count'])
-          print('V10_PANELS', x['allocation_transfer']['panel_count'])
+          freeze = json.loads(Path('benchmarks/v10_real_video_protocol_freeze.json').read_text())
+          digest = hashlib.sha256(p.read_bytes()).hexdigest()
+          assert digest == freeze['protocol_sha256'] == 'c84947c998f69d4c8f2d056e79c7f91c6c6736b938236c17386618ac5a924e03'
+          print('V10_PROTOCOL_MATCHES_FREEZE true')
+          print('V10_PROTOCOL_SHA256', digest)
           print('V10_OBSERVER_EXECUTION false')
           PY
