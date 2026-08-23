@@ -13,6 +13,7 @@ on:
       - "tests/test_v10_execution_contract.py"
       - "tests/test_v10_independent_oracle.py"
       - "tests/test_v10_observer_independence_audit.py"
+      - "tests/test_v10_trace_tamper_resistance.py"
       - ".github/workflows/v10-one-shot.yml"
   workflow_dispatch:
     inputs:
@@ -93,12 +94,13 @@ jobs:
             scripts/v10_evaluate_locked.py
           echo "V10_EXECUTION_SCRIPTS_COMPILE PASS"
 
-      - name: Verify V10 execution contracts and independent oracle
+      - name: Verify V10 execution contracts, independent oracle, and tamper resistance
         run: |
           pytest -q \
             tests/test_v10_execution_contract.py \
             tests/test_v10_independent_oracle.py \
             tests/test_v10_observer_independence_audit.py \
+            tests/test_v10_trace_tamper_resistance.py \
             tests/test_real_video_v10.py \
             tests/test_v10_real_video_protocol.py
 
