@@ -6,6 +6,10 @@
   "capture_path": ".v7/run/v7_runtime_environment.json",
   "pip_freeze_path": ".v7/run/v7_pip_freeze.txt",
   "capture_timing": "After exact frozen observer checkouts and PolliPi dependency installation, but before either exact observer smoke test, before master-seed derivation and before V7 pixel materialisation.",
+  "implementation_last_change_commits": {
+    "scripts/v7_capture_runtime_environment.py": "c00cf1af17662db233089032aa965786ecadea5b",
+    "scripts/v7_evaluate_locked.py": "7d6e337105577ff1f7c07987310b214a71601dff"
+  },
   "required_pre_capture_absence": [
     ".v7/run/v7_pixels.npz",
     ".v7/run/v7_pixels_manifest.json",
@@ -22,6 +26,14 @@
     "runtime manifest records master_seed_derived=false",
     "runtime manifest records v7_pixels_materialised=false",
     "runtime manifest records observer_output_inspected=false"
+  ],
+  "ledger_provenance": [
+    "runtime environment SHA-256",
+    "runtime pip-freeze SHA-256",
+    "runtime freeze SHA-256",
+    "runtime Python version",
+    "runtime NumPy version",
+    "orchestrator git SHA already recorded by V7 execution ledger"
   ],
   "scientific_non_interference": [
     "This freeze changes no V7 generator, allocator, evaluator, materialiser, baseline, metric, threshold, policy or claim rule.",
