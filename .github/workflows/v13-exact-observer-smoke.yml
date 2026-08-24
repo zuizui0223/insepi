@@ -52,6 +52,51 @@ jobs:
           test "$(git -C .v13/smoke/insepi rev-parse HEAD)" = "$INSEPI_SHA"
           echo "V13_EXACT_OBSERVER_REACHABILITY PASS"
 
+      - name: Audit software-level observer separation before any V13 pixels
+        run: |
+          python - <<'PY'
+          import ast
+          from pathlib import Path
+
+          def violations(root: Path, forbidden: str):
+              out=[]
+              for path in sorted(root.rglob('*.py')):
+                  try:
+                      tree=ast.parse(path.read_text(encoding='utf-8'))
+                  except (UnicodeDecodeError, SyntaxError) as exc:
+                      raise SystemExit(f'cannot audit {path}: {exc}')
+                  for node in ast.walk(tree):
+                      if isinstance(node, ast.Import):
+                          for alias in node.names:
+                              if alias.name == forbidden or alias.name.startswith(forbidden + '.'):
+                                  out.append((str(path), node.lineno, alias.name))
+                      elif isinstance(node, ast.ImportFrom):
+                          module=node.module or ''
+                          if module == forbidden or module.startswith(forbidden + '.'):
+                              out.append((str(path), node.lineno, module))
+                      elif isinstance(node, ast.Call) and node.args:
+                          fn=node.func
+                          dynamic=False
+                          if isinstance(fn, ast.Attribute) and fn.attr == 'import_module':
+                              dynamic=True
+                          elif isinstance(fn, ast.Name) and fn.id == '__import__':
+                              dynamic=True
+                          if dynamic and isinstance(node.args[0], ast.Constant) and isinstance(node.args[0].value, str):
+                              name=node.args[0].value
+                              if name == forbidden or name.startswith(forbidden + '.'):
+                                  out.append((str(path), node.lineno, name))
+              return out
+
+          pollipi_root=Path('.v13/smoke/pollipi/packages/analysis/src')
+          insepi_root=Path('.v13/smoke/insepi/src')
+          p=violations(pollipi_root, 'interaction_sensing')
+          i=violations(insepi_root, 'pollipi_analysis')
+          if p or i:
+              raise SystemExit(f'V13 frozen observer cross-import violation: pollipi={p} insepi={i}')
+          print('V13_FROZEN_OBSERVER_SOFTWARE_SEPARATION PASS')
+          print('V13_STATISTICAL_ERROR_INDEPENDENCE_CLAIM false')
+          PY
+
       - name: Smoke exact frozen observer APIs before any V13 pixels
         run: |
           python scripts/v13_run_pollipi_frozen.py \
