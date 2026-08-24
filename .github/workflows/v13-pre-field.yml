@@ -104,11 +104,90 @@ jobs:
             .v13/test-private/v13_observer_plan.csv
           echo "V13_BLIND_RANDOMISATION_DRY_RUN PASS"
 
-      - name: Confirm pre-field workflow generated no pixels, observer traces, predictions or result
+      - name: Rehearse blinded prediction then sealed-truth join on synthetic responses only
+        run: |
+          set -euo pipefail
+          mkdir -p .v13/test-analysis
+          python - <<'PY'
+          import csv, hashlib, json
+          from pathlib import Path
+          private = list(csv.DictReader(open('.v13/test-private/v13_private_truth_ledger.csv', newline='', encoding='utf-8')))
+          templates = {
+              'event_side': {'event_restore': (.80,.05), 'observability_restore': (.05,.02), 'shared_restore': (.40,.10)},
+              'nuisance_side': {'event_restore': (.02,.05), 'observability_restore': (.05,.80), 'shared_restore': (.10,.40)},
+              'shared_optical': {'event_restore': (.35,.10), 'observability_restore': (.10,.35), 'shared_restore': (.65,.65)},
+              'no_fault': {'event_restore': (-.02,-.01), 'observability_restore': (-.01,-.02), 'shared_restore': (-.02,-.02)},
+          }
+          fields = [
+              'block_id','split',
+              'event_restore_delta_evidence','event_restore_delta_observability',
+              'observability_restore_delta_evidence','observability_restore_delta_observability',
+              'shared_restore_delta_evidence','shared_restore_delta_observability',
+          ]
+          path = Path('.v13/test-analysis/v13_safe_block_responses.csv')
+          with path.open('w', newline='', encoding='utf-8') as h:
+              w=csv.DictWriter(h, fieldnames=fields, lineterminator='\n'); w.writeheader()
+              for row in sorted(private, key=lambda r:r['block_id']):
+                  t=templates[row['treatment_class']]
+                  jitter=(int(hashlib.sha256(row['block_id'].encode()).hexdigest()[:4],16)%101-50)*1e-5
+                  w.writerow({
+                      'block_id':row['block_id'],'split':row['split'],
+                      'event_restore_delta_evidence':t['event_restore'][0]+jitter,
+                      'event_restore_delta_observability':t['event_restore'][1]-jitter,
+                      'observability_restore_delta_evidence':t['observability_restore'][0]+jitter,
+                      'observability_restore_delta_observability':t['observability_restore'][1]-jitter,
+                      'shared_restore_delta_evidence':t['shared_restore'][0]+jitter,
+                      'shared_restore_delta_observability':t['shared_restore'][1]-jitter,
+                  })
+          sha=hashlib.sha256(path.read_bytes()).hexdigest()
+          receipt={'schema':'interaction-sensing-v13-safe-response-table-v1','truth_metadata_present':False,'safe_block_responses_sha256':sha}
+          Path('.v13/test-analysis/v13_response_receipt.json').write_text(json.dumps(receipt,sort_keys=True,indent=2)+'\n')
+          PY
+          python scripts/v13_predict_blinded.py \
+            --responses .v13/test-analysis/v13_safe_block_responses.csv \
+            --response-receipt .v13/test-analysis/v13_response_receipt.json \
+            --development-labels .v13/test-split/v13_development_labels.csv \
+            --output .v13/test-analysis/v13_predictions.json
+          python scripts/v13_commit_prediction.py \
+            --predictions .v13/test-analysis/v13_predictions.json \
+            --output .v13/test-analysis/v13_prediction_commitment.json
+          python - <<'PY'
+          import csv
+          p='.v13/test-private/v13_qc_template.csv'
+          rows=list(csv.DictReader(open(p,newline='',encoding='utf-8')))
+          fields=list(rows[0]) if rows else []
+          with open('.v13/test-analysis/v13_qc_annotations.csv','w',newline='',encoding='utf-8') as h:
+              w=csv.DictWriter(h,fieldnames=fields,lineterminator='\n'); w.writeheader()
+              for r in rows:
+                  r['local_event_reference_present_as_planned']='yes'
+                  r['nuisance_treatment_present_as_planned']='yes'
+                  r['shared_optical_treatment_present_as_planned']='yes'
+                  r['gross_protocol_violation']='no'
+                  r['annotator_code']='ci-test'
+                  w.writerow(r)
+          PY
+          python scripts/v13_evaluate_locked.py \
+            --predictions .v13/test-analysis/v13_predictions.json \
+            --prediction-commitment .v13/test-analysis/v13_prediction_commitment.json \
+            --heldout-truth .v13/test-split/v13_heldout_truth_SEALED.csv \
+            --truth-split-receipt .v13/test-split/v13_truth_split_receipt.json \
+            --randomisation-commitment .v13/test-private/v13_randomisation_commitment.json \
+            --qc-plan .v13/test-private/v13_protected_qc_plan.csv \
+            --qc-annotations .v13/test-analysis/v13_qc_annotations.csv \
+            --output .v13/test-analysis/v13_test_report.json
+          python - <<'PY'
+          import json
+          r=json.load(open('.v13/test-analysis/v13_test_report.json'))
+          assert r['schema']=='interaction-sensing-v13-physical-evaluation-v1'
+          assert r['heldout_block_count']==72
+          assert r['claim']['level'] in {'A','B','C','D'}
+          assert r['provenance']['truth_join_stage']=='after blinded prediction ledger commitment'
+          print('V13_SYNTHETIC_BLINDED_ANALYSIS_REHEARSAL PASS', r['claim']['level'], '(not scientific evidence)')
+          PY
+
+      - name: Confirm pre-field workflow generated no real V13 pixels or observer traces
         run: |
           test ! -e .v13/v13_frames.npy
           test ! -e .v13/pollipi_v13_trace.jsonl
           test ! -e .v13/insepi_v13_trace.jsonl
-          test ! -e .v13/v13_predictions.json
-          test ! -e .v13/v13_report.json
           echo "V13_PRE_FIELD_ONLY PASS"
