@@ -114,8 +114,11 @@ def main() -> None:
     }
     perturbation_rows: list[dict[str, object]] = []
     monotone: dict[str, bool] = {}
+    window_monotonicity: dict[str, dict[str, object]] = {}
+    video_indices = sorted(int(value) for value in full_video)
     for family in FAMILIES:
         family_mae: list[float] = []
+        tier_window_mae: list[np.ndarray] = []
         for tier in range(3):
             variant_index = variant_map[(family, tier)]
             perturbed_u8 = frames[:, variant_index]
@@ -137,7 +140,29 @@ def main() -> None:
             }
             perturbation_rows.append(row)
             family_mae.append(float(row["median_mae"]))
+            tier_window_mae.append(mae)
         monotone[family] = family_mae[0] <= family_mae[1] <= family_mae[2]
+
+        per_window = np.column_stack(tier_window_mae)
+        window_is_monotone = (per_window[:, 0] <= per_window[:, 1]) & (per_window[:, 1] <= per_window[:, 2])
+        per_video: list[dict[str, object]] = []
+        for video_index in video_indices:
+            indices = [index for index, row in enumerate(base) if int(row["video_index"]) == video_index]
+            video_medians = [float(np.median(per_window[indices, tier])) for tier in range(3)]
+            per_video.append({
+                "video_index": video_index,
+                "median_mae_by_tier": video_medians,
+                "median_mae_nondecreasing_by_tier": video_medians[0] <= video_medians[1] <= video_medians[2],
+                "window_mae_nondecreasing_fraction": float(np.mean(window_is_monotone[indices])),
+            })
+        window_monotonicity[family] = {
+            "window_count_nondecreasing": int(np.sum(window_is_monotone)),
+            "window_count_total": int(len(window_is_monotone)),
+            "window_fraction_nondecreasing": float(np.mean(window_is_monotone)),
+            "video_median_nondecreasing_count": int(sum(bool(row["median_mae_nondecreasing_by_tier"]) for row in per_video)),
+            "video_count": len(per_video),
+            "per_video": per_video,
+        }
 
     result = {
         "schema": "interaction-sensing-v10-preobserver-pixel-qa-v1",
@@ -164,6 +189,8 @@ def main() -> None:
             "tier_count": 3,
             "all_family_median_mae_nondecreasing_by_tier": all(monotone.values()),
             "family_median_mae_nondecreasing_by_tier": monotone,
+            "family_window_and_video_monotonicity": window_monotonicity,
+            "tier_geometry_rule": "V10 perturbation seed includes tier_index; therefore stochastic geometry may differ across tiers within the same base window. Window-level MAE monotonicity is descriptive only. The preregistered V10 dose gate is a family-distribution-level median-risk comparison, not a fixed-geometry within-window dose-response test.",
             "minimum_over_all_variants_of_min_window_mae": float(min(row["min_window_mae"] for row in perturbation_rows)),
             "maximum_over_all_variants_of_max_window_saturation_fraction": float(max(row["max_window_saturation_fraction"] for row in perturbation_rows)),
             "rows": perturbation_rows,
@@ -171,6 +198,7 @@ def main() -> None:
         "interpretation_boundary": [
             "These diagnostics were computed after the V10 protocol and pixel bytes were frozen.",
             "They are descriptive artifact-quality checks only and cannot change perturbations, thresholds, comparators, claim level, or acceptance criteria.",
+            "Tier-specific perturbation seeds mean stochastic geometry can differ across tiers; dose monotonicity in V10 must be interpreted at the preregistered family-distribution level rather than as fixed-geometry within-window dose response.",
             "No PolliPi or InsePi observer was run to compute these diagnostics.",
         ],
     }
@@ -182,7 +210,10 @@ def main() -> None:
     print("V10_PIXEL_QA_VIDEO_QUARTILE_TV_MAX", result["panel_assignment"]["video_temporal_quartile_tv_max"])
     print("V10_PIXEL_QA_MISSING_VIDEO_CATEGORIES", result["panel_assignment"]["panels_with_missing_video_category"])
     print("V10_PIXEL_QA_MISSING_VIDEO_QUARTILE_CATEGORIES", result["panel_assignment"]["panels_with_missing_video_temporal_quartile_category"])
-    print("V10_PIXEL_QA_ALL_FAMILY_MAE_MONOTONE", result["perturbation_pixel_diagnostics"]["all_family_median_mae_nondecreasing_by_tier"])
+    print("V10_PIXEL_QA_ALL_FAMILY_MEDIAN_MAE_MONOTONE", result["perturbation_pixel_diagnostics"]["all_family_median_mae_nondecreasing_by_tier"])
+    for family in FAMILIES:
+        diag = window_monotonicity[family]
+        print("V10_PIXEL_QA_WINDOW_MAE_MONOTONE", family, diag["window_count_nondecreasing"], diag["window_count_total"], diag["window_fraction_nondecreasing"])
     print("V10_PIXEL_QA_MIN_WINDOW_MAE", result["perturbation_pixel_diagnostics"]["minimum_over_all_variants_of_min_window_mae"])
     print("V10_PIXEL_QA_MAX_WINDOW_SATURATION", result["perturbation_pixel_diagnostics"]["maximum_over_all_variants_of_max_window_saturation_fraction"])
     print("V10_PIXEL_QA_OBSERVER_EXECUTION false")
