@@ -1,0 +1,114 @@
+name: V13 pre-field protocol
+
+on:
+  pull_request:
+    paths:
+      - "benchmarks/v13_*.json"
+      - "docs/V13_*.md"
+      - "src/interaction_sensing/causal_diagnostics.py"
+      - "src/interaction_sensing/physical_*v13.py"
+      - "scripts/v13_*.py"
+      - "tests/test_v13_*.py"
+      - "tests/test_physical_*v13.py"
+      - "tests/test_causal_diagnostics.py"
+      - ".github/workflows/v13-pre-field.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  pre-field:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11.16"
+
+      - name: Install pinned analysis and decoder runtime
+        run: |
+          python -m pip install "numpy==2.4.6" "imageio-ffmpeg==0.6.0"
+          python -m pip install -e ".[dev]"
+          python - <<'PY'
+          import platform, numpy as np
+          assert platform.python_version() == '3.11.16'
+          assert np.__version__ == '2.4.6'
+          print('V13_PINNED_RUNTIME PASS', platform.python_version(), np.__version__)
+          PY
+          ffmpeg_path="$(python - <<'PY'
+          import imageio_ffmpeg
+          print(imageio_ffmpeg.get_ffmpeg_exe())
+          PY
+          )"
+          test -f "$ffmpeg_path"
+          actual="$(sha256sum "$ffmpeg_path" | awk '{print $1}')"
+          expected="e7e7fb30477f717e6f55f9180a70386c62677ef8a4d4d1a5d948f4098aa3eb99"
+          test "$actual" = "$expected" || { echo "V13 ffmpeg drift: $actual != $expected"; exit 1; }
+          echo "V13_FFMPEG_FREEZE PASS $actual"
+
+      - name: Compile every V13 execution boundary
+        run: |
+          python -m py_compile \
+            scripts/v13_build_randomisation.py \
+            scripts/v13_validate_field_bundle.py \
+            scripts/v13_materialize_pixels.py \
+            scripts/v13_split_private_truth.py \
+            scripts/v13_make_qc_template.py \
+            scripts/v13_run_pollipi_frozen.py \
+            scripts/v13_run_insepi_frozen.py \
+            scripts/v13_summarize_observer_traces.py \
+            scripts/v13_predict_blinded.py \
+            scripts/v13_commit_prediction.py \
+            scripts/v13_evaluate_locked.py
+
+      - name: Run V13 protocol, measurement, artifact and evaluation contracts
+        run: |
+          pytest -q \
+            tests/test_causal_diagnostics.py \
+            tests/test_v13_physical_protocol.py \
+            tests/test_v13_phase_contract.py \
+            tests/test_physical_measurement_v13.py \
+            tests/test_physical_artifact_v13.py \
+            tests/test_physical_evaluation_v13.py
+
+      - name: Dry-run blinded randomisation and private truth split without V13 pixels
+        run: |
+          set -euo pipefail
+          mkdir -p .v13/test-private .v13/test-split
+          test_salt="$(printf '13%.0s' {1..32})"
+          python scripts/v13_build_randomisation.py \
+            --salt "$test_salt" \
+            --output-dir .v13/test-private > .v13/randomisation.json
+          python scripts/v13_validate_field_bundle.py \
+            --commitment .v13/test-private/v13_randomisation_commitment.json \
+            --private-truth .v13/test-private/v13_private_truth_ledger.csv \
+            --observer-plan .v13/test-private/v13_observer_plan.csv \
+            --qc-plan .v13/test-private/v13_protected_qc_plan.csv \
+            --output-receipt .v13/test-private/v13_plan_validation.json
+          python scripts/v13_split_private_truth.py \
+            --private-truth .v13/test-private/v13_private_truth_ledger.csv \
+            --commitment .v13/test-private/v13_randomisation_commitment.json \
+            --output-dir .v13/test-split
+          python scripts/v13_make_qc_template.py \
+            --qc-plan .v13/test-private/v13_protected_qc_plan.csv \
+            --commitment .v13/test-private/v13_randomisation_commitment.json \
+            --output .v13/test-private/v13_qc_template.csv
+          test "$(($(wc -l < .v13/test-private/v13_private_truth_ledger.csv)-1))" = 180
+          test "$(($(wc -l < .v13/test-private/v13_observer_plan.csv)-1))" = 720
+          test "$(($(wc -l < .v13/test-split/v13_development_labels.csv)-1))" = 108
+          test "$(($(wc -l < .v13/test-split/v13_heldout_truth_SEALED.csv)-1))" = 72
+          ! grep -Eiq 'event_side|nuisance_side|shared_optical|no_fault|treatment_class|treatment_subtype' \
+            .v13/test-private/v13_observer_plan.csv
+          echo "V13_BLIND_RANDOMISATION_DRY_RUN PASS"
+
+      - name: Confirm pre-field workflow generated no pixels, observer traces, predictions or result
+        run: |
+          test ! -e .v13/v13_frames.npy
+          test ! -e .v13/pollipi_v13_trace.jsonl
+          test ! -e .v13/insepi_v13_trace.jsonl
+          test ! -e .v13/v13_predictions.json
+          test ! -e .v13/v13_report.json
+          echo "V13_PRE_FIELD_ONLY PASS"
