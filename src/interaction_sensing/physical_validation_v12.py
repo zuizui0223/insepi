@@ -9,6 +9,7 @@ must be satisfied before physical clips are collected:
 - treatment order is derived without images or observer outputs;
 - observer manifests exclude intervention truth;
 - observer-facing trial ids/filenames do not encode treatment labels;
+- development and held-out observer bundles cannot be mixed;
 - evaluation truth is joined later by immutable trial_id.
 """
 from __future__ import annotations
@@ -83,6 +84,13 @@ def _require_seed(seed_hex: str) -> str:
     return value
 
 
+def _require_sha256(value: str, name: str) -> str:
+    digest = value.strip().lower()
+    if len(digest) != 64 or any(char not in "0123456789abcdef" for char in digest):
+        raise ValueError(f"{name} must be exactly 64 hex characters")
+    return digest
+
+
 def _digest(seed_hex: str, *parts: object) -> str:
     seed = _require_seed(seed_hex)
     text = "|".join((SEED_DOMAIN, seed, *(str(part) for part in parts)))
@@ -149,9 +157,6 @@ def build_trial_plan(
                                 (block, family, intensity, event, disturbance, replicate, digest)
                             )
 
-    # Randomise order within each physical block only. The assigned slot is then
-    # used to create an opaque observer-facing trial id. The treatment tuple is
-    # never part of the trial-id preimage.
     order_by_key: dict[tuple[str, str, str, int, int, int], int] = {}
     for block in sorted(blocks):
         members = [row for row in provisional if row[0] == block]
@@ -192,13 +197,21 @@ def build_trial_plan(
 def observer_manifest(
     trials: Sequence[Trial],
     clip_identity: dict[str, tuple[str, str]],
+    *,
+    allowed_split: str,
 ) -> tuple[ObserverClip, ...]:
-    """Return a truth-free manifest for observer execution.
+    """Return a truth-free manifest for exactly one preregistered split.
 
-    `clip_identity[trial_id] = (path, sha256)`. Treatment/split/block labels are
-    deliberately omitted. Observer-facing clip filenames must also use only the
-    opaque trial id so a capture-side descriptive filename cannot leak treatment.
+    Treatment/split/block labels are omitted. Observer-facing filenames use only
+    opaque trial ids. Mixing held-out trials into a development manifest (or vice
+    versa) fails before observer execution.
     """
+    if allowed_split not in {"development", "heldout"}:
+        raise ValueError("allowed_split must be development or heldout")
+    if not trials:
+        raise ValueError("observer manifest trials cannot be empty")
+    if any(trial.split != allowed_split for trial in trials):
+        raise ValueError(f"observer manifest mixes trials outside {allowed_split} split")
     if {trial.trial_id for trial in trials} != set(clip_identity):
         raise ValueError("clip identity must contain exactly one entry per trial")
     rows: list[ObserverClip] = []
@@ -208,9 +221,14 @@ def observer_manifest(
             raise ValueError(
                 f"observer-facing clip filename must equal opaque trial id: {path}"
             )
-        if len(digest) != 64 or any(char not in "0123456789abcdef" for char in digest.lower()):
-            raise ValueError(f"invalid clip SHA-256 for {trial.trial_id}")
-        rows.append(ObserverClip(OBSERVER_SCHEMA, trial.trial_id, str(path), digest.lower()))
+        rows.append(
+            ObserverClip(
+                OBSERVER_SCHEMA,
+                trial.trial_id,
+                str(path),
+                _require_sha256(digest, f"clip SHA-256 for {trial.trial_id}"),
+            )
+        )
     return tuple(rows)
 
 
@@ -221,11 +239,15 @@ def intervention_truth(
     disturbance_controller_log_sha256: str,
     external_sensor_log_sha256: str | None,
 ) -> InterventionTruth:
-    for digest in (event_controller_log_sha256, disturbance_controller_log_sha256):
-        if len(digest) != 64:
-            raise ValueError("controller log hashes must be SHA-256 hex")
-    if external_sensor_log_sha256 is not None and len(external_sensor_log_sha256) != 64:
-        raise ValueError("external sensor log hash must be SHA-256 hex")
+    event_hash = _require_sha256(event_controller_log_sha256, "event controller log SHA-256")
+    disturbance_hash = _require_sha256(
+        disturbance_controller_log_sha256, "disturbance controller log SHA-256"
+    )
+    sensor_hash = (
+        None
+        if external_sensor_log_sha256 is None
+        else _require_sha256(external_sensor_log_sha256, "external sensor log SHA-256")
+    )
     return InterventionTruth(
         schema=TRUTH_SCHEMA,
         trial_id=trial.trial_id,
@@ -233,11 +255,9 @@ def intervention_truth(
         disturbance_intervention=trial.disturbance_intervention,
         disturbance_family=trial.disturbance_family,
         intensity_label=trial.intensity_label,
-        event_controller_log_sha256=event_controller_log_sha256.lower(),
-        disturbance_controller_log_sha256=disturbance_controller_log_sha256.lower(),
-        external_sensor_log_sha256=(
-            None if external_sensor_log_sha256 is None else external_sensor_log_sha256.lower()
-        ),
+        event_controller_log_sha256=event_hash,
+        disturbance_controller_log_sha256=disturbance_hash,
+        external_sensor_log_sha256=sensor_hash,
     )
 
 
