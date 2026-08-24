@@ -8,10 +8,21 @@ failure label from raw observer agreement/disagreement.
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass
-from statistics import mean
+from math import sqrt
+from statistics import mean, stdev
 from typing import Mapping, Sequence
 
 from interaction_sensing.physical_validation_v12 import Trial
+
+
+EFFECT_FIELDS = (
+    "event_effect_on_evidence",
+    "disturbance_effect_on_evidence",
+    "interaction_on_evidence",
+    "event_effect_on_observability",
+    "disturbance_effect_on_observability",
+    "interaction_on_observability",
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -77,7 +88,7 @@ def estimate_factorial_responses(
     """Estimate block-level factorial contrasts after truth/output join.
 
     Each block × disturbance family × intensity must contain an exactly balanced
-    2x2 treatment with the same number of replicates in every cell.  Frames are
+    2x2 treatment with the same number of replicates in every cell. Frames are
     not accepted here; one observer output row corresponds to one physical trial.
     """
     if not trials:
@@ -133,3 +144,38 @@ def estimate_factorial_responses(
             )
         )
     return tuple(rows)
+
+
+def summarize_factorial_responses(
+    responses: Sequence[FactorialResponse],
+) -> tuple[dict[str, object], ...]:
+    """Summarise effects across independent physical blocks.
+
+    Each response contributes exactly once. No frame count or within-clip sample
+    count enters the standard error. A single-block group returns SD/SE as null,
+    making the lack of replication explicit instead of inventing frame-level
+    precision.
+    """
+    grouped: dict[tuple[str, str, str], list[FactorialResponse]] = {}
+    for row in responses:
+        key = (row.split, row.disturbance_family, row.intensity_label)
+        grouped.setdefault(key, []).append(row)
+    summaries: list[dict[str, object]] = []
+    for (split, family, intensity), rows in sorted(grouped.items()):
+        payload: dict[str, object] = {
+            "split": split,
+            "disturbance_family": family,
+            "intensity_label": intensity,
+            "independent_block_count": len(rows),
+        }
+        for field in EFFECT_FIELDS:
+            values = [float(getattr(row, field)) for row in rows]
+            sd = None if len(values) < 2 else float(stdev(values))
+            se = None if sd is None else sd / sqrt(len(values))
+            payload[field] = {
+                "mean": float(mean(values)),
+                "sd_across_blocks": sd,
+                "se_across_blocks": se,
+            }
+        summaries.append(payload)
+    return tuple(summaries)
