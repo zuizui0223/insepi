@@ -1,11 +1,19 @@
 from __future__ import annotations
 
+import importlib.util
 import json
 from pathlib import Path
-
-from scripts import audit_v11_failure as audit
+import sys
 
 ROOT = Path(__file__).resolve().parents[1]
+AUDIT_PATH = ROOT / "scripts" / "audit_v11_failure.py"
+
+spec = importlib.util.spec_from_file_location("v11_failure_audit_script", AUDIT_PATH)
+if spec is None or spec.loader is None:
+    raise RuntimeError(f"cannot load {AUDIT_PATH}")
+audit = importlib.util.module_from_spec(spec)
+sys.modules[spec.name] = audit
+spec.loader.exec_module(audit)
 
 
 def test_v11_failure_audit_is_bound_to_canonical_negative_result() -> None:
