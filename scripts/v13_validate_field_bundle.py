@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+from collections import Counter
 import csv
 import hashlib
 import json
@@ -18,6 +19,7 @@ FORBIDDEN_PUBLIC_TOKENS = (
     "shared_optical", "no_fault", "contrast_attenuation", "fan_driven",
     "occlusion", "glare", "diffusion",
 )
+TREATMENT_CLASSES = {"event_side", "nuisance_side", "shared_optical", "no_fault"}
 
 
 def _sha256_file(path: Path) -> str:
@@ -35,6 +37,75 @@ def _read_csv(path: Path) -> tuple[list[str], list[dict[str, str]]]:
         return list(reader.fieldnames or []), rows
 
 
+def _verify_physical_cluster_balance(
+    private_by_id: dict[str, dict[str, str]],
+    block_capture_log: Path,
+    capture_validation_receipt: Path,
+) -> dict[str, object]:
+    validation = json.loads(capture_validation_receipt.read_text(encoding="utf-8"))
+    if validation.get("schema") != "interaction-sensing-v13-capture-log-validation-v1":
+        raise RuntimeError("wrong V13 capture-validation receipt schema")
+    if validation.get("status") != "PASS" or validation.get("observer_execution_allowed") is not True:
+        raise RuntimeError("V13 physical bundle requires a PASS capture-validation receipt")
+    if _sha256_file(block_capture_log) != validation.get("block_log_sha256"):
+        raise RuntimeError("V13 block capture log changed after capture validation")
+    if validation.get("development_heldout_dates_disjoint") is not True:
+        raise RuntimeError("V13 capture validation did not establish disjoint physical dates")
+    if validation.get("development_heldout_scenes_disjoint") is not True:
+        raise RuntimeError("V13 capture validation did not establish disjoint physical scenes")
+    if validation.get("blocks_per_cluster") != [12]:
+        raise RuntimeError("V13 capture validation did not establish 12 blocks per physical cluster")
+
+    header, rows = _read_csv(block_capture_log)
+    required = {"block_id", "split", "recording_date_local", "physical_scene_code"}
+    if not required <= set(header):
+        raise RuntimeError("V13 block capture log lacks physical cluster columns")
+    if len(rows) != 180:
+        raise RuntimeError("V13 block capture log must contain 180 blocks")
+    capture_by_id = {row["block_id"]: row for row in rows}
+    if len(capture_by_id) != 180 or set(capture_by_id) != set(private_by_id):
+        raise RuntimeError("V13 block capture log ids differ from private truth ledger")
+
+    treatment_counts: Counter[tuple[str, str, str, str]] = Counter()
+    cluster_counts: Counter[tuple[str, str, str]] = Counter()
+    for block_id, private in private_by_id.items():
+        capture = capture_by_id[block_id]
+        if capture["split"] != private["split"]:
+            raise RuntimeError(f"V13 private/capture split mismatch for {block_id}")
+        treatment = private["treatment_class"]
+        if treatment not in TREATMENT_CLASSES:
+            raise RuntimeError(f"V13 unknown private treatment class: {treatment}")
+        cluster = (
+            capture["split"],
+            capture["recording_date_local"],
+            capture["physical_scene_code"],
+        )
+        cluster_counts[cluster] += 1
+        treatment_counts[(*cluster, treatment)] += 1
+
+    if len(cluster_counts) != 15 or any(count != 12 for count in cluster_counts.values()):
+        raise RuntimeError(f"V13 actual physical cluster balance changed: {dict(cluster_counts)}")
+    for cluster in cluster_counts:
+        per_class = {
+            treatment: treatment_counts[(*cluster, treatment)]
+            for treatment in sorted(TREATMENT_CLASSES)
+        }
+        if set(per_class.values()) != {3}:
+            raise RuntimeError(
+                f"V13 each actual physical day-scene cluster must contain 3 blocks per treatment class: "
+                f"{cluster}: {per_class}"
+            )
+
+    return {
+        "physical_cluster_balance_verified": True,
+        "physical_cluster_count": len(cluster_counts),
+        "blocks_per_physical_cluster": 12,
+        "replicates_per_treatment_per_physical_cluster": 3,
+        "capture_validation_receipt_sha256": _sha256_file(capture_validation_receipt),
+        "block_capture_log_sha256": _sha256_file(block_capture_log),
+    }
+
+
 def validate(
     commitment_path: Path,
     private_truth_path: Path,
@@ -42,6 +113,8 @@ def validate(
     qc_plan_path: Path,
     *,
     clips_dir: Path | None = None,
+    block_capture_log: Path | None = None,
+    capture_validation_receipt: Path | None = None,
     output_receipt: Path | None = None,
 ) -> dict[str, object]:
     commitment = json.loads(commitment_path.read_text(encoding="utf-8"))
@@ -104,6 +177,20 @@ def validate(
         if qc_by_id[block_id]["protected_qc"] != private_by_id[block_id]["protected_qc"]:
             raise RuntimeError(f"QC assignment mismatch for {block_id}")
 
+    if (block_capture_log is None) != (capture_validation_receipt is None):
+        raise RuntimeError("V13 physical-balance verification requires both block log and capture-validation receipt")
+    physical_balance: dict[str, object] = {"physical_cluster_balance_verified": False}
+    if block_capture_log is not None and capture_validation_receipt is not None:
+        physical_balance = _verify_physical_cluster_balance(
+            private_by_id,
+            block_capture_log,
+            capture_validation_receipt,
+        )
+    if clips_dir is not None and not physical_balance["physical_cluster_balance_verified"]:
+        raise RuntimeError(
+            "V13 clip-bearing field bundle cannot be validated before actual physical cluster/treatment balance is verified"
+        )
+
     clip_hashes: dict[str, str] = {}
     if clips_dir is not None:
         for row in public_rows:
@@ -127,6 +214,7 @@ def validate(
         "clip_count": len(clip_hashes),
         "clip_sha256": clip_hashes,
         "truth_leakage_detected": False,
+        **physical_balance,
     }
     if output_receipt is not None:
         output_receipt.parent.mkdir(parents=True, exist_ok=True)
@@ -141,6 +229,8 @@ def main() -> None:
     parser.add_argument("--observer-plan", type=Path, required=True)
     parser.add_argument("--qc-plan", type=Path, required=True)
     parser.add_argument("--clips-dir", type=Path)
+    parser.add_argument("--block-capture-log", type=Path)
+    parser.add_argument("--capture-validation-receipt", type=Path)
     parser.add_argument("--output-receipt", type=Path)
     args = parser.parse_args()
     receipt = validate(
@@ -149,6 +239,8 @@ def main() -> None:
         args.observer_plan,
         args.qc_plan,
         clips_dir=args.clips_dir,
+        block_capture_log=args.block_capture_log,
+        capture_validation_receipt=args.capture_validation_receipt,
         output_receipt=args.output_receipt,
     )
     print(json.dumps(receipt, sort_keys=True))
