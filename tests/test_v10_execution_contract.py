@@ -200,6 +200,93 @@ def _load_v10_evaluation_script():
     return module
 
 
+def _write_json(path: Path, value: object) -> None:
+    path.write_text(json.dumps(value, sort_keys=True) + "\n", encoding="utf-8")
+
+
+def _sha(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def _build_complete_v7_prerequisite(root: Path) -> Path:
+    """Build a synthetic but internally complete frozen-V7 provenance chain."""
+    pollipi_commit = "d58d0a86034a6c2d53f90efbe4245370fd7cd2e9"
+    insepi_commit = "980813bab996909020140fad5bd83b055eb3db9c"
+    allocator = "a8ac75991ab28fd74a3f3a5482304a2b127a97bc"
+    generator = "1c4c5ffc214ebdfb71ddabe170a071352acd4879"
+    evaluator = "6860fa973ce8f25b25028f49723710e8a920709c"
+    materializer = "11f5a7ad97dc71720a5ba0249bf36c6997a4e289"
+    baseline = "94288d76f69b57e9b3096dfb9fc90f1602ea79d836a4dcf2534979f7c7cd9975"
+    world_spec = "9442a25c3c35febaf44b1bc8f1bedce5524aa34a926f80513069593891982ac3"
+    pixel_sha = "3" * 64
+    world_fingerprint = "4" * 64
+
+    v7_pip = root / "v7_pip_freeze.txt"
+    v7_pip.write_text("numpy==2.4.6\n", encoding="utf-8")
+    v7_runtime = root / "v7_runtime_environment.json"
+    _write_json(v7_runtime, {
+        "schema": "pollipi-insepi-v7-runtime-environment-v1",
+        "python_version": "3.11.16",
+        "numpy_version": "2.4.6",
+        "master_seed_derived": False,
+        "v7_pixels_materialised": False,
+        "observer_output_inspected": False,
+        "pip_freeze_sha256": _sha(v7_pip),
+    })
+    v7_runtime_freeze = root / "v7_runtime_freeze.json"
+    _write_json(v7_runtime_freeze, {
+        "schema": "pollipi-insepi-v7-runtime-freeze-v1",
+        "python_version": "3.11.16",
+        "numpy_version": "2.4.6",
+    })
+    v7_report = root / "v7_report.json"
+    _write_json(v7_report, {"schema": "synthetic-v7-report-for-contract-test"})
+    v7_pollipi = root / "pollipi_v7_trace.jsonl"
+    v7_pollipi.write_text("synthetic-pollipi-trace\n", encoding="utf-8")
+    v7_insepi = root / "insepi_v7_trace.jsonl"
+    v7_insepi.write_text("synthetic-insepi-trace\n", encoding="utf-8")
+    v7_materialisation = root / "v7_materialisation_receipt.json"
+    _write_json(v7_materialisation, {
+        "frozen_inputs": {
+            "pollipi_method_sha": pollipi_commit,
+            "insepi_method_sha": insepi_commit,
+            "allocator_sha": allocator,
+            "generator_sha": generator,
+            "baseline_registry_sha256": baseline,
+            "world_spec_sha256": world_spec,
+        },
+        "pixel_artifact_sha256": pixel_sha,
+        "world_fingerprint": world_fingerprint,
+    })
+    v7_ledger = root / "v7_execution_ledger.json"
+    _write_json(v7_ledger, {
+        "schema": "pollipi-insepi-v7-execution-ledger-v1",
+        "claim_level": "B",
+        "gate_passed": False,
+        "pollipi_source_commit": pollipi_commit,
+        "insepi_source_commit": insepi_commit,
+        "allocator_sha": allocator,
+        "generator_sha": generator,
+        "evaluator_freeze_sha": evaluator,
+        "materializer_freeze_sha": materializer,
+        "baseline_registry_sha256": baseline,
+        "world_spec_sha256": world_spec,
+        "runtime_python_version": "3.11.16",
+        "runtime_numpy_version": "2.4.6",
+        "orchestrator_sha": "5" * 40,
+        "pixel_artifact_sha256": pixel_sha,
+        "world_fingerprint": world_fingerprint,
+        "report_sha256": _sha(v7_report),
+        "runtime_environment_sha256": _sha(v7_runtime),
+        "runtime_pip_freeze_sha256": _sha(v7_pip),
+        "runtime_freeze_sha256": _sha(v7_runtime_freeze),
+        "materialisation_receipt_sha256": _sha(v7_materialisation),
+        "pollipi_trace_sha256": _sha(v7_pollipi),
+        "insepi_trace_sha256": _sha(v7_insepi),
+    })
+    return v7_ledger
+
+
 def test_v10_evaluation_receipt_binds_complete_execution_provenance(
     tmp_path: Path,
     monkeypatch,
@@ -213,7 +300,6 @@ def test_v10_evaluation_receipt_binds_complete_execution_provenance(
     runtime_dir.mkdir()
     runtime_manifest = runtime_dir / "runtime_environment.json"
     pip_freeze = runtime_dir / "pip_freeze.txt"
-    v7_ledger = tmp_path / "v7_execution_ledger.json"
     implementation.write_text(json.dumps({
         "schema": "interaction-sensing-v10-execution-implementation-freeze-v1"
     }) + "\n")
@@ -235,11 +321,8 @@ def test_v10_evaluation_receipt_binds_complete_execution_provenance(
         "observer_output_inspected": False,
         "canonical_v10_pixels_read": False,
     }) + "\n")
-    v7_ledger.write_text(json.dumps({
-        "schema": "pollipi-insepi-v7-execution-ledger-v1",
-        "claim_level": "B",
-        "gate_passed": False,
-    }) + "\n")
+    v7_ledger = _build_complete_v7_prerequisite(tmp_path)
+    v7_ledger_payload = json.loads(v7_ledger.read_text())
 
     fake_report = {
         "schema": "interaction-sensing-v10-locked-report-v1",
@@ -283,11 +366,27 @@ def test_v10_evaluation_receipt_binds_complete_execution_provenance(
     report = json.loads(report_path.read_text())
     receipt = json.loads(receipt_path.read_text())
     copied_v7 = receipt_path.parent / "v7_prerequisite_execution_ledger.json"
+    copied_v7_report = receipt_path.parent / "v7_prerequisite_report.json"
+    copied_v7_materialisation = receipt_path.parent / "v7_prerequisite_materialisation_receipt.json"
+    copied_v7_runtime = receipt_path.parent / "v7_prerequisite_runtime_environment.json"
+    copied_v7_pip = receipt_path.parent / "v7_prerequisite_runtime_pip_freeze.txt"
+    copied_v7_runtime_freeze = receipt_path.parent / "v7_prerequisite_runtime_freeze.json"
+    copied_v7_pollipi = receipt_path.parent / "v7_prerequisite_pollipi_trace.jsonl"
+    copied_v7_insepi = receipt_path.parent / "v7_prerequisite_insepi_trace.jsonl"
     copied_runtime = receipt_path.parent / "runtime_environment.json"
     copied_freeze = receipt_path.parent / "runtime_pip_freeze.txt"
+
     assert copied_v7.read_bytes() == v7_ledger.read_bytes()
+    assert copied_v7_report.read_bytes() == (tmp_path / "v7_report.json").read_bytes()
+    assert copied_v7_materialisation.read_bytes() == (tmp_path / "v7_materialisation_receipt.json").read_bytes()
+    assert copied_v7_runtime.read_bytes() == (tmp_path / "v7_runtime_environment.json").read_bytes()
+    assert copied_v7_pip.read_bytes() == (tmp_path / "v7_pip_freeze.txt").read_bytes()
+    assert copied_v7_runtime_freeze.read_bytes() == (tmp_path / "v7_runtime_freeze.json").read_bytes()
+    assert copied_v7_pollipi.read_bytes() == (tmp_path / "pollipi_v7_trace.jsonl").read_bytes()
+    assert copied_v7_insepi.read_bytes() == (tmp_path / "insepi_v7_trace.jsonl").read_bytes()
     assert copied_runtime.read_bytes() == runtime_manifest.read_bytes()
     assert copied_freeze.read_bytes() == pip_freeze.read_bytes()
+
     expected = {
         "orchestrator_sha": orchestrator,
         "implementation_freeze_sha256": module.sha256_file(implementation),
@@ -301,6 +400,8 @@ def test_v10_evaluation_receipt_binds_complete_execution_provenance(
         "v7_prerequisite_ledger_sha256": module.sha256_file(v7_ledger),
         "v7_prerequisite_claim_level": "B",
         "v7_prerequisite_gate_passed": False,
+        "v7_prerequisite_world_fingerprint": v7_ledger_payload["world_fingerprint"],
+        "v7_prerequisite_pixel_artifact_sha256": v7_ledger_payload["pixel_artifact_sha256"],
     }
     assert report["execution_provenance"] == expected
     for key, value in expected.items():
