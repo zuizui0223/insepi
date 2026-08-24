@@ -10,11 +10,12 @@ No PolliPi or InsePi observer output is used here.
 
 ## Why this audit exists
 
-Three implementation-independent failure modes could make a real-pixel stress test hard to interpret even before observer execution:
+Four implementation-independent failure modes could make a real-pixel stress test hard to interpret even before observer execution:
 
 1. the fixed 182/182 disturbance assignment might accidentally concentrate disturbance truth in particular source videos or temporal strata;
-2. different family/tier panels might accidentally reuse almost the same disturbed windows, reducing effective panel diversity; and
-3. a transferred perturbation operator might be effectively a no-op on real pixels, or conversely saturate most of the image.
+2. different family/tier panels might accidentally reuse almost the same disturbed windows, reducing effective panel diversity;
+3. a transferred perturbation operator might be effectively a no-op on real pixels, or conversely saturate most of the image; and
+4. an apparent intensity-tier interpretation might be stronger than the actual frozen perturbation design supports.
 
 Because the artifact was already immutable, these checks can only document those properties; they cannot trigger retuning under the same V10 generation.
 
@@ -77,8 +78,27 @@ Median paired pixel MAE is nondecreasing across the three frozen intensity tiers
 
 The largest saturation fraction in any single perturbed window is **0.03711** (3.71%). Therefore the stress test is not produced by globally clipping most pixels to 0/255. `framing_drift` has the largest pixel MAE because it relocates nearly the whole image; its tier-1 and tier-2 MAEs are close because the frozen operator uses integer pixel displacements. This is retained rather than smoothed or retuned.
 
+## Tier-geometry limitation
+
+The frozen perturbation seed includes `tier_index`. For stochastic-geometry operators, increasing the tier therefore changes both the nominal intensity and the random realization of geometry (for example glare centre/sigma or occlusion patch size), rather than applying three amplitudes to one perfectly matched geometry.
+
+This distinction is visible when asking whether each individual base window has nondecreasing pixel MAE across tiers:
+
+| Family | Windows with MAE tier0 ≤ tier1 ≤ tier2 |
+|---|---:|
+| shadow | **364/364 (100%)** |
+| occlusion | **343/364 (94.2%)** |
+| blur | **364/364 (100%)** |
+| sensor_banding | **364/364 (100%)** |
+| glare | **217/364 (59.6%)** |
+| framing_drift | **363/364 (99.7%)** |
+
+Despite this window-level variation, the median MAE is nondecreasing across tiers in **all seven source videos for every family**. Thus the frozen design supports a **distribution-level family intensity comparison**, which is also how the preregistered V10 dose-monotonicity criterion is defined (family-level median InsePi risk at each tier). It should **not** be described as a fixed-geometry, within-window dose-response experiment.
+
+In particular, a failure of InsePi risk monotonicity for glare could reflect sensitivity to the changing glare geometry as well as to nominal amplitude. Conversely, a pass supports ordered response across the frozen family-level perturbation distributions, not a stronger causal statement about amplitude alone. This limitation is retained transparently; seeds and operators are not altered post hoc.
+
 ## Interpretation boundary
 
-These diagnostics support only the statement that the frozen real-pixel artifact is non-degenerate, that the fixed panel assignments retain useful diversity, and that there is a modest but nonzero finite-sample stratum imbalance in one panel. They do **not** establish observer transfer, allocation benefit, ecological-event accuracy, or a V10 claim level.
+These diagnostics support only the statement that the frozen real-pixel artifact is non-degenerate, that the fixed panel assignments retain useful diversity, and that there are known finite-realization/design limitations: one small video×time stratum gap and tier-dependent stochastic geometry for some operators. They do **not** establish observer transfer, allocation benefit, ecological-event accuracy, or a V10 claim level.
 
 The actual V10 scientific result still requires the exact frozen V5 observer commits and must be generated only by the fail-closed manual one-shot after V7 executes first.
