@@ -16,14 +16,16 @@
     "diameter_mm": 100,
     "diameter_tolerance_mm": 2,
     "surface": "matte high-contrast dark target on a matte neutral carrier",
-    "present_in_all_no-fault, nuisance-side and shared-optical placebo phases": true,
+    "present_in_all-no-fault_nuisance-side_shared-optical_placebo_phases": true,
     "event_restore_definition": "replace the current event proxy with an otherwise matched 100-mm high-contrast standard proxy at the same target-plane location"
   },
   "development_treatments": {
     "event_side": {
       "subtype": "local_target_contrast_attenuation",
       "physical_recipe": "100-mm target at the standard target-plane location with luminance contrast attenuated by a matched neutral target/overlay; target geometry unchanged",
-      "pre_observer_physical_tolerance": "absolute target-versus-carrier luminance contrast must be 0.20-0.30 of that measured for the standard event proxy under the same illumination",
+      "contrast_fraction_of_standard_min": 0.20,
+      "contrast_fraction_of_standard_max": 0.30,
+      "contrast_reference": "absolute target-versus-carrier luminance contrast measured for the standard event proxy under the same illumination",
       "event_restore": "replace attenuated target with the standard event proxy",
       "observability_restore": "sham nuisance-neutral handling; event attenuation remains",
       "shared_restore": "sham clear optical-carrier handling; event attenuation remains"
@@ -96,6 +98,7 @@
     "measurements_are_made_without_observer_outputs": true,
     "target_dimensions": "measure before each acquisition day with ruler/caliper",
     "camera_target_distance": "measure before each scene and lock mount thereafter",
+    "target_contrast": "measure target and carrier luminance under the same illumination before each development event-side block series",
     "fan_air_speed": "measure at the background plane before each development fan block series",
     "shadow_frequency": "verify from vane controller or independent timing, not observer output",
     "shadow_illuminance": "verify with an independent light meter before each held-out shadow block series",
