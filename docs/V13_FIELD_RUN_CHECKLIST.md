@@ -1,6 +1,6 @@
 # V13 field-run checklist
 
-This is an operator checklist for the already-frozen V13 protocol. It does not change scientific semantics. The authoritative execution order remains `docs/V13_EXECUTION_ORDER.md`.
+This is an operator checklist for the already-frozen V13 protocol. It does not change scientific semantics. The authoritative execution order remains `docs/V13_EXECUTION_ORDER.md`; quantitative apparatus tolerances are authoritative in `benchmarks/v13_physical_apparatus_freeze.json`.
 
 ## Before acquisition — private operator environment
 
@@ -10,8 +10,21 @@ This is an operator checklist for the already-frozen V13 protocol. It does not c
 - [ ] Preserve `v13_randomisation_commitment.json` and its SHA-256 before recording starts.
 - [ ] Keep `v13_private_truth_ledger.csv` and the salt outside the observer/prediction environment.
 - [ ] Generate capture templates and the protected-QC annotation template.
-- [ ] Confirm the committed scientific execution digest is `f7797611eb3ca7a262554652d53f2d711bd865f487dcf56c0a13539589cc97c8`.
+- [ ] Run the execution-freeze preflight and confirm the scientific execution digest equals `benchmarks/v13_execution_freeze.json`.
 - [ ] Confirm exact observers remain PolliPi `d58d0a86034a6c2d53f90efbe4245370fd7cd2e9` and InsePi `980813bab996909020140fad5bd83b055eb3db9c`.
+
+## Apparatus calibration — before observer output exists
+
+- [ ] Lock camera-to-target plane distance at **1000 ± 20 mm** within each scene.
+- [ ] Standard event proxy = **100 ± 2 mm** matte high-contrast circular disk on a matte neutral carrier.
+- [ ] Development event-side impairment: same 100-mm geometry, target/carrier luminance contrast **0.20–0.30 × standard** under the same illumination.
+- [ ] Development nuisance-side impairment: fan-driven mechanically isolated background, air speed **1.5 ± 0.2 m/s** at the background plane.
+- [ ] Development shared-optical impairment: semi-opaque front-of-lens strip covering **0.30 ± 0.03** of canonical frame width across target and surrounding scene.
+- [ ] Held-out event-side impairment: **50 ± 2 mm** high-contrast disk at the same target-plane centre.
+- [ ] Held-out nuisance-side impairment: moving shadow **0.50 ± 0.05 Hz**; trough illuminance **0.60 ± 0.10 × unshadowed**.
+- [ ] Held-out shared-optical impairment: full-aperture diffusion filter with visible transmittance **0.70 ± 0.10**.
+- [ ] Make these physical measurements without consulting PolliPi/InsePi outputs.
+- [ ] If a specified subtype/tolerance is infeasible, stop before acquisition rather than substituting another subtype under V13.
 
 ## Per physical block
 
@@ -29,6 +42,14 @@ This is an operator checklist for the already-frozen V13 protocol. It does not c
 - [ ] Mark any operator/protocol deviation immediately; do not repair it post hoc after observer output.
 - [ ] Mark block complete only when all four phase clips and metadata are present.
 
+## Intervention semantics
+
+- [ ] `event_restore`: replace current event proxy with the matched 100-mm standard target at the same location; unrelated nuisance/optical state remains unchanged.
+- [ ] `observability_restore`: neutralise the nuisance source only; target and shared-optical state remain unchanged.
+- [ ] `shared_restore`: replace the occluding/diffusing carrier with the matched clear carrier only.
+- [ ] In no-fault blocks, use matched sham handling: identical standard target, nuisance remains off, identical clear carrier.
+- [ ] After every active phase, restore the original latent placebo state before the next active phase.
+
 ## Acquisition totals
 
 - [ ] Development: 108 blocks = 3 dates × 3 physical scenes × 4 classes × 3 replicates.
@@ -43,7 +64,7 @@ This is an operator checklist for the already-frozen V13 protocol. It does not c
 - [ ] Run `v13_validate_capture_logs.py`; require PASS.
 - [ ] Run `v13_validate_field_bundle.py` with clip-byte validation; require PASS.
 - [ ] Verify all 720 clip hashes are preserved.
-- [ ] Run the exact-observer smoke gate; require exact commit and frame-index checks to pass.
+- [ ] Run the exact-observer smoke gate; require exact commit, software-separation and frame-index checks to pass.
 - [ ] Do not expose latent treatment class, subtype, treatment-success notes, private salt, or held-out truth to observer execution.
 
 ## Truth-free observation stage
@@ -93,6 +114,7 @@ Stop the V13 generation rather than silently repairing it if any of these occur:
 - cumulative intervention or failed baseline restoration;
 - development/held-out date or scene overlap;
 - fewer/more than six held-out physical clusters;
+- apparatus outside frozen tolerance without a declared pre-observer deviation;
 - latent treatment leakage into observer/prediction inputs;
 - prediction file changes after commitment;
 - held-out truth is read before prediction commitment;
