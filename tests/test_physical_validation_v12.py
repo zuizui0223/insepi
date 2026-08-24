@@ -6,6 +6,7 @@ import pytest
 
 from interaction_sensing.physical_validation_v12 import (
     PhysicalBlock,
+    _opaque_trial_id,
     build_trial_plan,
     intervention_truth,
     observer_manifest,
@@ -73,6 +74,16 @@ def test_v12_randomised_order_is_unique_within_block() -> None:
         assert sorted(orders) == list(range(len(orders)))
 
 
+def test_v12_trial_id_depends_on_neutral_slot_not_treatment_tuple() -> None:
+    trials = plan()
+    for trial in trials:
+        assert trial.trial_id == _opaque_trial_id(SEED, trial.block_id, trial.randomised_order)
+        # Observer id itself carries no readable treatment/family/intensity token.
+        assert trial.disturbance_family not in trial.trial_id
+        assert trial.intensity_label not in trial.trial_id
+        assert trial.block_id not in trial.trial_id
+
+
 def test_v12_observer_manifest_contains_no_intervention_or_split_truth() -> None:
     trials = plan()
     clips = {trial.trial_id: (f"clips/{trial.trial_id}.mp4", "12" * 32) for trial in trials}
@@ -85,6 +96,18 @@ def test_v12_observer_manifest_contains_no_intervention_or_split_truth() -> None
     for row in manifest:
         assert forbidden.isdisjoint(row.__dataclass_fields__)
         assert row.trial_id in clips
+
+
+def test_v12_observer_manifest_rejects_descriptive_truth_leaking_filename() -> None:
+    trials = plan()
+    clips = {trial.trial_id: (f"clips/{trial.trial_id}.mp4", "12" * 32) for trial in trials}
+    first = trials[0]
+    clips[first.trial_id] = (
+        f"clips/{first.trial_id}-{first.disturbance_family}-E{first.event_intervention}.mp4",
+        "12" * 32,
+    )
+    with pytest.raises(ValueError, match="opaque trial id"):
+        observer_manifest(trials, clips)
 
 
 def test_v12_truth_is_joined_separately_by_trial_id() -> None:
