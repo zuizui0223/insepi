@@ -8,6 +8,15 @@ import json
 from pathlib import Path
 import shutil
 import subprocess
+import sys
+
+# Keep this script importable through importlib in contract tests as well as
+# executable via ``python scripts/v10_evaluate_locked.py``.  The prerequisite
+# verifier remains an external orchestration helper rather than scientific
+# observer code.
+SCRIPT_DIR = Path(__file__).resolve().parent
+if str(SCRIPT_DIR) not in sys.path:
+    sys.path.insert(0, str(SCRIPT_DIR))
 
 from interaction_sensing.simulation.v10_evaluator import evaluate_v10
 from v10_verify_v7_prerequisite import verify as verify_v7_prerequisite
