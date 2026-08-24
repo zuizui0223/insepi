@@ -1,0 +1,84 @@
+{
+  "schema": "interaction-sensing-v12-causal-intervention-result-summary-v1",
+  "status": "canonical-first-run-frozen",
+  "workflow_run_id": 32702686586,
+  "workflow_artifact_id": 9511107739,
+  "workflow_artifact_zip_sha256": "bc34a59f298e13da36fc3d2d1333c638ce0ac5f5af274197af777247095c7d50",
+  "protocol_sha256": "50c26e86af83e460f244c8c3b5a89bc6f62914fb043a9ff0f2738161c92935b8",
+  "result_sha256": "7879cb05359eb45df76b8f9b77b3d2b412d0ae1d85e2315cb5a5c38299986222",
+  "runtime": {"python": "3.11.16", "numpy": "2.4.6"},
+  "byte_determinism": {"pythonhashseed_12_vs_1201": true},
+  "pre_result_contract_tests_passed": 19,
+  "claim": {"level": "B", "label": "conditional_causal_identification_advantage"},
+  "strategies": {
+    "interventional_dual_observer": {
+      "heldout_localisation_accuracy_budget2": 0.9858333333333333,
+      "heldout_full_battery_localisation_accuracy": 0.9947222222222222,
+      "shared_representation_recall_budget2": 0.9722222222222222,
+      "no_fault_false_intervention_rate_budget2": 0.008888888888888889,
+      "wrong_module_intervention_rate_budget2": 0.015925925925925927,
+      "accuracy_after_one_intervention": 0.9608333333333333,
+      "mean_active_interventions_to_stable_correct_diagnosis": 1.0108333333333333,
+      "heldout_repair_positive_transfer_rate": 0.9962962962962963,
+      "heldout_repair_relative_loss_reduction": 0.7903238909185754
+    },
+    "early_scalar_fusion": {
+      "heldout_localisation_accuracy_budget2": 0.9658333333333333,
+      "heldout_full_battery_localisation_accuracy": 0.9911111111111112,
+      "shared_representation_recall_budget2": 0.9311111111111111,
+      "no_fault_false_intervention_rate_budget2": 0.006666666666666667,
+      "wrong_module_intervention_rate_budget2": 0.043333333333333335,
+      "accuracy_after_one_intervention": 0.7366666666666667,
+      "mean_active_interventions_to_stable_correct_diagnosis": 1.261388888888889,
+      "heldout_repair_positive_transfer_rate": 0.9896296296296296,
+      "heldout_repair_relative_loss_reduction": 0.7737251443927248
+    },
+    "event_only": {
+      "heldout_localisation_accuracy_budget2": 0.8766666666666667,
+      "heldout_full_battery_localisation_accuracy": 0.8730555555555556,
+      "shared_representation_recall_budget2": 0.9766666666666667,
+      "no_fault_false_intervention_rate_budget2": 0.22777777777777777,
+      "wrong_module_intervention_rate_budget2": 0.08851851851851852,
+      "accuracy_after_one_intervention": 0.7652777777777777,
+      "mean_active_interventions_to_stable_correct_diagnosis": 1.5327777777777778,
+      "heldout_repair_positive_transfer_rate": 0.9662962962962963,
+      "heldout_repair_relative_loss_reduction": 0.7359495689657084
+    },
+    "observability_only": {
+      "heldout_localisation_accuracy_budget2": 0.8772222222222222,
+      "heldout_full_battery_localisation_accuracy": 0.8747222222222222,
+      "shared_representation_recall_budget2": 0.9777777777777777,
+      "no_fault_false_intervention_rate_budget2": 0.2311111111111111,
+      "wrong_module_intervention_rate_budget2": 0.08666666666666667,
+      "accuracy_after_one_intervention": 0.7794444444444445,
+      "mean_active_interventions_to_stable_correct_diagnosis": 1.5108333333333333,
+      "heldout_repair_positive_transfer_rate": 0.9611111111111111,
+      "heldout_repair_relative_loss_reduction": 0.7351775971151296
+    }
+  },
+  "dual_class_accuracy": {
+    "event_module": 0.9855555555555555,
+    "observability_module": 0.9944444444444445,
+    "shared_representation": 0.9722222222222222,
+    "no_fault": 0.9911111111111112
+  },
+  "dual_audit_stratified_accuracy": {
+    "audited": 0.9942987457240593,
+    "unaudited": 0.9831068674256335
+  },
+  "dual_intervention_pattern": {
+    "first": {"audit_stop": 222, "event_restore": 0, "observability_restore": 0, "shared_restore": 3378},
+    "second": {"audit_stop": 222, "event_restore": 1394, "observability_restore": 1984, "shared_restore": 0}
+  },
+  "locked_interpretation": [
+    "Controlled causal interventions reversed the V11 non-identifiability problem: all multi-channel representations became highly accurate across held-out mechanism subtypes.",
+    "The dual-channel representation did not meet the preregistered +0.10 advantage required for claim A because early scalar fusion also reached 0.9658 after two interventions.",
+    "The clearest distinct-channel advantage was diagnostic efficiency: 0.9608 accuracy after one active intervention versus 0.7367 for early fusion, with fewer interventions to stable diagnosis and fewer wrong-module repairs.",
+    "Protected audit is not sufficient to explain the dual result because unaudited dual accuracy remained 0.9831.",
+    "V12 establishes conditional causal identifiability in the preregistered synthetic intervention topology; it is not a physical validation and cannot rescue V7 or V11."
+  ],
+  "historical_results_retained": {
+    "v7": {"gate": "FAIL", "claim_level": "C"},
+    "v11": {"claim_level": "D", "result_sha256": "654d0be81c459f11d35b37ca91fa7251f395e352a31f44993384bac92b1107c1"}
+  }
+}
