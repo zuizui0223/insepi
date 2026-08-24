@@ -1,0 +1,76 @@
+{
+  "schema": "interaction-sensing-v13-physical-phase-contract-v1",
+  "status": "pre-field-frozen",
+  "paired_counterfactual_rule": {
+    "active_interventions_are_cumulative": false,
+    "each_active_phase_starts_from_same_latent_treatment_baseline": true,
+    "washout_restores_latent_treatment_before_next_active_phase": true,
+    "all_delta_responses_use_same_placebo_reference_within_block": true,
+    "abort_block_if_latent_baseline_cannot_be_restored": true
+  },
+  "timing": {
+    "placebo_seconds": 10,
+    "active_phase_seconds": 10,
+    "washout_seconds": 5,
+    "discard_initial_seconds_per_recorded_phase": 2,
+    "summary_statistic": "median observer score over remaining within-phase repeated measurements"
+  },
+  "development_operationalisation": {
+    "event_side": {
+      "latent_impairment": "target-only contrast attenuation",
+      "event_restore": "remove target-only attenuation or replace with canonical high-visibility target while leaving nuisance/optical state unchanged",
+      "observability_restore": "neutralise nuisance source only; target attenuation remains",
+      "shared_restore": "remove shared optical element only; target attenuation remains"
+    },
+    "nuisance_side": {
+      "latent_impairment": "fan-driven background or vegetation motion",
+      "event_restore": "canonical local target reference while fan treatment remains active",
+      "observability_restore": "fan treatment off while event target and shared optical state remain unchanged",
+      "shared_restore": "remove shared optical element only while fan treatment remains active"
+    },
+    "shared_optical": {
+      "latent_impairment": "partial optical occlusion affecting target and scene",
+      "event_restore": "canonical local target reference introduced without removing optical occluder",
+      "observability_restore": "neutralise nuisance source without removing optical occluder",
+      "shared_restore": "remove the optical occluder while event/nuisance conditions remain unchanged"
+    },
+    "no_fault": {
+      "latent_impairment": "none",
+      "event_restore": "canonical event reference control",
+      "observability_restore": "matched nuisance-neutral control",
+      "shared_restore": "matched optical-handling control"
+    }
+  },
+  "heldout_operationalisation": {
+    "event_side": {
+      "latent_impairment": "target scale or visibility shift",
+      "event_restore": "return target to canonical development-independent reference size/visibility",
+      "observability_restore": "neutralise heldout nuisance source only",
+      "shared_restore": "remove heldout shared optical element only"
+    },
+    "nuisance_side": {
+      "latent_impairment": "moving shadow or controlled illumination nuisance",
+      "event_restore": "canonical local target reference while lighting nuisance remains",
+      "observability_restore": "stop or neutralise the lighting nuisance without changing target or shared optical state",
+      "shared_restore": "remove shared optical element only while lighting nuisance remains"
+    },
+    "shared_optical": {
+      "latent_impairment": "glare or diffusion filter",
+      "event_restore": "canonical local target reference without removing glare/diffusion condition",
+      "observability_restore": "neutralise nuisance source without removing glare/diffusion condition",
+      "shared_restore": "remove glare/diffusion condition while target/nuisance states remain unchanged"
+    },
+    "no_fault": {
+      "latent_impairment": "none on new day/scene",
+      "event_restore": "canonical event reference control",
+      "observability_restore": "matched nuisance-neutral control",
+      "shared_restore": "matched optical-handling control"
+    }
+  },
+  "operator_blinding_boundary": {
+    "operator_knows_physical_treatment": true,
+    "observer_algorithm_does_not": true,
+    "heldout_evaluator_truth_join_occurs_after_predictions": true,
+    "operator_may_not_change_phase_order_or_treatment_after_viewing_observer_output": true
+  }
+}
