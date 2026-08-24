@@ -50,7 +50,7 @@ def main() -> None:
         raise SystemExit("V13 observer plan must contain 180 opaque blocks")
 
     block_fields = [
-        "block_id", "split", "recording_date_local", "operator_code",
+        "block_id", "split", "recording_date_local", "physical_scene_code", "operator_code",
         "device_id", "firmware_version", "lens_id", "mount_id",
         "width", "height", "fps", "exposure_mode", "exposure_us",
         "analogue_gain", "focus_mode", "lens_position",
@@ -65,6 +65,7 @@ def main() -> None:
             "block_id": block_id,
             "split": next(iter(splits)),
             "recording_date_local": "",
+            "physical_scene_code": "",
             "operator_code": "",
             "device_id": "",
             "firmware_version": "",
