@@ -1,8 +1,8 @@
 """Blinded V13 block-level prediction and post-truth evaluation.
 
 Prediction accepts held-out response vectors but no held-out treatment labels.
-Treatment truth is joined only by ``evaluate_predictions`` after the prediction
-ledger has been emitted/frozen by the calling workflow.
+Treatment truth and actual physical day/scene clusters are joined only by
+``evaluate_predictions`` after the prediction ledger has been emitted/frozen.
 """
 from __future__ import annotations
 
@@ -54,8 +54,8 @@ class HeldoutPrediction:
 class HeldoutTruth:
     block_id: str
     treatment_class: str
-    day_id: str
-    scene_id: str
+    recording_date_local: str
+    physical_scene_code: str
 
 
 @dataclass(frozen=True, slots=True)
@@ -234,19 +234,20 @@ def evaluate_predictions(
     heldout_truth: Sequence[HeldoutTruth],
     qc_annotations: Sequence[QcAnnotation],
 ) -> dict[str, object]:
-    """Join held-out truth only after prediction emission."""
+    """Join held-out class truth and actual physical clusters only after prediction emission."""
     truth_by_id = {row.block_id: row for row in heldout_truth}
     if len(truth_by_id) != len(heldout_truth):
         raise ValueError("duplicate held-out truth block id")
     if any(row.treatment_class not in CLASSES for row in heldout_truth):
         raise ValueError("held-out truth contains an unknown treatment class")
+    if any(not row.recording_date_local or not row.physical_scene_code for row in heldout_truth):
+        raise ValueError("held-out truth lacks actual physical cluster metadata")
 
     expected_pairs = {(block_id, strategy) for block_id in truth_by_id for strategy in STRATEGIES}
     prediction_pairs = {(row.block_id, row.strategy) for row in predictions}
     if prediction_pairs != expected_pairs or len(predictions) != len(expected_pairs):
         raise ValueError("prediction ledger does not contain exactly four strategies for every held-out block")
 
-    qc_by_id = {row.block_id: row for row in qc_annotations}
     protected = [row for row in qc_annotations if row.protected_qc]
     gross_qc_violation = any(row.gross_protocol_violation for row in protected)
     violation_rate = (
@@ -280,10 +281,14 @@ def evaluate_predictions(
                 no_fault_false.append(row.predicted_class_budget2 != "no_fault")
             else:
                 fault_wrong.append(not is_correct)
-            by_cluster.setdefault((truth.day_id, truth.scene_id), []).append(is_correct)
+            by_cluster.setdefault(
+                (truth.recording_date_local, truth.physical_scene_code), []
+            ).append(is_correct)
         cluster_scores = {key: sum(values) / len(values) for key, values in by_cluster.items()}
         if len(cluster_scores) != int(protocol["analysis"]["heldout_cluster_count"]):
-            raise ValueError(f"expected six held-out day_x_scene clusters, got {len(cluster_scores)}")
+            raise ValueError(f"expected six held-out physical day_x_scene clusters, got {len(cluster_scores)}")
+        if any(len(values) != 12 for values in by_cluster.values()):
+            raise ValueError("each held-out physical day_x_scene cluster must contain exactly 12 blocks")
         ci_lo, ci_hi = _cluster_bootstrap_accuracy(
             cluster_scores,
             resamples=int(bootstrap["resamples"]),
@@ -302,7 +307,7 @@ def evaluate_predictions(
             "full_battery_localisation_accuracy": sum(full_correct) / len(full_correct),
         }
         clusters_out[strategy] = {
-            f"{day}|{scene}": score for (day, scene), score in sorted(cluster_scores.items())
+            f"{date}|{scene}": score for (date, scene), score in sorted(cluster_scores.items())
         }
 
     level, label = _claim(summaries, gross_qc_violation)
@@ -311,6 +316,7 @@ def evaluate_predictions(
         "protocol_sha256": protocol_sha256(),
         "prediction_ledger_sha256": prediction_ledger_sha256(predictions),
         "heldout_block_count": len(truth_by_id),
+        "cluster_identity_source": "completed capture log: recording_date_local x physical_scene_code",
         "protected_qc_annotation_count": len(protected),
         "protected_qc_protocol_violation_rate": violation_rate,
         "gross_qc_violation": gross_qc_violation,
