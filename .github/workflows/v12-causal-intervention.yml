@@ -1,21 +1,13 @@
-name: V12 causal intervention development
+name: V12 causal intervention reproducibility
 
 on:
-  pull_request:
-    paths:
-      - "benchmarks/v12_causal_intervention_protocol.json"
-      - "src/interaction_sensing/simulation/causal_intervention_v12.py"
-      - "tests/test_causal_intervention_v12.py"
-      - "scripts/run_v12_causal_intervention.py"
-      - "docs/V12_PRE_RESULT_FREEZE.md"
-      - ".github/workflows/v12-causal-intervention.yml"
   workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
-  frozen-v12:
+  reproduce-v12:
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
@@ -36,22 +28,24 @@ jobs:
           print('V12_PINNED_RUNTIME PASS', platform.python_version(), np.__version__)
           PY
 
-      - name: Verify pre-result protocol and implementation contracts
+      - name: Verify frozen canonical identities and contracts
         run: |
           python - <<'PY'
           import json
           p=json.load(open('benchmarks/v12_causal_intervention_protocol.json'))
+          s=json.load(open('benchmarks/v12_causal_intervention_result_summary.json'))
           assert p['status']=='pre-result-frozen'
-          assert p['historical_boundaries']['v7_locked_gate']=='FAIL'
-          assert p['historical_boundaries']['v11_locked_claim_level']=='D'
-          assert p['historical_boundaries']['v11_result_sha256']=='654d0be81c459f11d35b37ca91fa7251f395e352a31f44993384bac92b1107c1'
-          assert p['interventions']['active_intervention_budget']==2
-          assert p['common_diagnostic_algorithm']['same_algorithm_for_all_representations'] is True
-          print('V12_PRE_RESULT_PROTOCOL PASS')
+          assert s['status']=='canonical-first-run-frozen'
+          assert s['protocol_sha256']=='50c26e86af83e460f244c8c3b5a89bc6f62914fb043a9ff0f2738161c92935b8'
+          assert s['result_sha256']=='7879cb05359eb45df76b8f9b77b3d2b412d0ae1d85e2315cb5a5c38299986222'
+          assert s['claim']=={'level':'B','label':'conditional_causal_identification_advantage'}
+          assert s['historical_results_retained']['v7']=={'gate':'FAIL','claim_level':'C'}
+          assert s['historical_results_retained']['v11']['claim_level']=='D'
+          print('V12_CANONICAL_IDENTITY PASS')
           PY
           pytest -q tests/test_causal_intervention_v12.py
 
-      - name: Run frozen V12 twice under distinct hash seeds
+      - name: Reproduce frozen V12 twice under distinct hash seeds
         env:
           PYTHONPATH: src
         run: |
@@ -59,38 +53,24 @@ jobs:
           PYTHONHASHSEED=12 python scripts/run_v12_causal_intervention.py --output .v12/a/v12_result.json | tee .v12/a/console.txt
           PYTHONHASHSEED=1201 python scripts/run_v12_causal_intervention.py --output .v12/b/v12_result.json | tee .v12/b/console.txt
 
-      - name: Require byte-identical result and preserve first canonical copy
+      - name: Require canonical byte identity
         run: |
+          expected="7879cb05359eb45df76b8f9b77b3d2b412d0ae1d85e2315cb5a5c38299986222"
           sha_a="$(sha256sum .v12/a/v12_result.json | awk '{print $1}')"
           sha_b="$(sha256sum .v12/b/v12_result.json | awk '{print $1}')"
-          test "$sha_a" = "$sha_b" || { echo "V12 result nondeterminism: $sha_a != $sha_b"; exit 1; }
-          mkdir -p .v12/canonical
-          cp .v12/a/v12_result.json .v12/canonical/
-          cp .v12/a/console.txt .v12/canonical/
-          cp benchmarks/v12_causal_intervention_protocol.json .v12/canonical/
-          cp docs/V12_PRE_RESULT_FREEZE.md .v12/canonical/
-          printf '%s\n' "$sha_a" > .v12/canonical/result_sha256.txt
-          echo "V12_BYTE_DETERMINISM PASS $sha_a"
-
-      - name: Summarize frozen V12
-        run: |
-          python - <<'PY' >> "$GITHUB_STEP_SUMMARY"
-          import json
-          r=json.load(open('.v12/canonical/v12_result.json'))
-          print('# V12 controlled causal intervention benchmark')
-          print()
-          print(f"- Claim: **{r['claim']['level']}** — `{r['claim']['label']}`")
-          for name,m in r['strategies'].items():
-              print(f"- {name}: localisation `{m['heldout_localisation_accuracy_budget2']:.3f}`, full battery `{m['heldout_full_battery_localisation_accuracy']:.3f}`, shared `{m['shared_representation_recall_budget2']:.3f}`, wrong `{m['wrong_module_intervention_rate_budget2']:.3f}`, repair+ `{m['heldout_repair_positive_transfer_rate']:.3f}`")
-          print('- V7 retained: **FAIL/C**')
-          print('- V11 retained: **FAIL/D**')
-          print('- V6 weights changed: **false**')
-          print('- V10 changed: **false**')
-          PY
+          test "$sha_a" = "$sha_b" || { echo "V12 nondeterminism: $sha_a != $sha_b"; exit 1; }
+          test "$sha_a" = "$expected" || { echo "V12 canonical drift: $sha_a != $expected"; exit 1; }
+          mkdir -p .v12/reproduction
+          cp .v12/a/v12_result.json .v12/reproduction/
+          cp .v12/a/console.txt .v12/reproduction/
+          cp benchmarks/v12_causal_intervention_protocol.json .v12/reproduction/
+          cp benchmarks/v12_causal_intervention_result_summary.json .v12/reproduction/
+          cp docs/V12_RESULT.md .v12/reproduction/
+          echo "V12_CANONICAL_REPRODUCTION PASS $sha_a"
 
       - uses: actions/upload-artifact@v4
         with:
-          name: v12-causal-intervention-first-run
-          path: .v12/canonical/
+          name: v12-causal-intervention-reproduction
+          path: .v12/reproduction/
           if-no-files-found: error
           retention-days: 90
