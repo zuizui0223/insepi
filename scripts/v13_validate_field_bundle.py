@@ -126,7 +126,7 @@ def validate(
         "protected_qc_block_count": sum(int(row["protected_qc"]) for row in private_rows),
         "clip_count": len(clip_hashes),
         "clip_sha256": clip_hashes,
-        "truth_leakage_detected": false if False else False,
+        "truth_leakage_detected": False,
     }
     if output_receipt is not None:
         output_receipt.parent.mkdir(parents=True, exist_ok=True)
