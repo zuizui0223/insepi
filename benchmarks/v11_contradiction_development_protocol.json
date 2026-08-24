@@ -19,21 +19,11 @@
   "truth_axes": {
     "biological_event": [0, 1],
     "observation_disturbance": [0, 1],
-    "factorial_states": [
-      "clean_absence",
-      "clean_event",
-      "nuisance_only",
-      "event_plus_nuisance"
-    ]
+    "factorial_states": ["clean_absence", "clean_event", "nuisance_only", "event_plus_nuisance"]
   },
   "diagnostic_states": {
     "threshold": 0.5,
-    "states": [
-      "evidence_high_observability_low",
-      "evidence_low_observability_high",
-      "both_high",
-      "both_low"
-    ],
+    "states": ["evidence_high_observability_low", "evidence_low_observability_high", "both_high", "both_low"],
     "interpretation": {
       "evidence_high_observability_low": "comparatively observable event evidence",
       "evidence_low_observability_high": "observation-failure or missed-event-risk hypothesis",
@@ -43,12 +33,7 @@
     "disagreement_is_truth": false,
     "disagreement_is_direct_acquisition_score": false
   },
-  "failure_classes": [
-    "event_module",
-    "observability_module",
-    "shared_representation",
-    "no_fault"
-  ],
+  "failure_classes": ["event_module", "observability_module", "shared_representation", "no_fault"],
   "mechanisms": {
     "development": {
       "event_module": "event_contrast_loss",
@@ -89,26 +74,10 @@
     "no_post_result_tuning": true
   },
   "strategies": {
-    "event_only": {
-      "visible_channels": ["evidence"],
-      "audit_truth": ["event_if_protected"],
-      "early_fusion": false
-    },
-    "observability_only": {
-      "visible_channels": ["observability"],
-      "audit_truth": ["disturbance_if_protected"],
-      "early_fusion": false
-    },
-    "early_scalar_fusion": {
-      "visible_channels": ["0.5*evidence + 0.5*observability"],
-      "audit_truth": ["max(event,disturbance)_if_protected"],
-      "early_fusion": true
-    },
-    "contradiction_guided": {
-      "visible_channels": ["evidence", "observability", "diagnostic_state"],
-      "audit_truth": ["event_if_protected", "disturbance_if_protected", "both_low_shared_miss_indicator"],
-      "early_fusion": false
-    }
+    "event_only": {"visible_channels": ["evidence"], "audit_truth": ["event_if_protected"], "early_fusion": false},
+    "observability_only": {"visible_channels": ["observability"], "audit_truth": ["disturbance_if_protected"], "early_fusion": false},
+    "early_scalar_fusion": {"visible_channels": ["0.5*evidence + 0.5*observability"], "audit_truth": ["max(event,disturbance)_if_protected"], "early_fusion": true},
+    "contradiction_guided": {"visible_channels": ["evidence", "observability", "diagnostic_state"], "audit_truth": ["event_if_protected", "disturbance_if_protected", "both_low_shared_miss_indicator"], "early_fusion": false}
   },
   "classifier": {
     "type": "nearest-centroid",
@@ -118,15 +87,7 @@
     "tie_break": "lexicographic failure-class name",
     "no_hyperparameter_search": true
   },
-  "primary_metrics": [
-    "heldout_failure_localisation_accuracy",
-    "wrong_module_intervention_rate",
-    "shared_blindspot_discovery_rate",
-    "no_fault_false_intervention_rate",
-    "experiments_to_stable_falsification",
-    "heldout_repair_positive_transfer_rate",
-    "heldout_repair_relative_loss_reduction"
-  ],
+  "primary_metrics": ["heldout_failure_localisation_accuracy", "wrong_module_intervention_rate", "shared_blindspot_discovery_rate", "no_fault_false_intervention_rate", "experiments_to_stable_falsification", "heldout_repair_positive_transfer_rate", "heldout_repair_relative_loss_reduction"],
   "experiments_to_stable_falsification": {
     "definition": "smallest prefix length k in 1..6 for which the diagnosis is correct and remains correct for every longer prefix; use 7 if no stable correct diagnosis occurs",
     "same_probe_order_for_all_strategies": true
@@ -137,25 +98,15 @@
     "repair_is_selected_from_predicted_failure_class": true,
     "loss": "mean of squared evidence error to event truth and squared observability error to disturbance truth across the six fixed probes",
     "positive_transfer": "post-repair heldout loss < pre-repair heldout loss",
-    "wrong_repairs_are_not_silently_clipped_to_help"
+    "wrong_repairs_are_not_silently_clipped_to_help": true
   },
   "claim_ceiling": {
     "A": {
-      "requirements": [
-        "contradiction-guided heldout localisation accuracy >= best comparator + 0.10",
-        "shared-blindspot discovery rate >= 0.80",
-        "wrong-module intervention rate <= 0.20",
-        "heldout repair positive-transfer rate >= 0.75",
-        "no-fault false-intervention rate <= 0.20"
-      ],
+      "requirements": ["contradiction-guided heldout localisation accuracy >= best comparator + 0.10", "shared-blindspot discovery rate >= 0.80", "wrong-module intervention rate <= 0.20", "heldout repair positive-transfer rate >= 0.75", "no-fault false-intervention rate <= 0.20"],
       "allowed_claim": "Preserving distinct observer hypotheses plus protected audit materially improves failure localisation and transferable repair selection over the tested single-channel and early-fusion development strategies."
     },
     "B": {
-      "requirements": [
-        "contradiction-guided heldout localisation accuracy >= best comparator",
-        "shared-blindspot discovery rate >= 0.65",
-        "heldout repair positive-transfer rate >= 0.60"
-      ],
+      "requirements": ["contradiction-guided heldout localisation accuracy >= best comparator", "shared-blindspot discovery rate >= 0.65", "heldout repair positive-transfer rate >= 0.60"],
       "allowed_claim": "Contradiction-guided development is competitive overall and improves diagnosis of shared blind spots, but the advantage is conditional."
     },
     "C": {
@@ -163,19 +114,9 @@
       "allowed_claim": "Development value is mixed or mechanism-specific; report diagnostic boundaries without a general superiority claim."
     },
     "D": {
-      "requirements": [
-        "contradiction-guided heldout localisation accuracy < best comparator - 0.05 OR shared-blindspot discovery rate < 0.50"
-      ],
+      "requirements": ["contradiction-guided heldout localisation accuracy < best comparator - 0.05 OR shared-blindspot discovery rate < 0.50"],
       "allowed_claim": "The tested contradiction-guided development protocol does not improve reliable failure localisation over simpler development strategies."
     }
   },
-  "forbidden_claims": [
-    "statistical independence of observer errors",
-    "disagreement is ground truth",
-    "disagreement should directly allocate sensing budget",
-    "universal optimality of any PolliPi/InsePi quota",
-    "field biological-event accuracy",
-    "V11 rescues or reinterprets V7",
-    "V11 substitutes for a physical held-out V12 validation"
-  ]
+  "forbidden_claims": ["statistical independence of observer errors", "disagreement is ground truth", "disagreement should directly allocate sensing budget", "universal optimality of any PolliPi/InsePi quota", "field biological-event accuracy", "V11 rescues or reinterprets V7", "V11 substitutes for a physical held-out V12 validation"]
 }
