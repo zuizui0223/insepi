@@ -43,17 +43,38 @@ def test_dummy_world_is_deterministic_but_is_not_a_validation_seed():
     assert len(first) == 64
 
 
-def test_committed_v7_manifest_is_safely_blocked():
+def test_committed_v7_manifest_is_a_safe_preexecution_state():
     manifest_path = Path("benchmarks/v7_lock_manifest.json")
     manifest = load_lock_manifest(manifest_path)
-    blockers = assert_manifest_is_safely_blocked(manifest)
-    assert len(blockers) >= 2
-    assert "master_seed_hex" not in manifest
-    assert "world_fingerprint" not in manifest
+    assert manifest["status"] in {"blocked", "ready"}
+    for key in ("master_seed_hex", "world_fingerprint", "pollipi_trace_sha256", "cross_report_sha256"):
+        assert manifest.get(key) in (None, "")
+
+    if manifest["status"] == "blocked":
+        blockers = assert_manifest_is_safely_blocked(manifest)
+        assert len(blockers) >= 2
+    else:
+        ids = manifest["frozen_inputs"]
+        frozen = validate_ready_manifest(
+            manifest,
+            # Unit-test injection only. External reachability is checked by both
+            # V7 workflows before any seed or pixel materialisation.
+            reachable_shas={
+                "pollipi_method_sha": ids["pollipi_method_sha"],
+                "insepi_method_sha": ids["insepi_method_sha"],
+            },
+            current_allocator_sha=ids["allocator_sha"],
+            current_generator_sha=ids["generator_sha"],
+            expected_world_spec_sha256=spec_fingerprint(),
+        )
+        assert frozen.pollipi_method_sha == ids["pollipi_method_sha"]
+        assert frozen.insepi_method_sha == ids["insepi_method_sha"]
 
 
 def test_blocked_manifest_cannot_validate_or_derive_final_seed():
     manifest = load_lock_manifest("benchmarks/v7_lock_manifest.json")
+    manifest["status"] = "blocked"
+    manifest["blockers"] = ["test-only external reachability blocker"]
     with pytest.raises(V7LockError, match="not ready"):
         validate_ready_manifest(
             manifest,

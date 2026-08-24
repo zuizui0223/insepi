@@ -13,10 +13,16 @@ DUMMY_POLLIPI = "1" * 40
 DUMMY_INSEPI = "2" * 40
 
 
-def test_committed_blocked_lock_cannot_materialise_v7(tmp_path):
+def test_dummy_blocked_lock_cannot_materialise_v7(tmp_path):
+    lock = tmp_path / "dummy-blocked-lock.json"
+    _write_dummy_ready_lock(lock)
+    payload = json.loads(lock.read_text(encoding="utf-8"))
+    payload["status"] = "blocked"
+    payload["blockers"] = ["test-only external reachability blocker"]
+    lock.write_text(json.dumps(payload), encoding="utf-8")
     with pytest.raises(RuntimeError, match="not ready"):
         materialise_locked_v7(
-            lock_manifest_path="benchmarks/v7_lock_manifest.json",
+            lock_manifest_path=lock,
             baseline_registry_path="benchmarks/v7_baseline_registry.json",
             npz_path=tmp_path / "v7.npz",
             artifact_manifest_path=tmp_path / "v7-artifact.json",

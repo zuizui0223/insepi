@@ -28,6 +28,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
@@ -41,18 +43,32 @@ jobs:
             tests/test_v7_evaluator.py \
             tests/test_v7_insepi_adapter.py \
             tests/test_v7_materialization.py
-      - name: Assert final V7 remains unmaterialised
+      - name: Assert safe blocked or externally reachable ready state without materialising V7
+        shell: bash
         run: |
+          set -euo pipefail
+          status="$(python -c 'import json; print(json.load(open("benchmarks/v7_lock_manifest.json"))["status"])')"
+          pollipi_tip=""
+          insepi_tip=""
+          if [ "$status" = "ready" ]; then
+            pollipi_tip="$(git ls-remote https://github.com/zuizui0223/pollipi.git refs/heads/frozen/v5-method | awk '{print $1}')"
+            insepi_tip="$(git ls-remote https://github.com/zuizui0223/insepi.git refs/heads/frozen/v5-method | awk '{print $1}')"
+          fi
+          export POLLIPI_REACHABLE_SHA="$pollipi_tip"
+          export INSEPI_REACHABLE_SHA="$insepi_tip"
+          export CURRENT_ALLOCATOR_SHA="$(git log -1 --format=%H -- src/interaction_sensing/simulation/frozen_portfolio_v6.py)"
+          export CURRENT_GENERATOR_SHA="$(git log -1 --format=%H -- src/interaction_sensing/simulation/locked_world_v7.py)"
           python - <<'PY'
+          import os
           from interaction_sensing.simulation.locked_world_v7 import spec_fingerprint
           from interaction_sensing.simulation.v7_evaluator import load_baseline_registry
           from interaction_sensing.simulation.v7_lock import (
               assert_manifest_is_safely_blocked,
               load_lock_manifest,
+              validate_ready_manifest,
           )
 
           manifest = load_lock_manifest('benchmarks/v7_lock_manifest.json')
-          blockers = assert_manifest_is_safely_blocked(manifest)
           expected = manifest['frozen_inputs']['world_spec_sha256']
           actual = spec_fingerprint()
           if actual != expected:
@@ -60,11 +76,28 @@ jobs:
           registry = load_baseline_registry('benchmarks/v7_baseline_registry.json')
           if registry['registry_sha256'] != manifest['frozen_inputs']['baseline_registry_sha256']:
               raise SystemExit('V7 baseline registry differs from lock manifest')
-          print('V7_STATUS BLOCKED_SAFE')
+          status = manifest.get('status')
+          if status == 'blocked':
+              blockers = assert_manifest_is_safely_blocked(manifest)
+              print('V7_STATUS BLOCKED_SAFE')
+              for blocker in blockers:
+                  print('V7_BLOCKER', blocker)
+          elif status == 'ready':
+              validate_ready_manifest(
+                  manifest,
+                  reachable_shas={
+                      'pollipi_method_sha': os.environ['POLLIPI_REACHABLE_SHA'],
+                      'insepi_method_sha': os.environ['INSEPI_REACHABLE_SHA'],
+                  },
+                  current_allocator_sha=os.environ['CURRENT_ALLOCATOR_SHA'],
+                  current_generator_sha=os.environ['CURRENT_GENERATOR_SHA'],
+                  expected_world_spec_sha256=actual,
+              )
+              print('V7_STATUS READY_EXTERNAL_REACHABILITY_PASS')
+          else:
+              raise SystemExit(f'unknown V7 lock status: {status}')
           print('V7_WORLD_SPEC', actual)
           print('V7_BASELINE_REGISTRY', registry['registry_sha256'])
-          for blocker in blockers:
-              print('V7_BLOCKER', blocker)
           print('V7_MASTER_SEED NOT_MATERIALISED')
           print('V7_WORLD_FINGERPRINT NOT_MATERIALISED')
           print('V7_PIXEL_ARTIFACT NOT_MATERIALISED')

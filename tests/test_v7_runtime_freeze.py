@@ -4,6 +4,7 @@ import hashlib
 import importlib.util
 import json
 from pathlib import Path
+import subprocess
 import sys
 from types import SimpleNamespace
 
@@ -61,7 +62,7 @@ def _runtime_files(tmp_path: Path):
     return runtime, pip_freeze, freeze
 
 
-def test_v7_runtime_freeze_is_pre_materialisation_and_lock_still_blocked() -> None:
+def test_v7_runtime_freeze_is_pre_materialisation_and_lock_has_no_result() -> None:
     freeze = json.loads((ROOT / "benchmarks/v7_runtime_freeze.json").read_text())
     lock = json.loads((ROOT / "benchmarks/v7_lock_manifest.json").read_text())
     assert freeze["schema"] == "pollipi-insepi-v7-runtime-freeze-v1"
@@ -73,7 +74,7 @@ def test_v7_runtime_freeze_is_pre_materialisation_and_lock_still_blocked() -> No
     assert origin["pollipi_verified_modules"] == ["pollipi_analysis", "pollipi_analysis.pipeline"]
     assert "interaction_sensing.noise" in origin["insepi_verified_modules"]
     assert "sys.modules" in origin["module_cache_rule"]
-    assert lock["status"] == "blocked"
+    assert lock["status"] in {"blocked", "ready"}
     for key in ("master_seed_hex", "world_fingerprint", "pollipi_trace_sha256", "cross_report_sha256"):
         assert lock.get(key) in (None, "")
 
@@ -81,10 +82,15 @@ def test_v7_runtime_freeze_is_pre_materialisation_and_lock_still_blocked() -> No
 def test_v7_frozen_observer_runner_blobs_match_runtime_freeze() -> None:
     freeze = json.loads((ROOT / "benchmarks/v7_runtime_freeze.json").read_text())
     for relative, expected in freeze["execution_file_git_blob_sha1"].items():
-        payload = (ROOT / relative).read_bytes()
-        # Git blob SHA-1 = SHA1("blob <len>\\0" + payload).
-        header = f"blob {len(payload)}\0".encode()
-        actual = hashlib.sha1(header + payload).hexdigest()  # noqa: S324 - Git object identity, not security.
+        # Ask Git to apply the repository's clean filters so a Windows CRLF
+        # checkout verifies the same canonical blob as the Linux one-shot run.
+        actual = subprocess.run(
+            ["git", "hash-object", relative],
+            cwd=ROOT,
+            check=True,
+            capture_output=True,
+            text=True,
+        ).stdout.strip()
         assert actual == expected
 
 
