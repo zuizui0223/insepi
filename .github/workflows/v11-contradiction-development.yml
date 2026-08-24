@@ -1,14 +1,10 @@
 name: V11 contradiction-guided development
 
+# Canonical first result already exists (run 32696262650, result SHA-256
+# 654d0be81c459f11d35b37ca91fa7251f395e352a31f44993384bac92b1107c1).
+# Keep this workflow manual-only so later documentation/diagnostic changes cannot
+# be mistaken for repeated scientific exploration.
 on:
-  pull_request:
-    paths:
-      - "benchmarks/v11_contradiction_development_protocol.json"
-      - "docs/V11_PRE_RESULT_FREEZE.md"
-      - "src/interaction_sensing/simulation/contradiction_development_v11.py"
-      - "scripts/run_v11_contradiction_development.py"
-      - "tests/test_contradiction_development_v11.py"
-      - ".github/workflows/v11-contradiction-development.yml"
   workflow_dispatch:
 
 permissions:
@@ -33,56 +29,33 @@ jobs:
           assert np.__version__ == '2.4.6'
           print('V11_PINNED_RUNTIME PASS', platform.python_version(), np.__version__)
           PY
-      - name: Verify pre-result contracts before result generation
+      - name: Verify frozen protocol and canonical-result identity
         run: |
           python - <<'PY'
           import json
           p=json.load(open('benchmarks/v11_contradiction_development_protocol.json'))
+          r=json.load(open('benchmarks/v11_contradiction_development_result_summary.json'))
           assert p['status']=='pre-result-frozen'
-          assert p['simulation']['development_replicates_per_mechanism_intensity']==300
-          assert p['simulation']['heldout_replicates_per_mechanism_intensity']==300
-          assert p['prior_result_boundary']['v7_gate']=='FAIL'
-          assert p['prior_result_boundary']['v7_claim_level']=='C'
-          assert p['non_interference']['direct_disagreement_allocation_restored'] is False
-          print('V11_PRE_RESULT_PROTOCOL PASS')
+          assert r['status']=='canonical-first-run-frozen'
+          assert r['workflow_run_id']==32696262650
+          assert r['protocol_sha256']=='af358226f4afccff3bb148e90a30c5fe9a25c2170d3f223497a22fb3dd685080'
+          assert r['result_sha256']=='654d0be81c459f11d35b37ca91fa7251f395e352a31f44993384bac92b1107c1'
+          assert r['claim']=={'level':'D','label':'no_general_localisation_advantage'}
+          print('V11_CANONICAL_NEGATIVE_RESULT_FROZEN PASS')
           PY
           pytest -q tests/test_contradiction_development_v11.py
-      - name: Run frozen V11 twice under distinct hash seeds
+      - name: Re-run only as explicit reproducibility check
         env:
           PYTHONPATH: src
         run: |
           mkdir -p .v11/a .v11/b
           PYTHONHASHSEED=11 python scripts/run_v11_contradiction_development.py --output .v11/a/v11_result.json | tee .v11/a/console.txt
           PYTHONHASHSEED=97 python scripts/run_v11_contradiction_development.py --output .v11/b/v11_result.json | tee .v11/b/console.txt
-      - name: Require byte-identical result and preserve canonical copy
+      - name: Require exact canonical identity
         run: |
+          expected="654d0be81c459f11d35b37ca91fa7251f395e352a31f44993384bac92b1107c1"
           sha_a="$(sha256sum .v11/a/v11_result.json | awk '{print $1}')"
           sha_b="$(sha256sum .v11/b/v11_result.json | awk '{print $1}')"
-          test "$sha_a" = "$sha_b" || { echo "V11 result nondeterminism: $sha_a != $sha_b"; exit 1; }
-          mkdir -p .v11/canonical
-          cp .v11/a/v11_result.json .v11/canonical/
-          cp .v11/a/console.txt .v11/canonical/
-          cp benchmarks/v11_contradiction_development_protocol.json .v11/canonical/
-          cp docs/V11_PRE_RESULT_FREEZE.md .v11/canonical/
-          printf '%s\n' "$sha_a" > .v11/canonical/result_sha256.txt
-          echo "V11_BYTE_DETERMINISM PASS $sha_a"
-      - name: Summarize frozen V11
-        run: |
-          python - <<'PY' >> "$GITHUB_STEP_SUMMARY"
-          import json
-          r=json.load(open('.v11/canonical/v11_result.json'))
-          print('# V11 contradiction-guided development')
-          print()
-          print(f"- Claim: **{r['claim']['level']}** — `{r['claim']['label']}`")
-          for name,m in r['strategies'].items():
-              print(f"- {name}: localisation `{m['heldout_failure_localisation_accuracy']:.3f}`, shared blind spot `{m['shared_blindspot_discovery_rate']:.3f}`, wrong intervention `{m['wrong_module_intervention_rate']:.3f}`, repair+ `{m['heldout_repair_positive_transfer_rate']:.3f}`")
-          print('- V7 retained: **FAIL / C**')
-          print('- V6 weights changed: **false**')
-          print('- V10 changed: **false**')
-          PY
-      - uses: actions/upload-artifact@v4
-        with:
-          name: v11-contradiction-development-first-run
-          path: .v11/canonical/
-          if-no-files-found: error
-          retention-days: 90
+          test "$sha_a" = "$expected" || { echo "V11 canonical drift: $sha_a"; exit 1; }
+          test "$sha_b" = "$expected" || { echo "V11 canonical drift: $sha_b"; exit 1; }
+          echo "V11_CANONICAL_REPRODUCIBILITY PASS $expected"
