@@ -12,13 +12,17 @@ import pytest
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def _load_evaluator_script():
-    path = ROOT / "scripts/v7_evaluate_locked.py"
-    spec = importlib.util.spec_from_file_location("v7_evaluate_locked_runtime_test", path)
+def _load_script(relative: str, module_name: str):
+    path = ROOT / relative
+    spec = importlib.util.spec_from_file_location(module_name, path)
     assert spec is not None and spec.loader is not None
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module
+
+
+def _load_evaluator_script():
+    return _load_script("scripts/v7_evaluate_locked.py", "v7_evaluate_locked_runtime_test")
 
 
 def _runtime_files(tmp_path: Path):
@@ -65,6 +69,10 @@ def test_v7_runtime_freeze_is_pre_materialisation_and_lock_still_blocked() -> No
     assert freeze["python_version"] == "3.11.16"
     assert freeze["numpy_version"] == "2.4.6"
     assert freeze["insepi_frame_index_gate"]["probe_indices"] == [0, 1, 179]
+    origin = freeze["frozen_module_origin_gate"]
+    assert origin["pollipi_verified_modules"] == ["pollipi_analysis", "pollipi_analysis.pipeline"]
+    assert "interaction_sensing.noise" in origin["insepi_verified_modules"]
+    assert "sys.modules" in origin["module_cache_rule"]
     assert lock["status"] == "blocked"
     for key in ("master_seed_hex", "world_fingerprint", "pollipi_trace_sha256", "cross_report_sha256"):
         assert lock.get(key) in (None, "")
@@ -80,16 +88,43 @@ def test_v7_frozen_observer_runner_blobs_match_runtime_freeze() -> None:
         assert actual == expected
 
 
+def test_v7_frozen_module_origin_guards_accept_inside_and_reject_outside(tmp_path: Path) -> None:
+    pollipi = _load_script("scripts/v7_run_pollipi_frozen.py", "v7_pollipi_origin_guard_test")
+    insepi = _load_script("scripts/v7_run_insepi_frozen.py", "v7_insepi_origin_guard_test")
+    root = tmp_path / "frozen-src"
+    root.mkdir()
+    inside = root / "module.py"
+    inside.write_text("# inside\n", encoding="utf-8")
+    outside = tmp_path / "wrong-module.py"
+    outside.write_text("# outside\n", encoding="utf-8")
+    inside_module = SimpleNamespace(__file__=str(inside))
+    outside_module = SimpleNamespace(__file__=str(outside))
+    for runner in (pollipi, insepi):
+        assert runner._require_module_under(inside_module, root, "inside") == inside.resolve()
+        with pytest.raises(RuntimeError, match="imported from wrong origin"):
+            runner._require_module_under(outside_module, root, "outside")
+        prefix = f"v7_origin_guard_poison_{id(runner)}"
+        sys.modules[prefix] = SimpleNamespace()
+        sys.modules[prefix + ".child"] = SimpleNamespace()
+        runner._purge_module_prefix(prefix)
+        assert prefix not in sys.modules
+        assert prefix + ".child" not in sys.modules
+
+
 def test_v7_insepi_runner_declares_pre_materialisation_index_invariance_gate() -> None:
     path = ROOT / "scripts/v7_run_insepi_frozen.py"
-    spec = importlib.util.spec_from_file_location("v7_insepi_runner_contract_test", path)
-    assert spec is not None and spec.loader is not None
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
+    module = _load_script("scripts/v7_run_insepi_frozen.py", "v7_insepi_runner_contract_test")
     assert module.FRAME_INDEX_INVARIANCE_PROBES == (0, 1, 179)
     text = path.read_text(encoding="utf-8")
     assert "decision-relevant outputs depend on frame_index" in text
     assert "V7_INSEPI_FRAME_INDEX_INVARIANCE PASS" in text
+    assert "V7_INSEPI_MODULE_ORIGIN PASS" in text
+
+
+def test_v7_pollipi_runner_declares_frozen_module_origin_gate() -> None:
+    text = (ROOT / "scripts/v7_run_pollipi_frozen.py").read_text(encoding="utf-8")
+    assert "V7_POLLIPI_MODULE_ORIGIN PASS" in text
+    assert "pollipi_analysis.pipeline" in text
 
 
 def test_v7_runtime_loader_accepts_exact_pre_materialisation_environment(tmp_path: Path) -> None:
@@ -135,11 +170,7 @@ def test_v7_runtime_loader_rejects_pip_freeze_tamper(tmp_path: Path) -> None:
 
 
 def test_v7_capture_script_forbids_existing_final_artifacts() -> None:
-    path = ROOT / "scripts/v7_capture_runtime_environment.py"
-    spec = importlib.util.spec_from_file_location("v7_capture_runtime_test", path)
-    assert spec is not None and spec.loader is not None
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
+    module = _load_script("scripts/v7_capture_runtime_environment.py", "v7_capture_runtime_test")
     forbidden = set(module.FORBIDDEN_PRECAPTURE_PATHS)
     assert ".v7/run/v7_pixels.npz" in forbidden
     assert ".v7/run/v7_materialisation_receipt.json" in forbidden
