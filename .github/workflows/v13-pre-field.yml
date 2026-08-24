@@ -54,6 +54,8 @@ jobs:
           python -m py_compile \
             scripts/v13_build_randomisation.py \
             scripts/v13_validate_field_bundle.py \
+            scripts/v13_make_capture_templates.py \
+            scripts/v13_validate_capture_logs.py \
             scripts/v13_materialize_pixels.py \
             scripts/v13_split_private_truth.py \
             scripts/v13_make_qc_template.py \
@@ -64,12 +66,13 @@ jobs:
             scripts/v13_commit_prediction.py \
             scripts/v13_evaluate_locked.py
 
-      - name: Run V13 protocol, measurement, artifact and evaluation contracts
+      - name: Run V13 protocol, capture, measurement, artifact and evaluation contracts
         run: |
           pytest -q \
             tests/test_causal_diagnostics.py \
             tests/test_v13_physical_protocol.py \
             tests/test_v13_phase_contract.py \
+            tests/test_v13_capture_logs.py \
             tests/test_physical_measurement_v13.py \
             tests/test_physical_artifact_v13.py \
             tests/test_physical_evaluation_v13.py
@@ -77,7 +80,7 @@ jobs:
       - name: Dry-run blinded randomisation and private truth split without V13 pixels
         run: |
           set -euo pipefail
-          mkdir -p .v13/test-private .v13/test-split
+          mkdir -p .v13/test-private .v13/test-split .v13/test-capture
           test_salt="$(printf '13%.0s' {1..32})"
           python scripts/v13_build_randomisation.py \
             --salt "$test_salt" \
@@ -96,10 +99,16 @@ jobs:
             --qc-plan .v13/test-private/v13_protected_qc_plan.csv \
             --commitment .v13/test-private/v13_randomisation_commitment.json \
             --output .v13/test-private/v13_qc_template.csv
+          python scripts/v13_make_capture_templates.py \
+            --observer-plan .v13/test-private/v13_observer_plan.csv \
+            --commitment .v13/test-private/v13_randomisation_commitment.json \
+            --output-dir .v13/test-capture
           test "$(($(wc -l < .v13/test-private/v13_private_truth_ledger.csv)-1))" = 180
           test "$(($(wc -l < .v13/test-private/v13_observer_plan.csv)-1))" = 720
           test "$(($(wc -l < .v13/test-split/v13_development_labels.csv)-1))" = 108
           test "$(($(wc -l < .v13/test-split/v13_heldout_truth_SEALED.csv)-1))" = 72
+          test "$(($(wc -l < .v13/test-capture/v13_block_capture_log.csv)-1))" = 180
+          test "$(($(wc -l < .v13/test-capture/v13_phase_capture_log.csv)-1))" = 720
           ! grep -Eiq 'event_side|nuisance_side|shared_optical|no_fault|treatment_class|treatment_subtype' \
             .v13/test-private/v13_observer_plan.csv
           echo "V13_BLIND_RANDOMISATION_DRY_RUN PASS"
