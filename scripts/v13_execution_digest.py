@@ -16,6 +16,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 CRITICAL_PATHS = (
     "benchmarks/v13_observer_measurement_freeze.json",
+    "benchmarks/v13_physical_apparatus_freeze.json",
     "benchmarks/v13_physical_intervention_protocol.json",
     "benchmarks/v13_physical_phase_contract.json",
     "scripts/v13_build_randomisation.py",
