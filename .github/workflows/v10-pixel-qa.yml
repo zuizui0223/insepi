@@ -1,0 +1,93 @@
+name: V10 post-freeze pixel QA
+
+on:
+  pull_request:
+    paths:
+      - "scripts/v10_preobserver_pixel_qa.py"
+      - "benchmarks/v10_preobserver_pixel_qa_summary.json"
+      - ".github/workflows/v10-pixel-qa.yml"
+      - "docs/V10_PREOBSERVER_PIXEL_QA.md"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+env:
+  V10_PIXEL_RUN_ID: "32616509747"
+  V10_PIXEL_ARTIFACT: v10-frozen-real-pixel-artifact
+
+jobs:
+  descriptive-pixel-qa:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install frozen array runtime only
+        run: python -m pip install numpy==2.4.6
+      - name: Download already-frozen canonical V10 pixels
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ env.V10_PIXEL_ARTIFACT }}
+          path: .v10/artifact-download
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: ${{ env.V10_PIXEL_RUN_ID }}
+      - name: Locate artifact and run observer-free QA
+        shell: bash
+        run: |
+          set -euo pipefail
+          receipt="$(find .v10/artifact-download -name v10_real_pixel_receipt.json -print -quit)"
+          test -n "$receipt"
+          root="$(dirname "$receipt")"
+          python scripts/v10_preobserver_pixel_qa.py \
+            --artifact-dir "$root" \
+            --output .v10/v10_preobserver_pixel_qa.json
+      - name: Match committed descriptive summary
+        run: |
+          python - <<'PY'
+          import json, math
+          from pathlib import Path
+          actual = json.loads(Path('.v10/v10_preobserver_pixel_qa.json').read_text())
+          expected = json.loads(Path('benchmarks/v10_preobserver_pixel_qa_summary.json').read_text())
+          assert actual['status'] == expected['status']
+          assert actual['observer_execution'] is False
+          assert actual['scientific_protocol_changed'] is False
+          for key in ('canonical_pixel_npz_sha256','condition_registry_sha256','panel_registry_sha256'):
+              assert actual[key] == expected[key]
+          aa, ee = actual['panel_assignment'], expected['panel_assignment']
+          for key in ('panel_count','disturbed_per_panel','panels_with_missing_video_category','panels_with_missing_video_temporal_quartile_category'):
+              assert aa[key] == ee[key]
+          for key in ('video_tv_mean','video_tv_max','video_temporal_quartile_tv_mean','video_temporal_quartile_tv_max'):
+              assert math.isclose(aa[key], ee[key], rel_tol=0.0, abs_tol=1e-15)
+          missing = [
+              (row['panel_id'], item['video_index'], item['temporal_quartile'], item['full_window_count'])
+              for row in aa['panels']
+              for item in row['missing_video_temporal_quartile_categories']
+          ]
+          detail = ee['missing_video_temporal_quartile_detail']
+          assert missing == [(detail['panel_id'], detail['video_index'], detail['temporal_quartile'], detail['full_window_count'])]
+          pp, ep = actual['perturbation_pixel_diagnostics'], expected['perturbation_pixel_diagnostics']
+          assert pp['all_family_median_mae_nondecreasing_by_tier'] is True
+          for family, expected_values in ep['family_median_mae_by_tier'].items():
+              actual_values = [row['median_mae'] for row in pp['rows'] if row['family'] == family]
+              assert len(actual_values) == 3
+              for a, e in zip(actual_values, expected_values, strict=True):
+                  assert math.isclose(a, e, rel_tol=0.0, abs_tol=1e-12)
+          assert math.isclose(pp['minimum_over_all_variants_of_min_window_mae'], ep['minimum_over_all_variants_of_min_window_mae'], rel_tol=0.0, abs_tol=1e-12)
+          assert math.isclose(pp['maximum_over_all_variants_of_max_window_saturation_fraction'], ep['maximum_over_all_variants_of_max_window_saturation_fraction'], rel_tol=0.0, abs_tol=1e-15)
+          assert not Path('.v10/run/pollipi_v10_trace.jsonl').exists()
+          assert not Path('.v10/run/insepi_v10_trace.jsonl').exists()
+          assert not Path('.v10/run/v10_report.json').exists()
+          print('V10_POST_FREEZE_PIXEL_QA MATCH')
+          print('V10_OBSERVER_EXECUTION false')
+          print('V10_CLAIM_GATE_CHANGED false')
+          PY
+      - name: Upload descriptive QA only
+        uses: actions/upload-artifact@v4
+        with:
+          name: v10-post-freeze-pixel-qa
+          path: .v10/v10_preobserver_pixel_qa.json
+          if-no-files-found: error
+          retention-days: 90
