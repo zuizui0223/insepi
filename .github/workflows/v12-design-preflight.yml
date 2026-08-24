@@ -1,0 +1,46 @@
+name: V12 causal physical design preflight
+
+on:
+  pull_request:
+    paths:
+      - "docs/V12_CAUSAL_PHYSICAL_VALIDATION_DRAFT.md"
+      - "docs/METHOD_CORE_AFTER_V11.md"
+      - "src/interaction_sensing/physical_validation_v12.py"
+      - "src/interaction_sensing/causal_response_v12.py"
+      - "tests/test_physical_validation_v12.py"
+      - "tests/test_causal_response_v12.py"
+      - ".github/workflows/v12-design-preflight.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  design-contracts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11.16"
+      - name: Install pinned design runtime
+        run: |
+          python -m pip install "numpy==2.4.6"
+          python -m pip install -e ".[dev]"
+      - name: Require V11 negative result remains immutable upstream
+        run: |
+          python - <<'PY'
+          import json
+          s=json.load(open('benchmarks/v11_contradiction_development_result_summary.json'))
+          assert s['claim']=={'level':'D','label':'no_general_localisation_advantage'}
+          assert s['result_sha256']=='654d0be81c459f11d35b37ca91fa7251f395e352a31f44993384bac92b1107c1'
+          print('V12_UPSTREAM_V11_NEGATIVE_RESULT PASS')
+          PY
+      - name: Test causal-design engineering only
+        run: pytest -q tests/test_physical_validation_v12.py tests/test_causal_response_v12.py
+      - name: Assert no V12 scientific result or locked claim exists
+        run: |
+          test ! -e benchmarks/v12_result.json
+          test ! -e benchmarks/v12_locked_claim.json
+          grep -q "Status: design-draft" docs/V12_CAUSAL_PHYSICAL_VALIDATION_DRAFT.md
+          echo "V12_DESIGN_ONLY_NO_SCIENTIFIC_RESULT PASS"
