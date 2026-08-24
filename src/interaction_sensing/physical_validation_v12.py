@@ -8,6 +8,7 @@ must be satisfied before physical clips are collected:
 - whole day/camera/scene blocks are assigned to development or held-out use;
 - treatment order is derived without images or observer outputs;
 - observer manifests exclude intervention truth;
+- observer-facing trial ids/filenames do not encode treatment labels;
 - evaluation truth is joined later by immutable trial_id.
 """
 from __future__ import annotations
@@ -23,6 +24,7 @@ PLAN_SCHEMA = "interaction-sensing-v12-physical-trial-plan-v1"
 OBSERVER_SCHEMA = "interaction-sensing-v12-observer-manifest-v1"
 TRUTH_SCHEMA = "interaction-sensing-v12-intervention-truth-v1"
 SEED_DOMAIN = "interaction-sensing-v12-physical-randomisation-v1"
+ID_DOMAIN = "interaction-sensing-v12-opaque-trial-id-v1"
 
 
 @dataclass(frozen=True, slots=True, order=True)
@@ -87,6 +89,13 @@ def _digest(seed_hex: str, *parts: object) -> str:
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
 
+def _opaque_trial_id(seed_hex: str, block_id: str, randomised_order: int) -> str:
+    """Create an observer-facing id from a neutral randomised slot, not treatment labels."""
+    seed = _require_seed(seed_hex)
+    text = f"{ID_DOMAIN}|{seed}|{block_id}|slot{int(randomised_order)}"
+    return "v12-" + hashlib.sha256(text.encode("utf-8")).hexdigest()[:20]
+
+
 def build_trial_plan(
     *,
     seed_hex: str,
@@ -98,7 +107,7 @@ def build_trial_plan(
 ) -> tuple[Trial, ...]:
     """Build a balanced 2x2 causal-intervention schedule.
 
-    `heldout_block_ids` must be decided before outcomes exist.  The planner never
+    `heldout_block_ids` must be decided before outcomes exist. The planner never
     examines images or observer outputs and cannot split a physical block across
     development and held-out phases.
     """
@@ -122,7 +131,6 @@ def build_trial_plan(
 
     provisional: list[tuple[PhysicalBlock, str, str, int, int, int, str]] = []
     for block in sorted(blocks):
-        split = "heldout" if block.block_id in heldout else "development"
         for family in disturbance_families:
             for intensity in intensity_labels:
                 for event in (0, 1):
@@ -141,8 +149,9 @@ def build_trial_plan(
                                 (block, family, intensity, event, disturbance, replicate, digest)
                             )
 
-    # Randomise order within each physical block only.  This preserves a clean
-    # block definition while preventing a fixed event/disturbance sequence.
+    # Randomise order within each physical block only. The assigned slot is then
+    # used to create an opaque observer-facing trial id. The treatment tuple is
+    # never part of the trial-id preimage.
     order_by_key: dict[tuple[str, str, str, int, int, int], int] = {}
     for block in sorted(blocks):
         members = [row for row in provisional if row[0] == block]
@@ -155,9 +164,8 @@ def build_trial_plan(
     for block, family, intensity, event, disturbance, replicate, digest in provisional:
         split = "heldout" if block.block_id in heldout else "development"
         key = (block.block_id, family, intensity, event, disturbance, replicate)
-        trial_id = "v12-" + hashlib.sha256(
-            f"{block.block_id}|{family}|{intensity}|{event}|{disturbance}|{replicate}".encode()
-        ).hexdigest()[:20]
+        order = order_by_key[key]
+        trial_id = _opaque_trial_id(seed_hex, block.block_id, order)
         trials.append(
             Trial(
                 trial_id=trial_id,
@@ -171,11 +179,13 @@ def build_trial_plan(
                 event_intervention=event,
                 disturbance_intervention=disturbance,
                 replicate=replicate,
-                randomised_order=order_by_key[key],
+                randomised_order=order,
                 randomisation_digest=digest,
             )
         )
     trials.sort(key=lambda trial: (trial.block_id, trial.randomised_order))
+    if len({trial.trial_id for trial in trials}) != len(trials):
+        raise AssertionError("opaque V12 trial ids collided")
     return tuple(trials)
 
 
@@ -185,15 +195,19 @@ def observer_manifest(
 ) -> tuple[ObserverClip, ...]:
     """Return a truth-free manifest for observer execution.
 
-    `clip_identity[trial_id] = (path, sha256)`.  Treatment/split/block labels are
-    deliberately omitted, so an observer runner cannot infer causal truth from
-    this manifest.
+    `clip_identity[trial_id] = (path, sha256)`. Treatment/split/block labels are
+    deliberately omitted. Observer-facing clip filenames must also use only the
+    opaque trial id so a capture-side descriptive filename cannot leak treatment.
     """
     if {trial.trial_id for trial in trials} != set(clip_identity):
         raise ValueError("clip identity must contain exactly one entry per trial")
     rows: list[ObserverClip] = []
     for trial in trials:
         path, digest = clip_identity[trial.trial_id]
+        if Path(path).stem != trial.trial_id:
+            raise ValueError(
+                f"observer-facing clip filename must equal opaque trial id: {path}"
+            )
         if len(digest) != 64 or any(char not in "0123456789abcdef" for char in digest.lower()):
             raise ValueError(f"invalid clip SHA-256 for {trial.trial_id}")
         rows.append(ObserverClip(OBSERVER_SCHEMA, trial.trial_id, str(path), digest.lower()))
