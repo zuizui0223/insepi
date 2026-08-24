@@ -21,8 +21,9 @@
     "scripts/v10_run_insepi_frozen.py": "3fe1eba427fa7a7ea468553365309312e806b88d",
     "scripts/v10_audit_frozen_observer_independence.py": "06f0615fbd99918d5f14ce7d0f60378229eea7af",
     "scripts/v10_capture_runtime_environment.py": "37c8f3a225de905a1f8f6296f732c11bc2c4129a",
+    "scripts/v10_verify_v7_prerequisite.py": "1de3f127d210465efe9c61bcbf9265368c01af0c",
     "src/interaction_sensing/simulation/v10_evaluator.py": "8d112b7fcfd760548358ca840260d5714422dd85",
-    "scripts/v10_evaluate_locked.py": "7c1047b785f0ea8ba0254039d63ff9b4d024699a",
+    "scripts/v10_evaluate_locked.py": "56671b1e5de4fe1ed018ecdff624c68fa2a9ce5a",
     ".github/workflows/v10-one-shot.yml": "16ca28940a6c042f8cad0db2afec370a141e32e5"
   },
   "generic_guarded_portfolio_git_blob_sha1": "a6397383c0d713026631b197d4aeb135222200ef",
@@ -36,8 +37,9 @@
     "independent_allocator_oracle": "Required in one-shot preflight; cross-checks exact selected-index sets for all six policies across frozen budgets and multiple seeds without calling the production selector in the reference implementation.",
     "uniform_seed_grid_check": "Required in one-shot preflight; 18 panels x 200 replicates x 3 budgets must remain within five standard errors of the SRSWOR finite-population expectation on a balanced synthetic truth set.",
     "trace_tamper_resistance": "Required in one-shot preflight; injected truth keys, row-count changes, condition order/id changes and frozen provenance identity changes must be rejected by the trace-only evaluator.",
-    "execution_script_compile": "All six V10 execution/audit/runtime scripts must py_compile successfully before external frozen checkouts or canonical pixel download.",
-    "software_independence_gate": "After exact V5 checkout and before dependency installation or canonical pixel download, PolliPi analysis source must contain no static or literal-dynamic import of interaction_sensing and InsePi source must contain no static or literal-dynamic import of pollipi_analysis. This supports software-level epistemic separation only and is not a claim of statistical error independence."
+    "execution_script_compile": "All frozen V10 execution/audit/runtime/prerequisite scripts must py_compile successfully before external frozen checkouts or canonical pixel download.",
+    "software_independence_gate": "After exact V5 checkout and before dependency installation or canonical pixel download, PolliPi analysis source must contain no static or literal-dynamic import of interaction_sensing and InsePi source must contain no static or literal-dynamic import of pollipi_analysis. This supports software-level epistemic separation only and is not a claim of statistical error independence.",
+    "v7_prerequisite_generation_verifier": "V10 final evaluation must independently verify that the supplied prior V7 evidence binds the exact frozen observer, allocator, generator, evaluator, materializer, baseline, world-spec and runtime identities, and that report/runtime/materialisation/trace files match all ledger SHA-256 fields. V7 PASS and FAIL are both accepted."
   },
   "evaluation_receipt_provenance": {
     "required": [
@@ -48,13 +50,14 @@
       "protocol freeze SHA-256",
       "runtime environment SHA-256",
       "runtime pip-freeze SHA-256 and copied files",
-      "V7 prerequisite ledger SHA-256 and copied ledger",
+      "verified V7 prerequisite ledger SHA-256 and copied ledger",
+      "copied V7 prerequisite report, materialisation receipt, runtime files and both observer traces with ledger-bound hashes",
       "PolliPi trace SHA-256",
       "InsePi trace SHA-256",
       "canonical pixel artifact SHA-256",
       "final report SHA-256"
     ],
-    "rule": "The V10 scientific artifact must remain independently auditable after upstream Actions artifacts expire; exact runtime files and the V7 prerequisite ledger are copied beside the V10 evaluation receipt."
+    "rule": "The V10 scientific artifact must remain independently auditable after upstream Actions artifacts expire; the complete small-file V7 provenance chain is copied beside the V10 evaluation receipt. The large V7 pixel artifact is not duplicated, but its SHA-256 is bound by the copied V7 ledger and materialisation receipt."
   },
   "execution_order_rule": "V7 locked validation must be executed first once both exact V5 observer commits are reachable. V10 execution order is operational only and does not condition or alter V10 scientific thresholds.",
   "forbidden_after_observer_output": [
@@ -62,6 +65,7 @@
     "changing the generic guarded selector bytes under the same V10 generation",
     "changing the evaluator semantic freeze",
     "changing the pinned Python/NumPy runtime under the same V10 generation",
+    "changing the V7 prerequisite-generation verification contract under the same V10 generation",
     "changing score mappings, budgets, replicates, comparators, perturbations, panels or claim precedence"
   ]
 }
