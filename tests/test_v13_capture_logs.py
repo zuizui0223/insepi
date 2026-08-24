@@ -6,8 +6,6 @@ from pathlib import Path
 import subprocess
 import sys
 
-import pytest
-
 ROOT = Path(__file__).resolve().parents[1]
 
 
@@ -37,13 +35,26 @@ def _prepare(tmp_path: Path):
     return plan_dir, logs
 
 
-def _complete_logs(logs: Path) -> None:
+def _complete_logs(plan_dir: Path, logs: Path) -> None:
+    with (plan_dir / "v13_private_truth_ledger.csv").open(newline="", encoding="utf-8") as handle:
+        truth = {row["block_id"]: row for row in csv.DictReader(handle)}
+
     block_path = logs / "v13_block_capture_log.csv"
     with block_path.open(newline="", encoding="utf-8") as handle:
         reader = csv.DictReader(handle); fields = list(reader.fieldnames or []); rows = list(reader)
     for index, row in enumerate(rows):
+        private = truth[row["block_id"]]
+        day_num = int(private["day_id"].rsplit("_", 1)[1])
+        scene_num = int(private["scene_id"].rsplit("_", 1)[1])
+        if row["split"] == "development":
+            recording_date = f"2026-09-{day_num:02d}"
+            scene_code = f"dev_physical_scene_{scene_num:02d}"
+        else:
+            recording_date = f"2026-10-{day_num:02d}"
+            scene_code = f"held_physical_scene_{scene_num:02d}"
         row.update({
-            "recording_date_local": "2026-09-01",
+            "recording_date_local": recording_date,
+            "physical_scene_code": scene_code,
             "operator_code": "blind-op",
             "device_id": f"pi-{index % 5}",
             "firmware_version": "frozen-test",
@@ -92,14 +103,14 @@ def _validate(plan_dir: Path, logs: Path, check: bool = True):
 
 def test_v13_completed_capture_logs_pass_before_observer_execution(tmp_path: Path) -> None:
     plan, logs = _prepare(tmp_path)
-    _complete_logs(logs)
+    _complete_logs(plan, logs)
     completed = _validate(plan, logs)
     assert "V13_CAPTURE_LOG_VALIDATION PASS" in completed.stdout
 
 
 def test_v13_missing_baseline_restoration_fails_before_observer_execution(tmp_path: Path) -> None:
     plan, logs = _prepare(tmp_path)
-    _complete_logs(logs)
+    _complete_logs(plan, logs)
     path = logs / "v13_phase_capture_log.csv"
     with path.open(newline="", encoding="utf-8") as handle:
         reader = csv.DictReader(handle); fields = list(reader.fieldnames or []); rows = list(reader)
@@ -114,7 +125,7 @@ def test_v13_missing_baseline_restoration_fails_before_observer_execution(tmp_pa
 
 def test_v13_camera_geometry_drift_fails_before_observer_execution(tmp_path: Path) -> None:
     plan, logs = _prepare(tmp_path)
-    _complete_logs(logs)
+    _complete_logs(plan, logs)
     path = logs / "v13_block_capture_log.csv"
     with path.open(newline="", encoding="utf-8") as handle:
         reader = csv.DictReader(handle); fields = list(reader.fieldnames or []); rows = list(reader)
@@ -124,3 +135,19 @@ def test_v13_camera_geometry_drift_fails_before_observer_execution(tmp_path: Pat
     completed = _validate(plan, logs, check=False)
     assert completed.returncode != 0
     assert "geometry/FPS" in (completed.stdout + completed.stderr)
+
+
+def test_v13_heldout_physical_scene_overlap_fails_before_observer_execution(tmp_path: Path) -> None:
+    plan, logs = _prepare(tmp_path)
+    _complete_logs(plan, logs)
+    path = logs / "v13_block_capture_log.csv"
+    with path.open(newline="", encoding="utf-8") as handle:
+        reader = csv.DictReader(handle); fields = list(reader.fieldnames or []); rows = list(reader)
+    for row in rows:
+        if row["physical_scene_code"] == "held_physical_scene_01":
+            row["physical_scene_code"] = "dev_physical_scene_01"
+    with path.open("w", newline="", encoding="utf-8") as handle:
+        writer = csv.DictWriter(handle, fieldnames=fields, lineterminator="\n"); writer.writeheader(); writer.writerows(rows)
+    completed = _validate(plan, logs, check=False)
+    assert completed.returncode != 0
+    assert "overlap" in (completed.stdout + completed.stderr)
