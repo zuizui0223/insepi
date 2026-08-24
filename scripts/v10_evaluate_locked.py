@@ -10,6 +10,7 @@ import shutil
 import subprocess
 
 from interaction_sensing.simulation.v10_evaluator import evaluate_v10
+from v10_verify_v7_prerequisite import verify as verify_v7_prerequisite
 
 RUNTIME_SCHEMA = "interaction-sensing-v10-runtime-environment-v1"
 EXPECTED_PYTHON = "3.11.16"
@@ -98,6 +99,10 @@ def main() -> None:
         else current_git_head()
     )
     v7_ledger_path = resolve_v7_ledger(args.v7_ledger)
+    v7_root = v7_ledger_path.parent
+    # Outcome-neutral but generation-strict: reject any prerequisite that is not
+    # the complete frozen V7 evidence chain before V10 evaluation is attempted.
+    v7_verified = verify_v7_prerequisite(v7_root)
     pip_freeze_path = args.runtime_manifest.parent / "pip_freeze.txt"
     for path in (
         args.implementation_freeze,
@@ -138,8 +143,8 @@ def main() -> None:
         raise RuntimeError("V10 runtime manifest was not captured pre-pixel")
     if runtime_manifest.get("pip_freeze_sha256") != sha256_file(pip_freeze_path):
         raise RuntimeError("V10 pip-freeze bytes differ from runtime manifest")
-    if v7_ledger.get("schema") != "pollipi-insepi-v7-execution-ledger-v1":
-        raise RuntimeError("unexpected V7 prerequisite ledger schema")
+    if sha256_file(v7_ledger_path) != v7_verified["ledger_sha256"]:
+        raise RuntimeError("V7 verifier/ledger path identity mismatch")
 
     report = evaluate_v10(args.artifact_dir, args.pollipi_trace, args.insepi_trace)
     execution_provenance = {
@@ -152,9 +157,11 @@ def main() -> None:
         "runtime_pip_freeze_sha256": sha256_file(pip_freeze_path),
         "runtime_python_version": str(runtime_manifest["python_version"]),
         "runtime_numpy_version": str(runtime_manifest["numpy_version"]),
-        "v7_prerequisite_ledger_sha256": sha256_file(v7_ledger_path),
-        "v7_prerequisite_claim_level": str(v7_ledger["claim_level"]),
-        "v7_prerequisite_gate_passed": bool(v7_ledger["gate_passed"]),
+        "v7_prerequisite_ledger_sha256": str(v7_verified["ledger_sha256"]),
+        "v7_prerequisite_claim_level": str(v7_verified["claim_level"]),
+        "v7_prerequisite_gate_passed": bool(v7_verified["gate_passed"]),
+        "v7_prerequisite_world_fingerprint": str(v7_verified["world_fingerprint"]),
+        "v7_prerequisite_pixel_artifact_sha256": str(v7_verified["pixel_artifact_sha256"]),
     }
     # Execution provenance changes neither the trace-only scientific evaluator nor
     # claim assignment; it is attached before hashing so the final report is a
@@ -178,14 +185,40 @@ def main() -> None:
     }
     args.receipt.write_bytes(json_bytes(receipt))
 
-    # Keep upstream/pre-observer evidence beside the V10 receipt so a downloaded
-    # V10 artifact remains auditable even if upstream Actions artifacts expire.
-    copies = (
-        (v7_ledger_path, args.receipt.parent / "v7_prerequisite_execution_ledger.json", execution_provenance["v7_prerequisite_ledger_sha256"]),
+    # Keep enough upstream V7 evidence beside V10 to re-verify the prerequisite
+    # generation after the original V7 Actions artifact expires. The large V7
+    # pixel artifact is not duplicated; its SHA-256 is bound by the ledger and
+    # materialisation receipt copied here.
+    v7_copy_specs = (
+        ("v7_execution_ledger.json", "v7_prerequisite_execution_ledger.json", "v7_prerequisite_ledger_sha256"),
+        ("v7_report.json", "v7_prerequisite_report.json", "report_sha256"),
+        ("v7_materialisation_receipt.json", "v7_prerequisite_materialisation_receipt.json", "materialisation_receipt_sha256"),
+        ("v7_runtime_environment.json", "v7_prerequisite_runtime_environment.json", "runtime_environment_sha256"),
+        ("v7_pip_freeze.txt", "v7_prerequisite_runtime_pip_freeze.txt", "runtime_pip_freeze_sha256"),
+        ("v7_runtime_freeze.json", "v7_prerequisite_runtime_freeze.json", "runtime_freeze_sha256"),
+        ("pollipi_v7_trace.jsonl", "v7_prerequisite_pollipi_trace.jsonl", "pollipi_trace_sha256"),
+        ("insepi_v7_trace.jsonl", "v7_prerequisite_insepi_trace.jsonl", "insepi_trace_sha256"),
+    )
+    for source_name, destination_name, ledger_hash_field in v7_copy_specs:
+        source = v7_root / source_name
+        if not source.is_file():
+            raise FileNotFoundError(source)
+        expected_sha = (
+            execution_provenance["v7_prerequisite_ledger_sha256"]
+            if ledger_hash_field == "v7_prerequisite_ledger_sha256"
+            else str(v7_ledger[ledger_hash_field])
+        )
+        destination = args.receipt.parent / destination_name
+        if destination.resolve() != source.resolve():
+            shutil.copyfile(source, destination)
+        if sha256_file(destination) != expected_sha:
+            raise RuntimeError(f"copied V7 prerequisite file hash changed: {destination.name}")
+
+    runtime_copies = (
         (args.runtime_manifest, args.receipt.parent / "runtime_environment.json", execution_provenance["runtime_environment_sha256"]),
         (pip_freeze_path, args.receipt.parent / "runtime_pip_freeze.txt", execution_provenance["runtime_pip_freeze_sha256"]),
     )
-    for source, destination, expected_sha in copies:
+    for source, destination, expected_sha in runtime_copies:
         if destination.resolve() != source.resolve():
             shutil.copyfile(source, destination)
         if sha256_file(destination) != expected_sha:
