@@ -1,0 +1,61 @@
+name: V11 post-result failure audit
+
+on:
+  pull_request:
+    paths:
+      - "benchmarks/v11_contradiction_development_result_summary.json"
+      - "docs/V11_RESULT.md"
+      - "scripts/audit_v11_failure.py"
+      - "tests/test_v11_failure_audit.py"
+      - ".github/workflows/v11-failure-audit.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  descriptive-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11.16"
+      - name: Install pinned analysis runtime
+        run: |
+          python -m pip install "numpy==2.4.6"
+          python -m pip install -e ".[dev]"
+      - name: Verify canonical V11 remains negative and frozen
+        run: |
+          python - <<'PY'
+          import json
+          s=json.load(open('benchmarks/v11_contradiction_development_result_summary.json'))
+          assert s['result_sha256']=='654d0be81c459f11d35b37ca91fa7251f395e352a31f44993384bac92b1107c1'
+          assert s['claim']=={'level':'D','label':'no_general_localisation_advantage'}
+          print('V11_NEGATIVE_RESULT_IDENTITY PASS')
+          PY
+          pytest -q tests/test_v11_failure_audit.py
+      - name: Run descriptive post-result audit twice
+        env:
+          PYTHONPATH: src:.
+        run: |
+          mkdir -p .v11/audit-a .v11/audit-b
+          PYTHONHASHSEED=13 python scripts/audit_v11_failure.py --output .v11/audit-a/v11_failure_audit.json | tee .v11/audit-a/console.txt
+          PYTHONHASHSEED=131 python scripts/audit_v11_failure.py --output .v11/audit-b/v11_failure_audit.json | tee .v11/audit-b/console.txt
+      - name: Require audit determinism without changing science
+        run: |
+          a="$(sha256sum .v11/audit-a/v11_failure_audit.json | awk '{print $1}')"
+          b="$(sha256sum .v11/audit-b/v11_failure_audit.json | awk '{print $1}')"
+          test "$a" = "$b" || { echo "V11 audit nondeterminism: $a != $b"; exit 1; }
+          mkdir -p .v11/audit
+          cp .v11/audit-a/v11_failure_audit.json .v11/audit/
+          cp .v11/audit-a/console.txt .v11/audit/
+          printf '%s\n' "$a" > .v11/audit/audit_sha256.txt
+          echo "V11_FAILURE_AUDIT_DETERMINISM PASS $a"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: v11-post-result-failure-audit
+          path: .v11/audit/
+          if-no-files-found: error
+          retention-days: 90
