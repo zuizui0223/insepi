@@ -1,0 +1,201 @@
+{
+  "schema": "interaction-sensing-v12-causal-intervention-protocol-v1",
+  "status": "pre-result-frozen",
+  "scientific_question": "Do paired causal intervention responses from epistemically distinct biological-evidence and observability-risk channels identify hidden failure classes across mechanism-subtype shift more reliably and with fewer experiments than event-only, observability-only, or early scalar fusion?",
+  "scientific_object": "causal experiment selection and failure identification, not a new sensing-allocation score",
+  "historical_boundaries": {
+    "v7_locked_gate": "FAIL",
+    "v7_claim_level": "C",
+    "v11_locked_claim_level": "D",
+    "v11_result_sha256": "654d0be81c459f11d35b37ca91fa7251f395e352a31f44993384bac92b1107c1",
+    "v11_may_not_be_retuned": true,
+    "v10_protocol_or_pixels_changed": false,
+    "v6_weights_changed": false
+  },
+  "failure_classes": [
+    "event_module",
+    "observability_module",
+    "shared_representation",
+    "no_fault"
+  ],
+  "mechanism_subtypes": {
+    "development": {
+      "event_module": "event_gain_loss",
+      "observability_module": "risk_gain_loss",
+      "shared_representation": "shared_coupling_loss",
+      "no_fault": "clean_control_dev"
+    },
+    "heldout": {
+      "event_module": "event_saturation_shift",
+      "observability_module": "risk_saturation_shift",
+      "shared_representation": "shared_mask_shift",
+      "no_fault": "clean_control_test"
+    }
+  },
+  "interventions": {
+    "mandatory_reference": "placebo",
+    "active_candidates": [
+      "event_restore",
+      "observability_restore",
+      "shared_restore"
+    ],
+    "active_intervention_budget": 2,
+    "full_battery_size": 3,
+    "semantics": {
+      "placebo": "matched repeat with no causal repair; used only as the response reference and not counted against the active budget",
+      "event_restore": "intervene on the event-evidence path while leaving the observability path structurally unchanged",
+      "observability_restore": "intervene on the observability-risk path while leaving the event-evidence path structurally unchanged",
+      "shared_restore": "intervene on a shared representation path that can affect both observer channels"
+    }
+  },
+  "causal_response_topology": {
+    "development": {
+      "event_module": {
+        "event_restore": [0.58, 0.02],
+        "observability_restore": [0.03, 0.01],
+        "shared_restore": [0.30, 0.05]
+      },
+      "observability_module": {
+        "event_restore": [0.01, 0.03],
+        "observability_restore": [0.02, 0.58],
+        "shared_restore": [0.05, 0.30]
+      },
+      "shared_representation": {
+        "event_restore": [0.26, 0.08],
+        "observability_restore": [0.08, 0.26],
+        "shared_restore": [0.46, 0.46]
+      },
+      "no_fault": {
+        "event_restore": [-0.02, -0.01],
+        "observability_restore": [-0.01, -0.02],
+        "shared_restore": [-0.02, -0.02]
+      }
+    },
+    "heldout": {
+      "event_module": {
+        "event_restore": [0.50, 0.03],
+        "observability_restore": [0.02, 0.01],
+        "shared_restore": [0.26, 0.06]
+      },
+      "observability_module": {
+        "event_restore": [0.01, 0.02],
+        "observability_restore": [0.03, 0.50],
+        "shared_restore": [0.06, 0.26]
+      },
+      "shared_representation": {
+        "event_restore": [0.20, 0.10],
+        "observability_restore": [0.10, 0.20],
+        "shared_restore": [0.38, 0.38]
+      },
+      "no_fault": {
+        "event_restore": [-0.025, -0.015],
+        "observability_restore": [-0.015, -0.025],
+        "shared_restore": [-0.025, -0.025]
+      }
+    },
+    "development_intensity_multiplier": "intensity",
+    "heldout_intensity_multiplier": "sqrt(intensity)",
+    "response_channels": ["delta_evidence", "delta_observability"]
+  },
+  "simulation": {
+    "intensity_tiers": [0.35, 0.65, 0.95],
+    "development_replicates_per_class_intensity": 300,
+    "heldout_replicates_per_class_intensity": 300,
+    "paired_response_noise_sd": 0.045,
+    "paired_channel_noise_correlation": 0.25,
+    "seed_domain": "interaction-sensing-v12-causal-intervention-v1",
+    "repair_seed_domain": "interaction-sensing-v12-independent-repair-test-v1",
+    "no_post_result_tuning": true
+  },
+  "protected_random_audit": {
+    "fraction": 0.25,
+    "assignment": "SHA256(domain|split|failure_class|intensity|replicate), first byte < 64",
+    "domain": "interaction-sensing-v12-protected-audit-v1",
+    "reveals": "fault_present only; it never reveals the causal failure class",
+    "same_assignment_for_all_strategies": true,
+    "used_as_independent_no-fault/shared-blind-spot safety information": true
+  },
+  "representations": {
+    "event_only": ["delta_evidence"],
+    "observability_only": ["delta_observability"],
+    "early_scalar_fusion": ["0.5*delta_evidence + 0.5*delta_observability"],
+    "interventional_dual_observer": ["delta_evidence", "delta_observability"]
+  },
+  "common_diagnostic_algorithm": {
+    "training": "class-conditional intervention-response centroids estimated only from development mechanism subtypes",
+    "scaling": "feature-wise mean/std learned only on development responses; zero-variance scale set to one",
+    "step_1_intervention": "choose the active intervention with the largest minimum pairwise development-centroid separation across all four failure classes",
+    "after_each_observation": "rank classes by squared Euclidean distance on only the interventions already observed",
+    "next_intervention": "take the two currently nearest class hypotheses and choose the remaining intervention with the largest development-centroid separation between those two hypotheses",
+    "final_diagnosis": "nearest development centroid after two active interventions",
+    "full_battery_ceiling": "nearest development centroid after all three active interventions",
+    "tie_break": "lexicographic intervention or class name",
+    "same_algorithm_for_all_representations": true,
+    "no_hyperparameter_search": true
+  },
+  "repair_evaluation": {
+    "repair_action": "predicted failure class",
+    "heldout_outcome_is_independently_noised": true,
+    "correct_module_repair_fraction": 0.80,
+    "shared_repair_on_single_module_fraction": 0.30,
+    "single_module_repair_on_shared_fraction": 0.35,
+    "wrong_unrelated_repair_penalty_fraction": 0.05,
+    "no_fault_action_has_zero_change": true
+  },
+  "primary_metrics": [
+    "heldout_localisation_accuracy_budget2",
+    "heldout_full_battery_localisation_accuracy",
+    "shared_representation_recall_budget2",
+    "no_fault_false_intervention_rate_budget2",
+    "wrong_module_intervention_rate_budget2",
+    "mean_active_interventions_to_stable_correct_diagnosis",
+    "heldout_repair_positive_transfer_rate",
+    "heldout_repair_relative_loss_reduction"
+  ],
+  "secondary_metrics": [
+    "first_intervention_choice_distribution",
+    "second_intervention_choice_distribution",
+    "accuracy_after_one_intervention",
+    "accuracy_after_two_interventions",
+    "protected_audit_stratified_accuracy"
+  ],
+  "claim_ceiling": {
+    "A": {
+      "requirements": [
+        "interventional_dual_observer budget2 localisation >= best comparator + 0.10",
+        "interventional_dual_observer shared recall >= 0.80",
+        "interventional_dual_observer wrong-module intervention <= 0.20",
+        "interventional_dual_observer repair-positive >= 0.75",
+        "interventional_dual_observer full-battery localisation >= 0.85"
+      ],
+      "allowed_claim": "Paired causal interventions combined with distinct observer channels materially improve held-out failure identification and repair selection over the tested single-channel and early-fusion representations."
+    },
+    "B": {
+      "requirements": [
+        "interventional_dual_observer budget2 localisation >= best comparator",
+        "interventional_dual_observer shared recall >= 0.65",
+        "interventional_dual_observer repair-positive >= 0.60"
+      ],
+      "allowed_claim": "Causal intervention responses make the distinct-channel development strategy competitive overall and improve shared-failure diagnosis conditionally."
+    },
+    "C": {
+      "requirements": ["neither A, B nor D"],
+      "allowed_claim": "Interventional diagnosis has mixed or mechanism-specific value; report identifiability boundaries without a general superiority claim."
+    },
+    "D": {
+      "requirements": [
+        "interventional_dual_observer budget2 localisation < best comparator - 0.05 OR interventional_dual_observer shared recall < 0.50"
+      ],
+      "allowed_claim": "Even under controlled interventions, the tested distinct-channel representation does not improve reliable held-out failure identification over simpler representations."
+    }
+  },
+  "forbidden_claims": [
+    "statistical independence of observer errors",
+    "disagreement is causal truth",
+    "50/10/40 is rescued by V12",
+    "V12 changes V7 or V11 outcomes",
+    "simulation interventions substitute for blinded physical intervention blocks",
+    "field biological-event accuracy",
+    "universal superiority of dual observers"
+  ]
+}
