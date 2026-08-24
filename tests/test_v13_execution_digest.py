@@ -25,6 +25,7 @@ def test_v13_execution_digest_covers_scientific_and_execution_boundaries() -> No
     paths = set(digest.CRITICAL_PATHS)
     required = {
         "benchmarks/v13_observer_measurement_freeze.json",
+        "benchmarks/v13_physical_apparatus_freeze.json",
         "benchmarks/v13_physical_intervention_protocol.json",
         "benchmarks/v13_physical_phase_contract.json",
         "src/interaction_sensing/causal_diagnostics.py",
@@ -41,7 +42,7 @@ def test_v13_execution_digest_covers_scientific_and_execution_boundaries() -> No
     assert ".github/workflows/v13-pre-field.yml" not in paths
     assert "scripts/v13_execution_digest.py" not in paths
     assert "benchmarks/v13_execution_freeze.json" not in paths
-    assert len(paths) == len(digest.CRITICAL_PATHS) == 21
+    assert len(paths) == len(digest.CRITICAL_PATHS) == 22
     assert all((ROOT / path).is_file() for path in paths)
 
 
@@ -69,7 +70,7 @@ def test_v13_committed_execution_freeze_matches_current_scientific_tree() -> Non
     freeze = json.loads(FREEZE_PATH.read_text(encoding="utf-8"))
     assert freeze["schema"] == "interaction-sensing-v13-execution-freeze-v1"
     assert freeze["status"] == "pre-field-scientific-execution-frozen"
-    assert freeze["critical_path_count"] == len(digest.CRITICAL_PATHS) == 21
+    assert freeze["critical_path_count"] == len(digest.CRITICAL_PATHS) == 22
     assert digest.execution_digest(ROOT) == freeze["scientific_execution_digest_sha256"]
 
     helper_path = ROOT / freeze["digest_helper"]["path"]
