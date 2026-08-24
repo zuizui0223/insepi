@@ -2,7 +2,11 @@ from __future__ import annotations
 
 import pytest
 
-from interaction_sensing.causal_response_v12 import ObserverOutput, estimate_factorial_responses
+from interaction_sensing.causal_response_v12 import (
+    ObserverOutput,
+    estimate_factorial_responses,
+    summarize_factorial_responses,
+)
 from interaction_sensing.physical_validation_v12 import PhysicalBlock, build_trial_plan
 
 SEED = "cd" * 32
@@ -22,8 +26,7 @@ def small_plan():
     )
 
 
-def test_v12_factorial_response_recovers_known_main_and_interaction_effects() -> None:
-    trials = small_plan()
+def known_outputs(trials):
     outputs = []
     for trial in trials:
         e = trial.event_intervention
@@ -33,7 +36,12 @@ def test_v12_factorial_response_recovers_known_main_and_interaction_effects() ->
         evidence = 0.10 + 0.40 * e - 0.08 * d - 0.12 * e * d
         observability = 0.15 + 0.03 * e + 0.50 * d + 0.06 * e * d
         outputs.append(ObserverOutput(trial.trial_id, evidence, observability))
-    responses = estimate_factorial_responses(trials, outputs)
+    return outputs
+
+
+def test_v12_factorial_response_recovers_known_main_and_interaction_effects() -> None:
+    trials = small_plan()
+    responses = estimate_factorial_responses(trials, known_outputs(trials))
     assert len(responses) == 2
     for row in responses:
         # Factorial main effects average over the other factor, so coefficient + half interaction.
@@ -47,6 +55,26 @@ def test_v12_factorial_response_recovers_known_main_and_interaction_effects() ->
             (row.event_effect_on_evidence, row.disturbance_effect_on_evidence),
             (row.event_effect_on_observability, row.disturbance_effect_on_observability),
         )
+
+
+def test_v12_summary_uses_independent_blocks_not_within_clip_replicates() -> None:
+    trials = small_plan()
+    responses = estimate_factorial_responses(trials, known_outputs(trials))
+    summaries = summarize_factorial_responses(responses)
+    # Development and held-out are separate; each has one physical block here.
+    assert len(summaries) == 2
+    for summary in summaries:
+        assert summary["independent_block_count"] == 1
+        for field in (
+            "event_effect_on_evidence",
+            "disturbance_effect_on_evidence",
+            "interaction_on_evidence",
+            "event_effect_on_observability",
+            "disturbance_effect_on_observability",
+            "interaction_on_observability",
+        ):
+            assert summary[field]["sd_across_blocks"] is None
+            assert summary[field]["se_across_blocks"] is None
 
 
 def test_v12_response_estimator_refuses_missing_or_extra_truth_output_join() -> None:
