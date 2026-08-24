@@ -10,10 +10,11 @@ No PolliPi or InsePi observer output is used here.
 
 ## Why this audit exists
 
-Two implementation-independent failure modes could make a real-pixel stress test hard to interpret even before observer execution:
+Three implementation-independent failure modes could make a real-pixel stress test hard to interpret even before observer execution:
 
-1. the fixed 182/182 disturbance assignment might accidentally concentrate disturbance truth in particular source videos or temporal strata; and
-2. a transferred perturbation operator might be effectively a no-op on real pixels, or conversely saturate most of the image.
+1. the fixed 182/182 disturbance assignment might accidentally concentrate disturbance truth in particular source videos or temporal strata;
+2. different family/tier panels might accidentally reuse almost the same disturbed windows, reducing effective panel diversity; and
+3. a transferred perturbation operator might be effectively a no-op on real pixels, or conversely saturate most of the image.
 
 Because the artifact was already immutable, these checks can only document those properties; they cannot trigger retuning under the same V10 generation.
 
@@ -43,6 +44,22 @@ There is one small stratification gap that should remain visible rather than be 
 
 This means the V10 panel assignment is correctly described as a deterministic hash-based balanced-half assignment, **not** as a video/time-stratified randomized design. The main V10 comparison remains paired because every policy is evaluated against the same fixed panel truth and the paired-uniform denominator uses the same assignment. The residual stratum imbalance should nevertheless be reported as a finite-realization limitation of the semi-empirical test.
 
+## Panel-overlap diagnostics
+
+The 18 fixed panel assignments were also compared with each other. There are 153 panel pairs. If two 182-of-364 half-samples were independent, their expected overlap would be exactly **91 windows**.
+
+Observed panel-pair overlap is:
+
+- mean **90.745**;
+- minimum **80**;
+- maximum **105**.
+
+The corresponding binary disturbance-assignment phi coefficients have mean **−0.0028** and range **−0.1209 to +0.1538**. Thus the different family/tier panels are not near-duplicates of one another.
+
+Across all 18 panels, each of the 364 base windows is disturbed an average of exactly **9 times**, with a range of **3–15**. No window is never disturbed, and no window is disturbed in all 18 panels. This is consistent with the intended use of the panel id as part of the frozen SHA-256 assignment domain and provides descriptive evidence that the 18 panel realizations retain useful assignment diversity.
+
+Again, this is not a new acceptance criterion. The already-frozen panel registry is retained exactly as generated.
+
 ## Pixel-level perturbation diagnostics
 
 Every one of the 18 family × tier variants differs from its paired native frame for every base window at a nonzero mean absolute pixel level. The smallest observed per-window MAE over all 6,552 perturbed base-window variants is **0.1695**, occurring in the spatially local occlusion family; thus no preregistered variant is a byte-level no-op.
@@ -62,6 +79,6 @@ The largest saturation fraction in any single perturbed window is **0.03711** (3
 
 ## Interpretation boundary
 
-These diagnostics support only the statement that the frozen real-pixel artifact is non-degenerate and that its panel assignment has modest but nonzero finite-sample stratum imbalance. They do **not** establish observer transfer, allocation benefit, ecological-event accuracy, or a V10 claim level.
+These diagnostics support only the statement that the frozen real-pixel artifact is non-degenerate, that the fixed panel assignments retain useful diversity, and that there is a modest but nonzero finite-sample stratum imbalance in one panel. They do **not** establish observer transfer, allocation benefit, ecological-event accuracy, or a V10 claim level.
 
 The actual V10 scientific result still requires the exact frozen V5 observer commits and must be generated only by the fail-closed manual one-shot after V7 executes first.
