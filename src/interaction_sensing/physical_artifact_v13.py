@@ -26,6 +26,8 @@ PHASE_NAMES = ("placebo", "event_restore", "observability_restore", "shared_rest
 BLOCK_COUNT = 180
 PHASE_COUNT = 4
 SAMPLE_COUNT = 8
+CANONICAL_HEIGHT = 96
+CANONICAL_WIDTH = 128
 
 
 def sha256_file(path: Path) -> str:
@@ -48,7 +50,9 @@ def read_observer_plan(path: Path) -> tuple[dict[str, str], ...]:
             raise RuntimeError(f"V13 observer plan columns changed: {reader.fieldnames}")
         rows = tuple(dict(row) for row in reader)
     if len(rows) != BLOCK_COUNT * PHASE_COUNT:
-        raise RuntimeError(f"V13 observer plan must contain 720 phase rows, got {len(rows)}")
+        raise RuntimeError(
+            f"V13 observer plan must contain {BLOCK_COUNT * PHASE_COUNT} phase rows, got {len(rows)}"
+        )
     return rows
 
 
@@ -57,14 +61,14 @@ def canonical_registry(plan_rows: Sequence[Mapping[str, str]]) -> tuple[dict[str
     for row in plan_rows:
         grouped.setdefault(str(row["opaque_block_id"]), []).append(row)
     if len(grouped) != BLOCK_COUNT:
-        raise RuntimeError(f"V13 requires exactly 180 opaque blocks, got {len(grouped)}")
+        raise RuntimeError(f"V13 requires exactly {BLOCK_COUNT} opaque blocks, got {len(grouped)}")
 
     registry: list[dict[str, object]] = []
     for block_index, block_id in enumerate(sorted(grouped)):
         phases = sorted(grouped[block_id], key=lambda row: int(row["phase_order"]))
         if len(phases) != PHASE_COUNT:
-            raise RuntimeError(f"V13 block {block_id} does not have exactly four phases")
-        if [int(row["phase_order"]) for row in phases] != [0, 1, 2, 3]:
+            raise RuntimeError(f"V13 block {block_id} does not have exactly {PHASE_COUNT} phases")
+        if [int(row["phase_order"]) for row in phases] != list(range(PHASE_COUNT)):
             raise RuntimeError(f"V13 phase-order contract changed for {block_id}")
         if phases[0]["phase_name"] != "placebo":
             raise RuntimeError(f"V13 placebo is not phase zero for {block_id}")
@@ -107,13 +111,16 @@ def materialise_pixel_artifact(
     """Build canonical pixels from safe plan rows via an injected RGB frame loader.
 
     ``phase_loader(clip_key)`` must return exactly eight native 1920x1080 RGB24
-    frames and the SHA-256 of the source clip bytes.  It receives no treatment
+    frames and the SHA-256 of the source clip bytes. It receives no treatment
     truth because ``clip_key`` comes from the safe observer plan only.
     """
     plan_rows = read_observer_plan(observer_plan_path)
     registry = canonical_registry(plan_rows)
-    frames = np.empty((BLOCK_COUNT, PHASE_COUNT, SAMPLE_COUNT, 96, 128), dtype=np.uint8)
-    backgrounds = np.empty((BLOCK_COUNT, 96, 128), dtype=np.uint8)
+    frames = np.empty(
+        (BLOCK_COUNT, PHASE_COUNT, SAMPLE_COUNT, CANONICAL_HEIGHT, CANONICAL_WIDTH),
+        dtype=np.uint8,
+    )
+    backgrounds = np.empty((BLOCK_COUNT, CANONICAL_HEIGHT, CANONICAL_WIDTH), dtype=np.uint8)
     safe_registry: list[dict[str, object]] = []
 
     by_block: dict[int, list[Mapping[str, object]]] = {}
@@ -143,7 +150,10 @@ def materialise_pixel_artifact(
     receipt_path = output_dir / "v13_pixel_receipt.json"
     np.save(frames_path, frames, allow_pickle=False)
     np.save(backgrounds_path, backgrounds, allow_pickle=False)
-    registry_path.write_text(json.dumps(safe_registry, sort_keys=True, indent=2) + "\n", encoding="utf-8")
+    registry_path.write_text(
+        json.dumps(safe_registry, sort_keys=True, indent=2) + "\n",
+        encoding="utf-8",
+    )
 
     receipt = {
         "schema": SCHEMA,
@@ -168,7 +178,10 @@ def materialise_pixel_artifact(
         "phase_count_per_block": PHASE_COUNT,
         "sample_count_per_phase": SAMPLE_COUNT,
     }
-    receipt_path.write_text(json.dumps(receipt, sort_keys=True, indent=2) + "\n", encoding="utf-8")
+    receipt_path.write_text(
+        json.dumps(receipt, sort_keys=True, indent=2) + "\n",
+        encoding="utf-8",
+    )
     return receipt
 
 
@@ -191,7 +204,15 @@ def load_pixel_artifact(directory: Path) -> V13PixelArtifact:
         raise RuntimeError("V13 safe registry hash mismatch")
     frames = np.load(frames_path, allow_pickle=False)
     backgrounds = np.load(backgrounds_path, allow_pickle=False)
-    if frames.shape != (180, 4, 8, 96, 128) or backgrounds.shape != (180, 96, 128):
+    expected_frames_shape = (
+        BLOCK_COUNT,
+        PHASE_COUNT,
+        SAMPLE_COUNT,
+        CANONICAL_HEIGHT,
+        CANONICAL_WIDTH,
+    )
+    expected_backgrounds_shape = (BLOCK_COUNT, CANONICAL_HEIGHT, CANONICAL_WIDTH)
+    if frames.shape != expected_frames_shape or backgrounds.shape != expected_backgrounds_shape:
         raise RuntimeError("V13 pixel array shape mismatch")
     if frames.dtype != np.uint8 or backgrounds.dtype != np.uint8:
         raise RuntimeError("V13 pixel arrays must be uint8")
@@ -200,6 +221,6 @@ def load_pixel_artifact(directory: Path) -> V13PixelArtifact:
     if raw_sha256(backgrounds) != receipt["array_contract"]["backgrounds_raw_sha256"]:
         raise RuntimeError("V13 backgrounds raw-byte hash mismatch")
     registry_obj = json.loads(registry_path.read_text(encoding="utf-8"))
-    if not isinstance(registry_obj, list) or len(registry_obj) != 720:
+    if not isinstance(registry_obj, list) or len(registry_obj) != BLOCK_COUNT * PHASE_COUNT:
         raise RuntimeError("V13 safe registry cardinality mismatch")
     return V13PixelArtifact(frames, backgrounds, tuple(registry_obj), receipt)
