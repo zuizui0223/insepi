@@ -1,0 +1,66 @@
+name: V13 exact frozen observer smoke
+
+on:
+  pull_request:
+    paths:
+      - "benchmarks/v13_execution_freeze.json"
+      - "scripts/v13_run_pollipi_frozen.py"
+      - "scripts/v13_run_insepi_frozen.py"
+      - ".github/workflows/v13-exact-observer-smoke.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  exact-observer-smoke:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      POLLIPI_SHA: d58d0a86034a6c2d53f90efbe4245370fd7cd2e9
+      INSEPI_SHA: 980813bab996909020140fad5bd83b055eb3db9c
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11.16"
+
+      - name: Install pinned observer runtime
+        run: |
+          python -m pip install "numpy==2.4.6"
+          python -m pip install -e ".[dev]"
+          python - <<'PY'
+          import json, platform
+          from pathlib import Path
+          import numpy as np
+          freeze=json.loads(Path('benchmarks/v13_execution_freeze.json').read_text())
+          assert platform.python_version()==freeze['runtime']['python']=='3.11.16'
+          assert np.__version__==freeze['runtime']['numpy']=='2.4.6'
+          assert freeze['observers']['pollipi_commit']=='d58d0a86034a6c2d53f90efbe4245370fd7cd2e9'
+          assert freeze['observers']['insepi_commit']=='980813bab996909020140fad5bd83b055eb3db9c'
+          print('V13_OBSERVER_RUNTIME_FREEZE PASS')
+          PY
+
+      - name: Clone and verify exact frozen observers
+        run: |
+          set -euo pipefail
+          mkdir -p .v13/smoke
+          git clone --depth=1 --branch frozen/v5-method https://github.com/zuizui0223/pollipi.git .v13/smoke/pollipi
+          git clone --depth=1 --branch frozen/v5-method https://github.com/zuizui0223/insepi.git .v13/smoke/insepi
+          test "$(git -C .v13/smoke/pollipi rev-parse HEAD)" = "$POLLIPI_SHA"
+          test "$(git -C .v13/smoke/insepi rev-parse HEAD)" = "$INSEPI_SHA"
+          echo "V13_EXACT_OBSERVER_REACHABILITY PASS"
+
+      - name: Smoke exact frozen observer APIs before any V13 pixels
+        run: |
+          python scripts/v13_run_pollipi_frozen.py \
+            --source-root .v13/smoke/pollipi \
+            --smoke-test
+          python scripts/v13_run_insepi_frozen.py \
+            --source-root .v13/smoke/insepi \
+            --smoke-test
+          test ! -e .v13/v13_frames.npy
+          test ! -e .v13/pollipi_v13_trace.jsonl
+          test ! -e .v13/insepi_v13_trace.jsonl
+          echo "V13_EXACT_OBSERVER_SMOKE_PRE_PIXEL PASS"
