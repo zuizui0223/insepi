@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
-"""Split the private V13 truth ledger into training labels and sealed heldout truth.
+"""Split the private V13 truth ledger into training labels and sealed heldout class truth.
 
-Run this in the field-operator/private environment.  Only the development-label
+Run this in the field-operator/private environment. Only the development-label
 file is transferred to the blinded prediction environment before heldout
-predictions are frozen.  The heldout truth file remains sealed until then.
+predictions are frozen. The heldout treatment-class file remains sealed until
+then. Actual heldout physical day/scene clusters are supplied separately from
+the validated completed capture log after prediction commitment.
 """
 from __future__ import annotations
 
@@ -50,12 +52,7 @@ def split(private_truth: Path, commitment_path: Path, output_dir: Path) -> dict[
         if row["split"] == "development"
     ]
     heldout = [
-        {
-            "block_id": row["block_id"],
-            "treatment_class": row["treatment_class"],
-            "day_id": row["day_id"],
-            "scene_id": row["scene_id"],
-        }
+        {"block_id": row["block_id"], "treatment_class": row["treatment_class"]}
         for row in rows
         if row["split"] == "heldout"
     ]
@@ -68,7 +65,7 @@ def split(private_truth: Path, commitment_path: Path, output_dir: Path) -> dict[
     development_path = output_dir / "v13_development_labels.csv"
     heldout_path = output_dir / "v13_heldout_truth_SEALED.csv"
     write_csv(development_path, ["block_id", "treatment_class"], development)
-    write_csv(heldout_path, ["block_id", "treatment_class", "day_id", "scene_id"], heldout)
+    write_csv(heldout_path, ["block_id", "treatment_class"], heldout)
     receipt = {
         "schema": "interaction-sensing-v13-private-truth-split-v1",
         "status": "heldout-truth-must-remain-sealed-until-prediction-ledger-frozen",
@@ -77,6 +74,8 @@ def split(private_truth: Path, commitment_path: Path, output_dir: Path) -> dict[
         "heldout_truth_sha256": sha256_file(heldout_path),
         "development_label_count": len(development),
         "heldout_truth_count": len(heldout),
+        "cluster_identity_source": "validated completed capture log after prediction commitment",
+        "synthetic_randomisation_day_scene_slots_used_for_final_cluster_inference": False,
         "transfer_to_blinded_prediction_environment_before_prediction": [
             "v13_development_labels.csv"
         ],
