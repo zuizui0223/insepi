@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 """Run exact frozen PolliPi against the byte-frozen V10 real-pixel artifact.
 
-Only current/background pixels enter ``analyze``.  Result rows deliberately omit
+Only current/background pixels enter ``analyze``. Result rows deliberately omit
 family, tier, disturbance truth, source-video identity and panel assignment.
 """
 from __future__ import annotations
 
 import argparse
+import importlib
 import json
 from pathlib import Path
 import sys
@@ -29,12 +30,41 @@ def _state_text(value: object) -> str:
     return str(raw)
 
 
+def _purge_module_prefix(prefix: str) -> None:
+    for name in tuple(sys.modules):
+        if name == prefix or name.startswith(prefix + "."):
+            del sys.modules[name]
+
+
+def _require_module_under(module, root: Path, label: str) -> Path:
+    raw = getattr(module, "__file__", None)
+    if not raw:
+        raise RuntimeError(f"{label} has no concrete __file__; frozen module origin cannot be verified")
+    resolved = Path(raw).resolve()
+    expected_root = root.resolve()
+    try:
+        resolved.relative_to(expected_root)
+    except ValueError as exc:
+        raise RuntimeError(
+            f"{label} imported from wrong origin: {resolved} is not under {expected_root}"
+        ) from exc
+    return resolved
+
+
 def _import_analyze(source_root: Path):
-    analysis_src = source_root / "packages" / "analysis" / "src"
+    analysis_src = (source_root / "packages" / "analysis" / "src").resolve()
     if not analysis_src.is_dir():
         raise FileNotFoundError(analysis_src)
+    _purge_module_prefix("pollipi_analysis")
     sys.path.insert(0, str(analysis_src))
-    from pollipi_analysis.pipeline import analyze  # type: ignore
+    package = importlib.import_module("pollipi_analysis")
+    pipeline = importlib.import_module("pollipi_analysis.pipeline")
+    package_path = _require_module_under(package, analysis_src, "pollipi_analysis")
+    pipeline_path = _require_module_under(pipeline, analysis_src, "pollipi_analysis.pipeline")
+    analyze = getattr(pipeline, "analyze", None)
+    if analyze is None:
+        raise RuntimeError("exact frozen PolliPi pipeline has no analyze()")
+    print("V10_POLLIPI_MODULE_ORIGIN PASS", package_path, pipeline_path)
     return analyze
 
 
