@@ -22,10 +22,10 @@
     "scripts/v10_run_pollipi_frozen.py": "8136f42ea4135b88e5ff8cb65653ace81b7ea3af",
     "scripts/v10_run_insepi_frozen.py": "3fe1eba427fa7a7ea468553365309312e806b88d",
     "scripts/v10_audit_frozen_observer_independence.py": "06f0615fbd99918d5f14ce7d0f60378229eea7af",
-    "scripts/v10_capture_runtime_environment.py": "7e548331b3b40d81f5a891bd7208b3e739bbe13f",
+    "scripts/v10_capture_runtime_environment.py": "1829d06c93ebec36e518fec39d330feccf52dce0",
     "scripts/v10_verify_v7_prerequisite.py": "1de3f127d210465efe9c61bcbf9265368c01af0c",
     "src/interaction_sensing/simulation/v10_evaluator.py": "8d112b7fcfd760548358ca840260d5714422dd85",
-    "scripts/v10_evaluate_locked.py": "56671b1e5de4fe1ed018ecdff624c68fa2a9ce5a",
+    "scripts/v10_evaluate_locked.py": "e476e5e111e18e54a662b8a93645c75cd4456edd",
     ".github/workflows/v10-one-shot.yml": "16ca28940a6c042f8cad0db2afec370a141e32e5"
   },
   "generic_guarded_portfolio_git_blob_sha1": "a6397383c0d713026631b197d4aeb135222200ef",
