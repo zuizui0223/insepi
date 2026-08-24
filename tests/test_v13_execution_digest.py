@@ -1,10 +1,21 @@
 from __future__ import annotations
 
+import importlib.util
 from pathlib import Path
 
-from scripts import v13_execution_digest as digest  # type: ignore
-
 ROOT = Path(__file__).resolve().parents[1]
+
+
+def _load_digest_module():
+    path = ROOT / "scripts/v13_execution_digest.py"
+    spec = importlib.util.spec_from_file_location("v13_execution_digest_test_module", path)
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+digest = _load_digest_module()
 
 
 def test_v13_execution_digest_covers_scientific_and_execution_boundaries() -> None:
