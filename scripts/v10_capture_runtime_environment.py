@@ -18,6 +18,10 @@ import sys
 
 import numpy as np
 
+SCRIPT_DIR = Path(__file__).resolve().parent
+if str(SCRIPT_DIR) not in sys.path:
+    sys.path.insert(0, str(SCRIPT_DIR))
+
 from v10_verify_v7_prerequisite import verify as verify_v7_prerequisite
 
 SCHEMA = "interaction-sensing-v10-runtime-environment-v1"
