@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
-"""Capture the pinned V10 observer runtime before canonical pixels are read."""
+"""Capture the pinned V10 observer runtime before canonical pixels are read.
+
+The same pre-pixel step also verifies that the supplied prerequisite evidence is
+the complete frozen V7 generation. V7 PASS and FAIL are both accepted; a wrong
+or incomplete V7 generation blocks V10 before canonical V10 pixels are read.
+"""
 from __future__ import annotations
 
 import argparse
@@ -12,6 +17,8 @@ import subprocess
 import sys
 
 import numpy as np
+
+from v10_verify_v7_prerequisite import verify as verify_v7_prerequisite
 
 SCHEMA = "interaction-sensing-v10-runtime-environment-v1"
 EXPECTED_PYTHON = (3, 11, 16)
@@ -41,6 +48,11 @@ def main() -> None:
         type=Path,
         default=Path(".v10/runtime/pip_freeze.txt"),
     )
+    parser.add_argument(
+        "--v7-prereq-root",
+        type=Path,
+        default=Path(".v10/v7-prereq"),
+    )
     args = parser.parse_args()
 
     actual_python = sys.version_info[:3]
@@ -52,6 +64,10 @@ def main() -> None:
         raise RuntimeError(
             f"V10 NumPy runtime mismatch: {np.__version__} != {EXPECTED_NUMPY}"
         )
+
+    # This occurs after the prior V7 artifact is downloaded but before observer
+    # smoke and before the canonical V10 pixel artifact is downloaded.
+    v7_verified = verify_v7_prerequisite(args.v7_prereq_root)
 
     completed = subprocess.run(
         [sys.executable, "-m", "pip", "freeze", "--all"],
@@ -81,6 +97,12 @@ def main() -> None:
         "setuptools_version": _distribution_version("setuptools"),
         "pip_freeze_sha256": _sha256(freeze_bytes),
         "pip_freeze_line_count": len(lines),
+        "v7_prerequisite_verified": True,
+        "v7_prerequisite_ledger_sha256": str(v7_verified["ledger_sha256"]),
+        "v7_prerequisite_claim_level": str(v7_verified["claim_level"]),
+        "v7_prerequisite_gate_passed": bool(v7_verified["gate_passed"]),
+        "v7_prerequisite_world_fingerprint": str(v7_verified["world_fingerprint"]),
+        "v7_prerequisite_pixel_artifact_sha256": str(v7_verified["pixel_artifact_sha256"]),
         "observer_output_inspected": False,
         "canonical_v10_pixels_read": False,
     }
@@ -92,6 +114,8 @@ def main() -> None:
     print("V10_RUNTIME_PYTHON", payload["python_version"])
     print("V10_RUNTIME_NUMPY", payload["numpy_version"])
     print("V10_RUNTIME_PIP_FREEZE_SHA256", payload["pip_freeze_sha256"])
+    print("V10_V7_PREREQUISITE_VERIFIED true")
+    print("V10_V7_PREREQUISITE_LEDGER_SHA256", payload["v7_prerequisite_ledger_sha256"])
     print("V10_RUNTIME_CANONICAL_PIXELS_READ false")
 
 
