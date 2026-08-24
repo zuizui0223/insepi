@@ -1,0 +1,46 @@
+{
+  "schema": "interaction-sensing-v10-preobserver-pixel-qa-summary-v1",
+  "status": "post-freeze-descriptive-only-not-a-v10-claim-gate",
+  "source_artifact_workflow_run_id": 32616509747,
+  "canonical_pixel_npz_sha256": "b971caa2b0c06b45ccf114df99d6515765ea9ec5fb8e58ded226b424f8afad66",
+  "condition_registry_sha256": "1689f5ce102abfef722e3e8667e8c6e290a42fe1d4563c1655b7f14520cde393",
+  "panel_registry_sha256": "b1e59cda67977e5ab8d09e1ea28236b442d72c616c92df0c22adca89122cac8a",
+  "observer_execution": false,
+  "scientific_protocol_changed": false,
+  "panel_assignment": {
+    "panel_count": 18,
+    "disturbed_per_panel": 182,
+    "video_tv_mean": 0.05173992673992674,
+    "video_tv_max": 0.09615384615384617,
+    "video_temporal_quartile_tv_mean": 0.10653235653235654,
+    "video_temporal_quartile_tv_max": 0.1401098901098901,
+    "panels_with_missing_video_category": 0,
+    "panels_with_missing_video_temporal_quartile_category": 1,
+    "missing_video_temporal_quartile_detail": {
+      "panel_id": "framing_drift:tier0",
+      "video_index": 7,
+      "temporal_quartile": 3,
+      "full_window_count": 6,
+      "disturbed_window_count": 0
+    }
+  },
+  "perturbation_pixel_diagnostics": {
+    "all_family_median_mae_nondecreasing_by_tier": true,
+    "family_median_mae_by_tier": {
+      "shadow": [8.6640625, 15.392008463541668, 22.0692138671875],
+      "occlusion": [0.2532958984375, 0.45528157552083337, 0.6500244140625],
+      "blur": [10.087565104166666, 16.84912109375, 19.644612630208332],
+      "sensor_banding": [5.739583333333333, 10.197916666666666, 14.6533203125],
+      "glare": [3.8611246744791665, 6.803466796875, 8.719889322916668],
+      "framing_drift": [43.2501220703125, 46.894734700520836, 46.96663411458333]
+    },
+    "minimum_over_all_variants_of_min_window_mae": 0.16951497395833334,
+    "maximum_over_all_variants_of_max_window_saturation_fraction": 0.037109375
+  },
+  "interpretation_boundary": [
+    "Computed only after the V10 protocol and canonical pixel bytes were frozen.",
+    "Descriptive artifact-quality evidence only; not a preregistered V10 acceptance or claim criterion.",
+    "No perturbation, panel assignment, score mapping, threshold, comparator or claim ceiling may be changed in response.",
+    "No PolliPi or InsePi observer output was used."
+  ]
+}
