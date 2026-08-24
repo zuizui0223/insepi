@@ -98,7 +98,7 @@ python scripts/v13_validate_capture_logs.py \
   --output-receipt V13_CAPTURE_LOGS/v13_capture_validation.json
 ```
 
-Observer execution is forbidden if this step fails.
+Observer execution is forbidden if this step fails. This receipt fixes the actual physical `recording_date_local × physical_scene_code` cluster identities that will later be used for held-out uncertainty. Synthetic randomisation slots may not substitute for these completed acquisition clusters.
 
 ## Stage 5 — byte-level field bundle validation
 
@@ -257,11 +257,15 @@ python scripts/v13_evaluate_locked.py \
   --prediction-commitment V13_PREDICTIONS/v13_prediction_commitment.json \
   --heldout-truth PRIVATE_V13_TRUTH_SPLIT/v13_heldout_truth_SEALED.csv \
   --truth-split-receipt PRIVATE_V13_TRUTH_SPLIT/v13_truth_split_receipt.json \
+  --block-capture-log V13_CAPTURE_LOGS/v13_block_capture_log.csv \
+  --capture-validation-receipt V13_CAPTURE_LOGS/v13_capture_validation.json \
   --randomisation-commitment PRIVATE_V13_PLAN/v13_randomisation_commitment.json \
   --qc-plan PRIVATE_V13_PLAN/v13_protected_qc_plan.csv \
   --qc-annotations V13_QC_ANNOTATIONS.csv \
   --output V13_RESULT/v13_report.json
 ```
+
+The final cluster identity is read from the **same validated completed block capture log** whose SHA-256 is bound in `v13_capture_validation.json`. The held-out class truth file contains only opaque block id + treatment class; it does not supply day/scene cluster labels.
 
 The evaluator reports:
 
@@ -271,7 +275,7 @@ The evaluator reports:
 - one-intervention and two-intervention performance;
 - full-battery ceiling;
 - A/B/C/D claim level;
-- complete prediction/truth/QC provenance hashes.
+- complete prediction/truth/capture/QC provenance hashes.
 
 ## Non-negotiable stop boundary
 
