@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import importlib
 import json
 from pathlib import Path
 import sys
@@ -48,24 +49,50 @@ def _load_artifact(npz_path: Path, manifest_path: Path):
     return raw, backgrounds, frames, metadata
 
 
+def _purge_module_prefix(prefix: str) -> None:
+    for name in tuple(sys.modules):
+        if name == prefix or name.startswith(prefix + "."):
+            del sys.modules[name]
+
+
+def _require_module_under(module, root: Path, label: str) -> Path:
+    raw = getattr(module, "__file__", None)
+    if not raw:
+        raise RuntimeError(f"{label} has no concrete __file__; frozen module origin cannot be verified")
+    resolved = Path(raw).resolve()
+    expected_root = root.resolve()
+    try:
+        resolved.relative_to(expected_root)
+    except ValueError as exc:
+        raise RuntimeError(
+            f"{label} imported from wrong origin: {resolved} is not under {expected_root}"
+        ) from exc
+    return resolved
+
+
 def _import_frozen(source_root: Path):
-    src = source_root / "src"
+    src = (source_root / "src").resolve()
     if not src.exists():
         raise FileNotFoundError(f"InsePi source not found: {src}")
+    _purge_module_prefix("interaction_sensing")
     sys.path.insert(0, str(src))
-    from interaction_sensing.noise import NoiseFirstPolicy  # type: ignore
-    from interaction_sensing.simulation.factorial_benchmark_v4 import (  # type: ignore
-        _apply_calibrated_local_audit,
-        calibrate_occlusion_threshold,
-        local_structure_loss,
+    package = importlib.import_module("interaction_sensing")
+    noise_module = importlib.import_module("interaction_sensing.noise")
+    factorial_module = importlib.import_module("interaction_sensing.simulation.factorial_benchmark_v4")
+    visual_module = importlib.import_module("interaction_sensing.simulation.visual_contradiction_v2")
+    verified = (
+        _require_module_under(package, src, "interaction_sensing"),
+        _require_module_under(noise_module, src, "interaction_sensing.noise"),
+        _require_module_under(factorial_module, src, "interaction_sensing.simulation.factorial_benchmark_v4"),
+        _require_module_under(visual_module, src, "interaction_sensing.simulation.visual_contradiction_v2"),
     )
-    from interaction_sensing.simulation.visual_contradiction_v2 import infer_noise_observation  # type: ignore
+    print("V7_INSEPI_MODULE_ORIGIN PASS", *(str(path) for path in verified))
     return (
-        NoiseFirstPolicy,
-        infer_noise_observation,
-        calibrate_occlusion_threshold,
-        local_structure_loss,
-        _apply_calibrated_local_audit,
+        noise_module.NoiseFirstPolicy,
+        visual_module.infer_noise_observation,
+        factorial_module.calibrate_occlusion_threshold,
+        factorial_module.local_structure_loss,
+        factorial_module._apply_calibrated_local_audit,
     )
 
 
