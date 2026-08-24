@@ -12,8 +12,8 @@
     "scripts/v7_audit_frozen_observer_independence.py": "64885d404d2b157c9da529f365f7a0e243d57494"
   },
   "execution_file_git_blob_sha1": {
-    "scripts/v7_run_pollipi_frozen.py": "80942036e2683f9ae16208da718f86b3579c32b4",
-    "scripts/v7_run_insepi_frozen.py": "537d1e331f3dca7f5d886500e1ceb482c408f6eb"
+    "scripts/v7_run_pollipi_frozen.py": "983e6709cf1413bbd5f81dd7531b270f996913af",
+    "scripts/v7_run_insepi_frozen.py": "90419a545422894c2504a0e33342deccfe63075e"
   },
   "software_independence_gate": {
     "timing": "after exact V5 checkouts and before dependency installation, smoke tests, seed derivation or V7 pixel materialisation",
@@ -22,6 +22,20 @@
     "scope": "static Python imports plus literal dynamic imports in the frozen observer source trees",
     "interpretation": "software-level implementation separation only; this is not a claim of statistical independence of observer errors",
     "failure_action": "Block V7 before master-seed derivation and pixel materialisation."
+  },
+  "frozen_module_origin_gate": {
+    "timing": "inside each exact frozen observer adapter before its smoke decision and again before normal observer execution",
+    "pollipi_required_root": "<exact PolliPi checkout>/packages/analysis/src",
+    "pollipi_verified_modules": ["pollipi_analysis", "pollipi_analysis.pipeline"],
+    "insepi_required_root": "<exact InsePi checkout>/src",
+    "insepi_verified_modules": [
+      "interaction_sensing",
+      "interaction_sensing.noise",
+      "interaction_sensing.simulation.factorial_benchmark_v4",
+      "interaction_sensing.simulation.visual_contradiction_v2"
+    ],
+    "module_cache_rule": "Before importing a frozen observer, remove any existing sys.modules entries for that package prefix, put the exact checkout source root first on sys.path, import the package/submodules, and require every concrete __file__ to resolve under the exact checkout root.",
+    "failure_action": "Block V7 before the frozen observer decision; never fall back to an installed or current-repository package with the same import name."
   },
   "insepi_frame_index_gate": {
     "probe_indices": [0, 1, 179],
@@ -56,6 +70,7 @@
   ],
   "scientific_non_interference": [
     "This freeze changes no V7 generator, allocator, evaluator, materialiser, baseline, metric, threshold, policy or claim rule.",
+    "Frozen-module origin verification changes only fail-closed provenance enforcement; it does not modify either frozen observer implementation or its decision semantics.",
     "No V7 master seed has been derived by adding this freeze.",
     "No V7 pixel artifact has been materialised by adding this freeze."
   ]
