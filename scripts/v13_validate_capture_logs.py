@@ -3,13 +3,14 @@
 from __future__ import annotations
 
 import argparse
+from collections import Counter
 import csv
 import hashlib
 import json
 from pathlib import Path
 
 BLOCK_FIELDS = [
-    "block_id", "split", "recording_date_local", "operator_code",
+    "block_id", "split", "recording_date_local", "physical_scene_code", "operator_code",
     "device_id", "firmware_version", "lens_id", "mount_id",
     "width", "height", "fps", "exposure_mode", "exposure_us",
     "analogue_gain", "focus_mode", "lens_position",
@@ -87,15 +88,45 @@ def main() -> None:
         if (int(row["width"]), int(row["height"]), int(row["fps"])) != (1920, 1080, 30):
             raise SystemExit(f"V13 camera geometry/FPS contract violated: {block_id}")
         required_nonempty = (
-            "recording_date_local", "operator_code", "device_id", "firmware_version",
-            "lens_id", "mount_id", "exposure_mode", "exposure_us", "analogue_gain",
-            "focus_mode", "lens_position",
+            "recording_date_local", "physical_scene_code", "operator_code", "device_id",
+            "firmware_version", "lens_id", "mount_id", "exposure_mode", "exposure_us",
+            "analogue_gain", "focus_mode", "lens_position",
         )
         empty = [field for field in required_nonempty if not row[field].strip()]
         if empty:
             raise SystemExit(f"V13 missing required block metadata {empty}: {block_id}")
         if not yes(row["block_complete"], "block_complete"):
             raise SystemExit(f"V13 block not marked complete: {block_id}")
+
+    # Physical cluster identity must be demonstrated by completed acquisition
+    # metadata, not inferred from synthetic split labels.
+    split_dates = {
+        split: {row["recording_date_local"] for row in block_rows if row["split"] == split}
+        for split in ("development", "heldout")
+    }
+    split_scenes = {
+        split: {row["physical_scene_code"] for row in block_rows if row["split"] == split}
+        for split in ("development", "heldout")
+    }
+    if len(split_dates["development"]) != 3 or len(split_dates["heldout"]) != 2:
+        raise SystemExit(f"V13 physical day-count contract violated: {split_dates}")
+    if split_dates["development"] & split_dates["heldout"]:
+        raise SystemExit("V13 heldout recording dates overlap development dates")
+    if len(split_scenes["development"]) != 3 or len(split_scenes["heldout"]) != 3:
+        raise SystemExit(f"V13 physical scene-count contract violated: {split_scenes}")
+    if split_scenes["development"] & split_scenes["heldout"]:
+        raise SystemExit("V13 heldout physical scenes overlap development scenes")
+
+    cluster_counts = Counter(
+        (row["split"], row["recording_date_local"], row["physical_scene_code"])
+        for row in block_rows
+    )
+    expected_cluster_count = 3 * 3 + 2 * 3
+    if len(cluster_counts) != expected_cluster_count:
+        raise SystemExit(f"V13 day_x_scene cluster cardinality changed: {len(cluster_counts)}")
+    bad_clusters = {key: count for key, count in cluster_counts.items() if count != 12}
+    if bad_clusters:
+        raise SystemExit(f"V13 each day_x_scene cluster must contain 12 blocks: {bad_clusters}")
 
     deviations: list[str] = []
     for row in phase_rows:
@@ -126,6 +157,14 @@ def main() -> None:
         "phase_log_sha256": sha256_file(args.phase_log),
         "block_count": 180,
         "phase_count": 720,
+        "development_date_count": len(split_dates["development"]),
+        "heldout_date_count": len(split_dates["heldout"]),
+        "development_physical_scene_count": len(split_scenes["development"]),
+        "heldout_physical_scene_count": len(split_scenes["heldout"]),
+        "day_x_scene_cluster_count": len(cluster_counts),
+        "blocks_per_cluster": sorted(set(cluster_counts.values())),
+        "development_heldout_dates_disjoint": True,
+        "development_heldout_scenes_disjoint": True,
         "deviations": deviations,
         "observer_execution_allowed": not deviations,
     }
