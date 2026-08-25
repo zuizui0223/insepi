@@ -8,37 +8,42 @@ import sys
 
 
 ROOT = Path(__file__).resolve().parents[1]
+FILES = (
+    "v14_dimensionless_phase_surface.csv",
+    "v14_dimensionless_phase_summary.json",
+    "v14_dimensionless_phase_receipt.json",
+)
 
 
 def _sha(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def _run(script: str, out: Path) -> None:
+    subprocess.run(
+        [
+            sys.executable,
+            script,
+            "--output-dir",
+            str(out),
+            "--limit-coordinates",
+            "2",
+            "--replicates",
+            "2",
+        ],
+        cwd=ROOT,
+        check=True,
+    )
+
+
 def test_v14_small_phase_rehearsal_is_deterministic(tmp_path: Path) -> None:
     outputs = []
     for label in ("a", "b"):
         out = tmp_path / label
-        subprocess.run(
-            [
-                sys.executable,
-                "scripts/run_v14_dimensionless_phase_sweep.py",
-                "--output-dir",
-                str(out),
-                "--limit-coordinates",
-                "2",
-                "--replicates",
-                "2",
-            ],
-            cwd=ROOT,
-            check=True,
-        )
+        _run("scripts/run_v14_dimensionless_phase_sweep.py", out)
         outputs.append(out)
 
-    for name in (
-        "v14_dimensionless_phase_surface.csv",
-        "v14_dimensionless_phase_summary.json",
-        "v14_dimensionless_phase_receipt.json",
-    ):
+    for name in FILES:
         assert _sha(outputs[0] / name) == _sha(outputs[1] / name)
 
     summary = json.loads((outputs[0] / "v14_dimensionless_phase_summary.json").read_text())
@@ -54,6 +59,15 @@ def test_v14_small_phase_rehearsal_is_deterministic(tmp_path: Path) -> None:
         "P3_pi2_near_one_more_ambiguity_when_other_separation_weak",
         "P4_high_pi4_more_indirect_rescue_at_low_pi3",
     }
+
+
+def test_cached_wrapper_is_scientifically_byte_identical(tmp_path: Path) -> None:
+    uncached = tmp_path / "uncached"
+    cached = tmp_path / "cached"
+    _run("scripts/run_v14_dimensionless_phase_sweep.py", uncached)
+    _run("scripts/run_v14_dimensionless_phase_sweep_cached.py", cached)
+    for name in FILES:
+        assert _sha(uncached / name) == _sha(cached / name)
 
 
 def test_protocol_predictions_are_descriptive_not_ci_gates() -> None:
