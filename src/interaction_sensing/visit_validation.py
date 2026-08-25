@@ -1,10 +1,10 @@
 """Pre-data evaluator contracts for V15 real visit-observation validation.
 
-The evaluator keeps biological truth and observation-support truth separate. It
-also distinguishes retaining a candidate clip from making an interpretable
-positive biological claim. This matters when a target-focused observer fires in a
-window that the V14 support gate marks unobservable: the clip may still deserve
-review, but the window remains censored for ecological inference.
+Biological truth, nuisance truth, and primary-stream observation support remain
+separate. Biological truth may be unresolved when even the independent reference
+truth channel cannot determine whether a visit occurred. Such windows remain
+available for primary-stream observability/QC evaluation but are excluded from
+biological-accuracy denominators rather than being silently labelled no-insect.
 """
 from __future__ import annotations
 
@@ -29,19 +29,38 @@ class VisitTruthState(str, Enum):
         return self is VisitTruthState.VISIT_EVENT
 
 
+class VisitTruthResolution(str, Enum):
+    RESOLVED = "resolved"
+    UNRESOLVED = "unresolved"
+
+
 @dataclass(frozen=True, slots=True)
 class VisitTruthRecord:
     window_id: str
     block_id: str
-    biological_state: VisitTruthState
+    biological_state: VisitTruthState | None
     support_truth: ObservationAvailability
     nuisance_labels: tuple[str, ...] = ()
+    biological_truth_resolution: VisitTruthResolution = VisitTruthResolution.RESOLVED
+    reference_truth_source: str | None = None
 
     def __post_init__(self) -> None:
         if not self.window_id:
             raise ValueError("window_id cannot be empty")
         if not self.block_id:
             raise ValueError("block_id cannot be empty")
+        if self.biological_truth_resolution is VisitTruthResolution.RESOLVED and self.biological_state is None:
+            raise ValueError("resolved biological truth requires biological_state")
+        if self.biological_truth_resolution is VisitTruthResolution.UNRESOLVED and self.biological_state is not None:
+            raise ValueError("unresolved biological truth must not carry a biological_state")
+
+    @property
+    def biological_truth_resolved(self) -> bool:
+        return self.biological_truth_resolution is VisitTruthResolution.RESOLVED
+
+    @property
+    def is_visit(self) -> bool:
+        return self.biological_truth_resolved and self.biological_state is VisitTruthState.VISIT_EVENT
 
 
 @dataclass(frozen=True, slots=True)
@@ -73,11 +92,14 @@ class VisitPredictionRecord:
 @dataclass(frozen=True, slots=True)
 class VisitValidationSummary:
     n_windows: int
+    resolved_biological_truth_windows: int
+    unresolved_biological_truth_windows: int
+    reference_truth_unresolved_fraction: float
     observable_true_visit_windows: int
     retained_observable_true_visits: int
     visit_recall_on_observable_truth: float
     candidate_false_positive_rate: float
-    negative_calls: int
+    negative_calls_on_resolved_truth: int
     false_absence_count: int
     false_absence_rate: float
     missed_visit_as_absence_rate: float
@@ -119,11 +141,13 @@ def evaluate_visit_predictions(
     target_low_threshold: float = 0.25,
     nuisance_low_threshold: float = 0.60,
 ) -> VisitValidationSummary:
-    """Evaluate inference and censoring without treating frames as replicates.
+    """Evaluate visit inference and primary-stream censoring.
 
-    This function reports window-level diagnostic quantities only. Confidence
-    intervals and block-level visit-rate estimators belong to the final V15 freeze
-    once a sample-size/cluster design is fixed.
+    Biological metrics use resolved reference truth only. Observation-support
+    metrics use every window because primary-stream observability can be annotated
+    even when biological truth is unresolved. Confidence intervals and block-level
+    rate estimators remain outside this pre-data evaluator until the V15 cluster /
+    sample-size design is frozen.
     """
 
     truth_by_id = {row.window_id: row for row in truth}
@@ -138,30 +162,38 @@ def evaluate_visit_predictions(
         raise ValueError(f"truth/prediction window mismatch: missing_pred={missing_pred}, missing_truth={missing_truth}")
 
     rows = [(truth_by_id[key], pred_by_id[key]) for key in sorted(truth_by_id)]
+    resolved_rows = [(t, p) for t, p in rows if t.biological_truth_resolved]
+    unresolved_rows = [(t, p) for t, p in rows if not t.biological_truth_resolved]
+
     observable_visits = [
         (t, p)
-        for t, p in rows
-        if t.biological_state.is_visit and t.support_truth is ObservationAvailability.OBSERVABLE
+        for t, p in resolved_rows
+        if t.is_visit and t.support_truth is ObservationAvailability.OBSERVABLE
     ]
     retained_observable_visits = sum(p.retain_candidate for _, p in observable_visits)
 
-    nonvisit_rows = [(t, p) for t, p in rows if not t.biological_state.is_visit]
+    nonvisit_rows = [(t, p) for t, p in resolved_rows if not t.is_visit]
     candidate_false_positives = sum(p.retain_candidate for _, p in nonvisit_rows)
 
-    negative_rows = [(t, p) for t, p in rows if p.negative_evidence]
-    false_absences = sum(t.biological_state.is_visit for t, _ in negative_rows)
-    all_visits = [(t, p) for t, p in rows if t.biological_state.is_visit]
+    negative_rows = [(t, p) for t, p in resolved_rows if p.negative_evidence]
+    false_absences = sum(t.is_visit for t, _ in negative_rows)
+    all_visits = [(t, p) for t, p in resolved_rows if t.is_visit]
     visits_called_negative = sum(p.negative_evidence for _, p in all_visits)
 
+    # Support-gate performance is evaluated on every window independently of
+    # whether the reference channel could resolve the insect state.
     unobservable_rows = [(t, p) for t, p in rows if t.support_truth is ObservationAvailability.UNOBSERVABLE]
     censored_unobservable = sum(p.censored for _, p in unobservable_rows)
     observable_rows = [(t, p) for t, p in rows if t.support_truth is ObservationAvailability.OBSERVABLE]
     censored_observable = sum(p.censored for _, p in observable_rows)
 
+    # A shared blind spot can be either a resolved true visit or a primary-stream
+    # support failure. The latter remains auditable even if biological truth is
+    # unresolved, because the support truth is a separate annotation layer.
     shared_blind_spots = [
         (t, p)
         for t, p in rows
-        if (t.biological_state.is_visit or t.support_truth is ObservationAvailability.UNOBSERVABLE)
+        if (t.is_visit or t.support_truth is ObservationAvailability.UNOBSERVABLE)
         and p.target_score is not None
         and p.nuisance_burden is not None
         and p.target_score <= target_low_threshold
@@ -171,11 +203,14 @@ def evaluate_visit_predictions(
 
     return VisitValidationSummary(
         n_windows=len(rows),
+        resolved_biological_truth_windows=len(resolved_rows),
+        unresolved_biological_truth_windows=len(unresolved_rows),
+        reference_truth_unresolved_fraction=_ratio(len(unresolved_rows), len(rows)),
         observable_true_visit_windows=len(observable_visits),
         retained_observable_true_visits=retained_observable_visits,
         visit_recall_on_observable_truth=_ratio(retained_observable_visits, len(observable_visits)),
         candidate_false_positive_rate=_ratio(candidate_false_positives, len(nonvisit_rows)),
-        negative_calls=len(negative_rows),
+        negative_calls_on_resolved_truth=len(negative_rows),
         false_absence_count=false_absences,
         false_absence_rate=_ratio(false_absences, len(negative_rows)),
         missed_visit_as_absence_rate=_ratio(visits_called_negative, len(all_visits)),
