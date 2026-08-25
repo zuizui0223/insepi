@@ -1,56 +1,88 @@
 # Methods in Ecology and Evolution packaging gate
 
-This file tracks **submission-format and peer-review packaging** only. Scientific pass/fail is controlled separately by the locked V7 protocol and claim ceiling.
+This file tracks submission-format and peer-review packaging. Scientific pass/fail remains controlled by the frozen generation-specific protocols and claim ceilings.
 
 ## Current state
 
 | Requirement | Status | Evidence / action |
 |---|---|---|
-| Standard Article framing | PASS | Simulation-first new method, not workflow glue |
-| Main manuscript anonymised | PASS by build + unpack audit | role labels Observer-E / Observer-O; public project names, owner and searchable 40-char commit IDs absent |
-| Abstract numbered 1–4 | PASS by build | CI checks exactly four numbered paragraphs |
-| Abstract target ≤350 words | PASS | current pre-V7 abstract = **257 words** |
-| Main manuscript word budget | PASS | current pre-V7 generated manuscript = **5,428 words**, leaving margin for locked V7 result under the journal ceiling |
-| Data/Code for peer review statement | PASS by build | inserted directly below Abstract |
-| Keywords | PASS | retained below Data/Code statement |
+| Standard Article framing | PASS | Methodology paper centred on contradiction-guided development, controlled diagnosis and protected probability sampling |
+| Current main manuscript | PASS working draft | V7/V10/V11/V12 locked outcomes represented; V13 explicitly result-pending |
+| Main manuscript anonymisation | PASS by current build contract | Observer-E / Observer-O labels; owner/project names and searchable 40-char Git commits removed |
+| Abstract numbered 1–4 | PASS by build contract | exactly four source-derived numbered paragraphs retained |
+| Abstract target ≤350 words | PASS/FAIL determined by current builder | builder refuses output above 350 words |
+| Main manuscript ≤8,000 words | PASS/FAIL determined by current builder | builder refuses output above 8,000 words |
+| Data/Code for peer review statement | PASS by build | inserted directly below abstract before keywords |
 | Separate title page | PASS template | `manuscript/TITLE_PAGE_TEMPLATE.md`; excluded from anonymous bundle |
-| AI assistance disclosure | PASS draft | Methods disclosure names ChatGPT GPT-5.6 Sol and repository-recorded Claude assistance; corresponding author responsibility stated |
-| Anonymous peer-review code bundle | PASS by build + manual grep | deterministic ZIP; text and paths scrub owner/project names, email and searchable 40-char git SHAs; JSONL/BibTeX included in scan |
-| Core bibliography metadata | PASS | 11-entry `REFERENCES_VERIFIED.bib`; publisher/institutional metadata audit; corrected Avizienis DOI and Aubry title |
-| Observation/simulation validation citations | PASS | MacKenzie 2002, Morris 2019 and Dwork 2015 inserted with bounded citation roles |
-| Supplementary Information | PASS pre-V7 | `SUPPLEMENTARY_INFORMATION_PRE_V7.md` contains V1–V6 tables, theorem derivation, hashes and seed-independent V7 preregistration; result fields remain placeholders |
-| Pre-V7 figures | PASS | deterministic Fig. 1–5 SVG/CSV package; V7 absent |
-| V7 final result | **BLOCKED** | exact frozen V5 observer branches not yet publicly reachable |
-| PolliPi open-source licence | **BLOCKED — explicit author choice required** | no root `LICENSE`, `LICENSE.txt`, `LICENSE.md` or `COPYING`; root `package.json` is private and has no licence declaration |
-| InsePi open-source licence | **BLOCKED — explicit author choice required** | no root `LICENSE`, `LICENSE.txt`, `LICENSE.md` or `COPYING`; `pyproject.toml` has no licence metadata |
-| Stable public archive / DOI | PENDING after V7 | create immutable archive after locked result is preserved |
-| Final Data Availability statement | PENDING archive DOI | title page and final manuscript updated after archiving |
+| AI assistance disclosure | PASS draft | Methods disclosure names ChatGPT GPT-5.6 Sol and repository-recorded Claude assistance; author responsibility stated |
+| Current anonymous peer-review code bundle | PASS by build contract; CI required | based on V13 scientific tree, includes completed V7/V10/V11/V12 evidence and frozen V13 protocol |
+| Core bibliography metadata | PASS | 11-entry `REFERENCES_VERIFIED.bib`; publisher/institutional metadata audit retained |
+| Observation/simulation validation citations | PASS current builder | MacKenzie 2002, Morris 2019, Dwork 2015, Aubry 2024 and Bothmann 2023 inserted with bounded roles |
+| Current Supplementary Information | PASS draft | `SUPPLEMENTARY_INFORMATION_CURRENT.md` covers V1–V13 and contains no V7 placeholders |
+| Current main figures | **IN PROGRESS** | old pre-V7 Fig. 1–5 are historical only; regenerate figures for falsification / V9 / V11→V12 / V10–V13 story |
+| V7 locked result | PASS evidence | FAIL/C preserved; report SHA `20ff5ecc...` |
+| V10 locked real-pixel result | PASS evidence | partial transfer/C preserved; one-shot run `32693453262` |
+| V11 locked result | PASS evidence | static localisation FAIL/D preserved |
+| V12 locked result | PASS evidence | controlled intervention claim B preserved |
+| V13 physical result | **RESULT PENDING** | pre-field execution frozen; stronger physical-transfer MEE claim waits for blinded acquisition/evaluation |
+| PolliPi open-source licence | **BLOCKED — explicit author choice required** | no explicit root licence recorded |
+| InsePi open-source licence | **BLOCKED — explicit author choice required** | no explicit root licence recorded |
+| Stable public archive / DOI | PENDING final claim set | create immutable archive after final submission evidence set is fixed |
+| Final Data Availability statement | PENDING archive DOI | update after archive creation |
+
+## Scientific evidence already closed
+
+The package must preserve, not re-run or reinterpret, these outcomes:
+
+- V7: general frozen-allocation superiority rejected, claim C;
+- V10: partial/family-specific real-pixel observation-risk transfer, claim C;
+- V11: static contradiction-state causal localisation rejected, claim D;
+- V12: conditional causal-identification advantage under controlled interventions, claim B.
+
+V13 is a separate pre-field generation. Its 22-path scientific execution digest is:
+
+`96c44136f51d30060534b7157c9adc1c68a42883e401757db63193ebb7a8035d`.
+
+Packaging work must not modify those 22 critical paths.
 
 ## Why the licence remains blocked
 
-Methods in Ecology and Evolution requires code accompanying submissions to carry an open-source software licence. The method depends on **two separately executable repositories**, so both PolliPi and InsePi need explicit licensing before the public submission/archive package can be treated as complete.
+Methods in Ecology and Evolution requires accompanying code to carry an appropriate open-source software licence. The method depends on two separately executable observer repositories, so both repositories require explicit licensing before the public submission/archive package can be considered complete.
 
-A repository-wide search found no existing SPDX header, Copyright notice or embedded project licence declaration that already settles the choice. That absence removes an obvious internal conflict but does **not** authorise an automatic licence grant. Choosing MIT, BSD-3-Clause, Apache-2.0, GPL or another licence changes the legal permissions granted by the copyright holder, so the build system deliberately does not choose one automatically.
-
-Until explicit root licences are added to both repositories, the publication package must remain `license_ready=false`.
+No prior repository-wide licence grant was identified that authorises the build system to choose terms automatically. Selecting MIT, BSD-3-Clause, Apache-2.0, GPL or another licence changes legal permissions granted by the copyright holder. The package therefore remains `license_ready=false` until the author explicitly chooses/authorises licences for both repositories.
 
 ## Double-anonymous handling
 
-The review bundle removes repository ownership, email addresses, public observer-project names and public git commit identifiers from both content and paths. Scientific SHA-256 fingerprints for simulated worlds, registries and reports remain unchanged because they identify evidence, not authors. The latest unpacked artifact was checked with a case-insensitive recursive text/path scan and produced zero project/owner leaks. The final public archive should restore canonical source provenance after peer review.
+The current review bundle:
+
+- starts from the V13 scientific tree rather than the obsolete pre-V7 tree;
+- removes repository ownership, email addresses, public observer-project names and 40-character Git commit identifiers from content and paths;
+- retains 64-character scientific SHA-256 evidence fingerprints;
+- includes `MEE_CURRENT_SUBMISSION.md` and `SUPPLEMENTARY_INFORMATION_CURRENT.md`;
+- excludes the title page and historical `SUPPLEMENTARY_INFORMATION_PRE_V7.md` / `V7_FINALIZATION_CONTRACT.md` from reviewer-facing content;
+- declares completed locked generations V7/V10/V11/V12 and explicitly declares `v13_scientific_result_present=false`.
+
+Canonical historical files remain in repository history for provenance.
 
 ## Bibliography boundary
 
-`REFERENCES_VERIFIED.bib` is now the canonical bibliography source. `REFERENCE_AUDIT.md` records corrections and limits on what each neighbouring literature can support. Literature added after V7 must not be used to retrospectively inflate a failing locked claim.
+`REFERENCES_VERIFIED.bib` remains the canonical audited bibliography source. New literature may clarify the method's position but may not retrospectively upgrade a locked negative result.
 
-## V7 boundary
+## V13 boundary
 
-No packaging task may insert, infer or simulate a V7 outcome. The five context-specific `[[V7_LOCKED_RESULT:...]]` fields remain unresolved until the one-shot execution ledger exists. Packaging CI may build manuscripts, supplementary information and figures from V1–V6 evidence, but it must not generate V7 seed, pixels, traces or reports.
+V13 may be described only as a frozen physical protocol until its no-peek sequence completes:
+
+`private randomisation → physical capture → capture validation → truth-free pixels → exact observers → blinded predictions → prediction commitment → protected QC → held-out truth unseal → frozen evaluator`.
+
+No packaging task may invent or simulate a V13 scientific outcome for the manuscript.
 
 ## Pre-submission blockers remaining
 
-Only two blocker classes remain outside ordinary title-page completion:
+For the intended stronger MEE version, the remaining substantive blockers are:
 
-1. make the exact frozen V5 observer commits externally reachable, then execute the already staged one-shot V7 workflow;
-2. explicitly choose and add compatible open-source licences to **both** PolliPi and InsePi.
+1. execute V13 physical acquisition/evaluation exactly as frozen and accept its A/B/C/D outcome without retuning;
+2. build the current V1–V13-aligned main figure set (the old pre-V7 figures are not the final figures);
+3. explicitly choose and add compatible open-source licences to both observer repositories;
+4. create the final stable archive/DOI after the claim set is fixed.
 
-Neither blocker may be bypassed by publication-packaging code.
+A conservative simulation-first manuscript can be packaged before V13, but it must retain the narrower claim ceiling and still requires the current figures and explicit licences before submission.
