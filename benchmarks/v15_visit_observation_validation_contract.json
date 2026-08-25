@@ -5,9 +5,11 @@
   "purpose": "Validate whether explicit target evidence, nuisance risk, and observability censoring improve real insect-visit observation without conflating non-detection with biological absence.",
   "truth_layers": {
     "biological_event": {
-      "source": "human annotation independent of observer outputs",
+      "source": "synchronised independent reference observation (reference camera and/or direct observer), annotated without algorithm outputs",
       "states": ["no_insect", "insect_in_context", "target_contact", "visit_event"],
-      "visit_definition": "operational interaction event at the focal floral target; does not imply pollination effectiveness"
+      "resolution": ["resolved", "unresolved"],
+      "visit_definition": "operational interaction event at the focal floral target; does not imply pollination effectiveness",
+      "hard_rule": "If the reference truth channel cannot resolve the biological state, the window is truth_unresolved and cannot be relabelled no_insect."
     },
     "nuisance": {
       "source": "human/physical annotation independent of observer outputs",
@@ -15,10 +17,18 @@
       "effects": ["mimic_target", "mask_target", "corrupt_attribution", "degrade_observation_support"]
     },
     "observation_support": {
-      "source": "annotation/physical measurement independent of PolliPi/InsePi outputs",
+      "source": "annotation/physical measurement of the primary system-under-test stream, independent of PolliPi/InsePi outputs",
       "states": ["observable", "compromised", "unobservable"],
-      "question": "If a visit occurred in the focal interaction zone, was the available stream sufficient to observe it?"
+      "question": "If a visit occurred in the focal interaction zone, was the primary system-under-test stream sufficient to observe it?",
+      "independence_rule": "Primary-stream unobservability does not prevent biological truth from being resolved by the independent reference truth channel."
     }
+  },
+  "reference_truth_contract": {
+    "primary_stream": "the camera stream evaluated by PolliPi/InsePi/V14",
+    "reference_stream": "a synchronised observation channel used only for truth annotation and not as model input",
+    "required_for_false_absence_validation": true,
+    "reference_stream_outputs_hidden_from_algorithms": true,
+    "both_streams_unresolved": "biological truth is unresolved; exclude from biological accuracy denominators but retain for support/QC accounting"
   },
   "split_contract": {
     "development": "threshold calibration and contradiction-guided failure diagnosis only",
@@ -33,7 +43,8 @@
     "algorithm_outputs_hidden_from_annotators": true,
     "double_annotation_fraction_min": 0.20,
     "disagreements_adjudicated_before_model_scoring": true,
-    "unobservable_is_not_relabelled_as_no_visit": true
+    "unobservable_is_not_relabelled_as_no_visit": true,
+    "unresolved_reference_truth_is_not_relabelled_as_no_insect": true
   },
   "comparison_systems": [
     "target_only_naive",
@@ -43,12 +54,13 @@
     "protected_random_reference"
   ],
   "primary_metrics": [
-    "visit_recall_on_observable_truth",
-    "false_positive_visit_rate",
-    "false_absence_rate",
+    "visit_recall_on_observable_resolved_truth",
+    "false_positive_visit_rate_on_resolved_truth",
+    "false_absence_rate_on_resolved_truth",
     "unobservable_recall",
     "observable_false_censor_rate",
     "fraction_censored",
+    "reference_truth_unresolved_fraction",
     "shared_blind_spot_discovery_rate",
     "review_or_capture_burden",
     "block_level_visit_rate_bias",
