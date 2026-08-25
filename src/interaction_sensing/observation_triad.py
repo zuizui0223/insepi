@@ -111,25 +111,31 @@ class ObservationSupport:
     reasons: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
-        for name, value in (
+        for name, value in self.component_scores:
+            if not 0.0 <= value <= 1.0:
+                raise ValueError(f"{name} must lie in [0, 1]")
+
+    @property
+    def component_scores(self) -> tuple[tuple[str, float], ...]:
+        """Stable ordered support components for provenance and diagnosis."""
+
+        return (
             ("target_zone_coverage", self.target_zone_coverage),
             ("target_zone_visibility", self.target_zone_visibility),
             ("spatial_resolution", self.spatial_resolution),
             ("photometric_sufficiency", self.photometric_sufficiency),
             ("temporal_continuity", self.temporal_continuity),
-        ):
-            if not 0.0 <= value <= 1.0:
-                raise ValueError(f"{name} must lie in [0, 1]")
+        )
 
     @property
     def ceiling(self) -> float:
-        return min(
-            self.target_zone_coverage,
-            self.target_zone_visibility,
-            self.spatial_resolution,
-            self.photometric_sufficiency,
-            self.temporal_continuity,
-        )
+        return min(value for _, value in self.component_scores)
+
+    @property
+    def limiting_component(self) -> str:
+        """First minimum component in a fixed order, for deterministic diagnosis."""
+
+        return min(self.component_scores, key=lambda item: item[1])[0]
 
 
 @dataclass(frozen=True, slots=True)
@@ -142,6 +148,7 @@ class ObservationInterpretation:
     target_score: float
     nuisance_burden: float
     observability_ceiling: float
+    observability_limiting_component: str
     absence_interpretable: bool
     denominator_eligible: bool
     audit_priority: bool
@@ -203,6 +210,7 @@ class ObservationTriadPolicy:
             reasons.append(f"target:{target.source_state}")
         if nuisance.dominant_source:
             reasons.append(f"nuisance:{nuisance.dominant_source}")
+        reasons.append(f"support_limit:{support.limiting_component}")
 
         # An unobservable window is censored regardless of whether either
         # observer emitted a high/low score. A high target score is retained as a
@@ -216,6 +224,7 @@ class ObservationTriadPolicy:
                 target_score=target.score,
                 nuisance_burden=nuisance.burden,
                 observability_ceiling=support.ceiling,
+                observability_limiting_component=support.limiting_component,
                 absence_interpretable=False,
                 denominator_eligible=False,
                 audit_priority=True,
@@ -278,6 +287,7 @@ class ObservationTriadPolicy:
             target_score=target.score,
             nuisance_burden=nuisance.burden,
             observability_ceiling=support.ceiling,
+            observability_limiting_component=support.limiting_component,
             absence_interpretable=absence_interpretable,
             denominator_eligible=denominator_eligible,
             audit_priority=audit_priority,

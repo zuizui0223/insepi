@@ -1,0 +1,78 @@
+name: V14a dimensionless phase sweep
+
+on:
+  pull_request:
+    paths:
+      - "benchmarks/v14_dimensionless_world_protocol.json"
+      - "src/interaction_sensing/simulation/dimensionless_observability_v14.py"
+      - "scripts/run_v14_dimensionless_phase_sweep.py"
+      - "scripts/run_v14_dimensionless_phase_sweep_cached.py"
+      - "tests/test_dimensionless_observability_v14.py"
+      - "tests/test_v14_dimensionless_phase_sweep.py"
+      - ".github/workflows/v14-dimensionless-phase.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  canonical-phase-sweep:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install V14 runtime
+        run: python -m pip install -e ".[dev]"
+      - name: Verify V14 ontology, rehearsal and cached-run parity contracts
+        run: |
+          pytest -q \
+            tests/test_observation_triad.py \
+            tests/test_dimensionless_observability_v14.py \
+            tests/test_v14_dimensionless_phase_sweep.py
+      - name: Full canonical V14a sweep — hash seed 11
+        env:
+          PYTHONHASHSEED: "11"
+        run: python scripts/run_v14_dimensionless_phase_sweep_cached.py --output-dir .v14/run-a
+      - name: Full canonical V14a sweep — hash seed 97
+        env:
+          PYTHONHASHSEED: "97"
+        run: python scripts/run_v14_dimensionless_phase_sweep_cached.py --output-dir .v14/run-b
+      - name: Require byte-identical canonical artifacts
+        run: |
+          for name in \
+            v14_dimensionless_phase_surface.csv \
+            v14_dimensionless_phase_summary.json \
+            v14_dimensionless_phase_receipt.json; do
+            sha_a="$(sha256sum ".v14/run-a/$name" | awk '{print $1}')"
+            sha_b="$(sha256sum ".v14/run-b/$name" | awk '{print $1}')"
+            test "$sha_a" = "$sha_b" || { echo "V14 determinism failure: $name $sha_a != $sha_b"; exit 1; }
+            echo "V14_BYTE_IDENTICAL $name $sha_a"
+          done
+      - name: Report scientific outputs without gating predictions
+        run: |
+          python - <<'PY' >> "$GITHUB_STEP_SUMMARY"
+          import json
+          from pathlib import Path
+          summary = json.loads(Path('.v14/run-a/v14_dimensionless_phase_summary.json').read_text())
+          print('# V14a dimensionless phase sweep')
+          print()
+          print(f"- Worlds: `{summary['world_count']}`")
+          print(f"- Coordinates: `{summary['coordinate_count']}`")
+          print(f"- Surface rows: `{summary['surface_row_count']}`")
+          print('- Overall:')
+          for key, value in summary['overall'].items():
+              print(f"  - `{key}`: `{value:.6f}`")
+          print('- Pre-sweep prediction checks (descriptive, **not gates**):')
+          for key, value in summary['prediction_checks_descriptive_not_gates'].items():
+              print(f"  - `{key}`: `{value}`")
+          print()
+          print('No prediction result changes CI success and no observer was tuned from this sweep.')
+          PY
+      - name: Upload canonical V14a phase evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: v14a-dimensionless-phase-evidence
+          path: .v14/run-a/
+          if-no-files-found: error
+          retention-days: 90

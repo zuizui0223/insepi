@@ -35,6 +35,15 @@ from .visit_annotation import (
     assert_algorithm_fields_absent,
     validate_raw_annotations,
 )
+from .visit_observation import (
+    DiagnosticAction,
+    VisitObservationRecord,
+    VisitObservationStatus,
+    VisitObservationSummary,
+    diagnostic_actions,
+    summarise_visit_observations,
+    visit_record_from_interpretation,
+)
 from .visit_validation import (
     CoupledResponseResolution,
     VisitPredictionRecord,
@@ -52,6 +61,7 @@ __all__ = [
     "BBox",
     "Candidate",
     "CoupledResponseResolution",
+    "DiagnosticAction",
     "ErrorClass",
     "InferentialStatus",
     "InteractionEvent",
@@ -75,16 +85,22 @@ __all__ = [
     "TargetRouteEvidence",
     "TargetSpec",
     "TriadState",
+    "VisitObservationRecord",
+    "VisitObservationStatus",
+    "VisitObservationSummary",
     "VisitPredictionRecord",
     "VisitTruthRecord",
     "VisitTruthResolution",
     "VisitTruthState",
     "VisitValidationSummary",
     "assert_algorithm_fields_absent",
+    "diagnostic_actions",
     "evaluate_visit_predictions",
     "prediction_from_triad",
     "profile_for",
+    "summarise_visit_observations",
     "validate_raw_annotations",
+    "visit_record_from_interpretation",
 ]
 
 __version__ = "0.1.0"

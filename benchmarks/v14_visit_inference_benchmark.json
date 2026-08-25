@@ -1,0 +1,48 @@
+{
+  "schema": "pollipi-insepi-v14-visit-inference-benchmark-v1",
+  "generation": "V14",
+  "status": "development-benchmark-preregistered-before-result",
+  "scientific_question": "Does separating observation support from target evidence and nuisance risk prevent false biological absence and denominator contamination without treating all high-nuisance windows as unobservable?",
+  "latent_axes": {
+    "visit_truth": [false, true],
+    "nuisance_mechanism": ["clean", "mimic", "mask", "attribution", "support_loss"],
+    "support_truth": ["observable", "compromised", "unobservable"]
+  },
+  "support_levels": {
+    "observable": 0.90,
+    "compromised": 0.50,
+    "unobservable": 0.10
+  },
+  "design": {
+    "windows_per_cell": 400,
+    "replicates": 50,
+    "base_seed": 140314,
+    "paired_worlds_across_policies": true
+  },
+  "policies": {
+    "target_only": "Uses target evidence only; low target evidence is treated as negative evidence regardless of nuisance/support.",
+    "target_plus_nuisance": "Uses target evidence and nuisance risks; low target evidence with low missed-event risk is treated as negative evidence, but no independent support gate exists.",
+    "triad": "Uses target evidence, nuisance risks, and independent observation support; unobservable windows are censored rather than counted as absence."
+  },
+  "primary_metrics": [
+    "false_absence_rate_among_true_visits",
+    "false_positive_candidate_rate_among_true_absences",
+    "unobservable_denominator_contamination",
+    "observable_opportunity_retention",
+    "observable_true_visit_candidate_recall",
+    "unobservable_censor_recall"
+  ],
+  "diagnostic_slices": [
+    "low_nuisance_unobservable",
+    "high_nuisance_observable",
+    "masking_observable",
+    "support_loss_low_target"
+  ],
+  "interpretation_rules": [
+    "Do not collapse the primary metrics into one scalar winner.",
+    "A lower false-absence rate obtained only by censoring all high-nuisance windows is not sufficient evidence for the triad model.",
+    "The key V14 distinction is demonstrated only if low-nuisance unobservable windows can be censored while at least some high-nuisance observable windows remain denominator-eligible.",
+    "This development benchmark cannot establish field visit accuracy or calibrated detection probability."
+  ],
+  "locked_history_boundary": "V7, V10, V11, V12, and V13 are not modified or reinterpreted by V14."
+}

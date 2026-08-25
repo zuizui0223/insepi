@@ -3,6 +3,20 @@
   "generation": "V14",
   "status": "development-contract-no-performance-claim",
   "purpose": "Separate biological target evidence, nuisance risk, and observation support before validating visit observations.",
+  "software_roles": {
+    "PolliPi": {
+      "outputs": ["target_evidence"],
+      "rule": "target evidence is not confirmed visitation, nuisance truth, or absence truth"
+    },
+    "InsePi": {
+      "outputs": ["nuisance_risk", "observation_support"],
+      "rule": "nuisance risk and observation support remain separately emitted heads; observation support must not be defined as one minus nuisance risk"
+    },
+    "cross_observer_diagnostic": {
+      "inputs": ["target_evidence", "nuisance_risk", "observation_support"],
+      "rule": "retain the three quantities until diagnostic interpretation; contradiction is evidence for what to audit/intervene on, not a truth label"
+    }
+  },
   "axes": {
     "target_evidence": {
       "scientific_question": "Is there evidence for the focal insect/visit event?",
@@ -11,11 +25,12 @@
     },
     "nuisance_risk": {
       "scientific_question": "Can a non-target process mimic, hide, or misattribute the focal event?",
-      "reference_observer": "InsePi-like observation-process observer",
+      "reference_observer": "InsePi nuisance head",
       "not_equivalent_to": ["all non-insect content", "one_minus_target_evidence", "unobservability"]
     },
     "observation_support": {
       "scientific_question": "If an insect visit occurred in the focal interaction zone, was the measurement channel sufficient to observe it?",
+      "reference_observer": "InsePi support head",
       "components": [
         "target_zone_coverage",
         "target_zone_visibility",
@@ -69,7 +84,7 @@
     "positive_candidate": "May trigger visit-focused retention; confirmation still requires the relevant validation contract.",
     "negative_evidence": "Allowed only for quiet_observable windows with missed-event risk below the nuisance threshold.",
     "censored": "Must not be counted as absence or as a fully observed opportunity.",
-    "protected_random_sample": "Must sample independently of target/nuisance scores so quiet shared blind spots remain auditable."
+    "protected_random_sample": "Must sample independently of target/nuisance/support scores so quiet shared blind spots remain auditable."
   },
   "claim_ceiling": {
     "current": "conceptual_and_software_contract_only",
