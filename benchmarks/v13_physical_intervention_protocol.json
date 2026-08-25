@@ -27,6 +27,16 @@
     },
     "total_expected_block_count": 180
   },
+  "actual_physical_cluster_contract": {
+    "cluster_identity_source": "completed capture log recording_date_local x physical_scene_code",
+    "randomisation_day_scene_slots_used_for_final_uncertainty": false,
+    "blocks_per_day_x_scene_cluster": 12,
+    "replicates_per_treatment_class_per_day_x_scene_cluster": 3,
+    "development_day_x_scene_cluster_count": 9,
+    "heldout_day_x_scene_cluster_count": 6,
+    "development_and_heldout_recording_dates_must_be_disjoint": true,
+    "development_and_heldout_physical_scenes_must_be_disjoint": true
+  },
   "latent_physical_treatment_classes": {
     "event_side": {
       "development_subtype": "local_target_contrast_attenuation",
@@ -112,6 +122,9 @@
     "no_frame_level_resampling_for_uncertainty": true,
     "uncertainty_unit": "day_x_scene cluster",
     "heldout_cluster_count": 6,
+    "synthetic_randomisation_day_scene_slots_used_for_cluster_bootstrap": false,
+    "required_blocks_per_heldout_cluster": 12,
+    "required_replicates_per_treatment_per_heldout_cluster": 3,
     "cluster_bootstrap": {"enabled": true, "resamples": 5000, "seed": 1313},
     "report_per_cluster_results": true
   },
