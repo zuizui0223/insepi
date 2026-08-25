@@ -1,9 +1,8 @@
 """V14a2 prefrozen spatiotemporal closed-world generator.
 
-This module fixes the design required after the negative V14a Pi2 result. It
-adds an independent spatial correlation-length coordinate (Pi5) and explicit
-sampling coordinate (Pi6). Construction invariants may be unit-tested, but the
-registered full scientific sweep remains blocked until prefreeze receipt.
+Adds Pi5 (nuisance spatial correlation length / target support width) and Pi6
+(samples / target timescale) after the negative V14a Pi2 result. Construction
+invariants may be tested before freeze; the full scientific sweep remains blocked.
 """
 from __future__ import annotations
 
@@ -140,13 +139,11 @@ def spatial_shared_weight(distance_target_widths: float, pi5: float) -> float:
 
 
 def _time_grid(point: SpatiotemporalPoint) -> np.ndarray:
-    # Pi6 controls the actual sample count. Low-Pi6 worlds remain undersampled.
     n = max(2, int(floor(point.pi1 * point.pi6)) + 1)
     return np.linspace(-point.pi1 / 2.0, point.pi1 / 2.0, n, dtype=float)
 
 
 def _ou_process(rng: np.random.Generator, n: int, dt: float, timescale: float) -> np.ndarray:
-    """Stationary discrete OU process with unit marginal variance."""
     a = float(np.exp(-dt / max(timescale, _EPS)))
     innovation = float(np.sqrt(max(0.0, 1.0 - a * a)))
     out = np.empty(n, dtype=float)
@@ -161,7 +158,6 @@ def nuisance_field(
     *,
     seed: int,
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
-    """Return times, focal nuisance, and three reference-region nuisance traces."""
     times = _time_grid(point)
     dt = float(times[1] - times[0])
     rng = np.random.default_rng(seed)
@@ -185,6 +181,19 @@ def normalized_spatial_structure(focal: np.ndarray, reference: np.ndarray) -> fl
         + _EPS
     )
     return float(np.clip(numerator / denominator, 0.0, 1.0))
+
+
+def normalized_local_power_excess(focal: np.ndarray, reference: np.ndarray) -> float:
+    """Positive focal amplitude excess over the reference, normalized to [0,1]."""
+    focal_rms = _rms(focal)
+    reference_rms = _rms(reference)
+    return float(
+        np.clip(
+            max(0.0, focal_rms - reference_rms) / (focal_rms + reference_rms + _EPS),
+            0.0,
+            1.0,
+        )
+    )
 
 
 def _abs_corr(a: np.ndarray, b: np.ndarray) -> float:
@@ -302,12 +311,15 @@ def signature_for(
     scene_focal = focal_nuisance + coupling
     reference = np.median(references, axis=0)
 
-    corr = _abs_corr(focal_nuisance, reference)
-    structure = normalized_spatial_structure(focal_nuisance, reference)
+    # Observation-only spatial statistics: coupling is NOT removed with latent
+    # truth before feature extraction. It must compete with nuisance empirically.
+    corr = _abs_corr(scene_focal, reference)
+    structure = normalized_spatial_structure(scene_focal, reference)
     coherence = 1.0 - structure
-    # Crucial route separation: direct actor pixels are NOT part of the coupled
-    # scene-response route. Local excess is computed from scene motion only.
-    local_excess = normalized_spatial_structure(scene_focal, reference)
+    local_excess = normalized_local_power_excess(scene_focal, reference)
+
+    # Direct actor evidence is a separate observed route and must not leak into
+    # the target-coupled scene-response route.
     direct_rms = _rms(actor)
     scene_rms = _rms(scene_focal)
     direct_fraction = direct_rms / (direct_rms + scene_rms + _EPS)
@@ -353,7 +365,6 @@ def observation_support(
     *,
     coupling_available: bool,
 ) -> float:
-    """Counterfactual target-observation support without unrealised-route leakage."""
     target_sampling, _, _ = sampling_support(point)
     window_support = min(1.0, point.pi1)
     direct_support = point.pi3 / (1.0 + point.pi3)
@@ -399,10 +410,7 @@ def analyse_point(
 ) -> SpatiotemporalInterpretation:
     target_truth, nuisance_truth, coupling_truth = truth(regime)
     coupling_available_for_support = coupling_truth or not target_truth
-    support = observation_support(
-        point,
-        coupling_available=coupling_available_for_support,
-    )
+    support = observation_support(point, coupling_available=coupling_available_for_support)
 
     if regime is LatentRegime.BASELINE:
         zero = SpatiotemporalSignature(*(0.0 for _ in range(12)))
