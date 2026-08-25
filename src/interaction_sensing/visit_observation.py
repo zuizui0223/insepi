@@ -7,6 +7,7 @@ risk was acceptably low. Otherwise the window is ambiguous or censored.
 """
 from __future__ import annotations
 
+from collections import Counter
 from dataclasses import dataclass
 from enum import Enum
 from typing import Iterable
@@ -50,7 +51,10 @@ class VisitObservationRecord:
 
     `opportunity_seconds` belongs in an ecological denominator only when
     `denominator_eligible` is true. Censored time is retained explicitly rather
-    than silently converted to zero visits.
+    than silently converted to zero visits. The limiting observation-support
+    component is stored so lost effort can be attributed to coverage, visibility,
+    resolution, photometry, or temporal continuity rather than to a generic
+    "noise" bucket.
     """
 
     window_id: str
@@ -61,6 +65,7 @@ class VisitObservationRecord:
     target_score: float
     nuisance_burden: float
     observability_ceiling: float
+    observability_limiting_component: str
     triad_state: TriadState
     actions: tuple[DiagnosticAction, ...]
 
@@ -69,6 +74,8 @@ class VisitObservationRecord:
             raise ValueError("window_id cannot be empty")
         if self.opportunity_seconds <= 0:
             raise ValueError("opportunity_seconds must be positive")
+        if not self.observability_limiting_component:
+            raise ValueError("observability_limiting_component cannot be empty")
         if self.status is VisitObservationStatus.CENSORED_UNOBSERVABLE and self.denominator_eligible:
             raise ValueError("censored windows cannot enter the conservative denominator")
         if self.status is VisitObservationStatus.OBSERVABLE_NONDETECTION and not self.absence_interpretable:
@@ -87,6 +94,7 @@ class VisitObservationSummary:
     visit_candidate_windows: int
     observable_nondetection_windows: int
     audit_or_ambiguous_windows: int
+    censored_limiting_components: tuple[tuple[str, int], ...]
 
     @property
     def observable_fraction(self) -> float:
@@ -155,6 +163,7 @@ def visit_record_from_interpretation(
         target_score=interpretation.target_score,
         nuisance_burden=interpretation.nuisance_burden,
         observability_ceiling=interpretation.observability_ceiling,
+        observability_limiting_component=interpretation.observability_limiting_component,
         triad_state=interpretation.state,
         actions=diagnostic_actions(interpretation),
     )
@@ -172,6 +181,7 @@ def summarise_visit_observations(records: Iterable[VisitObservationRecord]) -> V
         row.status in {VisitObservationStatus.CONFLICT_AUDIT, VisitObservationStatus.AMBIGUOUS}
         for row in rows
     )
+    limiting_counts = Counter(row.observability_limiting_component for row in censored)
     return VisitObservationSummary(
         n_windows=len(rows),
         eligible_windows=len(eligible),
@@ -181,4 +191,5 @@ def summarise_visit_observations(records: Iterable[VisitObservationRecord]) -> V
         visit_candidate_windows=candidates,
         observable_nondetection_windows=negative,
         audit_or_ambiguous_windows=uncertain,
+        censored_limiting_components=tuple(sorted(limiting_counts.items())),
     )
