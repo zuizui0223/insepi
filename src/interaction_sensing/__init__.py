@@ -28,6 +28,14 @@ from .observation_triad import (
     TargetEvidence,
     TriadState,
 )
+from .visit_validation import (
+    VisitPredictionRecord,
+    VisitTruthRecord,
+    VisitTruthState,
+    VisitValidationSummary,
+    evaluate_visit_predictions,
+    prediction_from_triad,
+)
 
 __all__ = [
     "AuditRecord",
@@ -53,6 +61,12 @@ __all__ = [
     "TargetEvidence",
     "TargetSpec",
     "TriadState",
+    "VisitPredictionRecord",
+    "VisitTruthRecord",
+    "VisitTruthState",
+    "VisitValidationSummary",
+    "evaluate_visit_predictions",
+    "prediction_from_triad",
     "profile_for",
 ]
 
