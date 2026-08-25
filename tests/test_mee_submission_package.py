@@ -11,7 +11,7 @@ ROOT = Path(__file__).resolve().parents[1]
 TEXT_SUFFIXES = (".py", ".md", ".toml", ".json", ".jsonl", ".bib", ".txt", ".yml", ".yaml", ".svg", ".csv", ".tsv")
 
 
-def test_mee_manuscript_has_four_part_abstract_and_required_statements(tmp_path: Path) -> None:
+def test_mee_manuscript_has_current_four_part_abstract_and_required_statements(tmp_path: Path) -> None:
     output = tmp_path / "submission.md"
     subprocess.run(
         [
@@ -32,16 +32,9 @@ def test_mee_manuscript_has_four_part_abstract_and_required_statements(tmp_path:
     assert abstract.count("\n3. ") == 1
     assert abstract.count("\n4. ") == 1
     assert "\n5. " not in abstract
-    for marker in (
-        "[[V7_LOCKED_RESULT:ABSTRACT]]",
-        "[[V7_LOCKED_RESULT:TABLE]]",
-        "[[V7_LOCKED_RESULT:RESULTS]]",
-        "[[V7_LOCKED_RESULT:DISCUSSION]]",
-        "[[V7_LOCKED_RESULT:REPRODUCIBILITY_LEDGER]]",
-    ):
-        assert text.count(marker) == 1
+    assert "[[V7_LOCKED_RESULT" not in text
     assert "## Data/Code for peer review" in text
-    assert "### 2.13. AI-assisted software and manuscript development" in text
+    assert "### 2.15. AI-assisted software and manuscript development" in text
     assert "GPT-5.6 Sol" in text
     assert "**Target journal:**" not in text
     assert "**Status:**" not in text
@@ -52,7 +45,16 @@ def test_mee_manuscript_has_four_part_abstract_and_required_statements(tmp_path:
     assert "d58d0a86034a6c2d53f90efbe4245370fd7cd2e9" not in text
     assert "980813bab996909020140fad5bd83b055eb3db9c" not in text
 
-    # Submission references must be the audited set, not the old working list.
+    # Current locked-result boundaries must survive the presentation transform.
+    assert "0.9247839629" in text  # V7 locked failure
+    assert "794/864" in text  # V8 generality map
+    assert "97.75%" in text  # V9 design-based coverage
+    assert "partial_or_family_specific_transfer" in text  # V10 claim C
+    assert "0.3469" in text  # V11 locked failure
+    assert "0.9608" in text and "0.7367" in text  # V12 first-intervention contrast
+    assert "V13 physical validation is frozen but not yet claim-bearing" in text
+
+    # Submission references must be the audited set, not the working list.
     assert "## References\n" in text
     assert "References (working citations)" not in text
     assert "10.1109/TSE.1985.231893" in text
@@ -60,6 +62,7 @@ def test_mee_manuscript_has_four_part_abstract_and_required_statements(tmp_path:
     assert "MacKenzie et al., 2002" in text
     assert "Morris, White & Crowther, 2019" in text
     assert "Dwork et al., 2015" in text
+    assert "Bothmann et al., 2023" in text
     assert "Reference metadata remains a working list" not in text
 
 
@@ -86,30 +89,35 @@ def test_verified_bibliography_has_unique_core_dois() -> None:
     assert bib.count("@") == 11  # McKeeman (1998) has no DOI in the verified list.
 
 
-def test_pre_v7_supplement_preserves_locked_boundary() -> None:
-    supplement = (ROOT / "manuscript" / "SUPPLEMENTARY_INFORMATION_PRE_V7.md").read_text(encoding="utf-8")
-    assert "## Appendix S5. Locked V5 falsification record" in supplement
-    assert "## Appendix S6. V6 focused candidate comparison" in supplement
-    assert "## Appendix S8. V7 seed-independent preregistration" in supplement
-    assert "[[V7_LOCKED_RESULT:STATUS]]" in supplement
-    assert "[[V7_LOCKED_RESULT:SUPPLEMENTARY]]" in supplement
-    assert "master_seed_hex" not in supplement
-    assert "180 conditions" in supplement
-    assert "94288d76f69b57e9b3096dfb9fc90f1602ea79d836a4dcf2534979f7c7cd9975" in supplement
+def test_current_supplement_preserves_locked_failures_and_v13_boundary() -> None:
+    supplement = (ROOT / "manuscript" / "SUPPLEMENTARY_INFORMATION_CURRENT.md").read_text(encoding="utf-8")
+    for heading in (
+        "## Appendix S4. V5 locked scalar-allocation falsification",
+        "## Appendix S5. V6 development architecture and V7 locked challenge",
+        "## Appendix S6. V8 abstract generality benchmark",
+        "## Appendix S7. V9 finite-population inference",
+        "## Appendix S8. V10 locked real-pixel perturbation transfer",
+        "## Appendix S9. V11 locked static contradiction-state localisation",
+        "## Appendix S10. V12 controlled causal-intervention diagnosis",
+        "## Appendix S12. V13 blinded physical same-stream protocol",
+    ):
+        assert heading in supplement
+    assert "[[V7_LOCKED_RESULT" not in supplement
+    assert "gate: **FAIL**" in supplement
+    assert "claim level: **D**" in supplement
+    assert "Claim level: **B**" in supplement
+    assert "V13 contains no scientific result" in supplement
+    assert "96c44136f51d30060534b7157c9adc1c68a42883e401757db63193ebb7a8035d" in supplement
 
 
 def test_anonymous_bundle_is_deterministic_and_identity_scrubbed(tmp_path: Path) -> None:
-    generated = ROOT / "manuscript" / "generated" / "MEE_PRE_V7_SUBMISSION.md"
+    generated = ROOT / "manuscript" / "generated" / "MEE_CURRENT_SUBMISSION.md"
     generated.parent.mkdir(parents=True, exist_ok=True)
     subprocess.run(
         [sys.executable, "scripts/build_mee_submission_manuscript.py", "--output", str(generated)],
         cwd=ROOT,
         check=True,
     )
-
-    # Generate figures so the anonymous bundle contains the actual pre-V7 review visuals.
-    subprocess.run([sys.executable, "scripts/build_pre_v7_figures.py"], cwd=ROOT, check=True)
-    subprocess.run([sys.executable, "scripts/polish_pre_v7_figures.py"], cwd=ROOT, check=True)
 
     zip_a = tmp_path / "a.zip"
     zip_b = tmp_path / "b.zip"
@@ -132,12 +140,13 @@ def test_anonymous_bundle_is_deterministic_and_identity_scrubbed(tmp_path: Path)
 
     with zipfile.ZipFile(zip_a) as archive:
         names = set(archive.namelist())
-        assert "manuscript/generated/MEE_PRE_V7_SUBMISSION.md" in names
-        assert "manuscript/figures/generated/fig1_generation_timeline.svg" in names
+        assert "manuscript/generated/MEE_CURRENT_SUBMISSION.md" in names
         assert "manuscript/REFERENCES_VERIFIED.bib" in names
-        assert "manuscript/SUPPLEMENTARY_INFORMATION_PRE_V7.md" in names
+        assert "manuscript/SUPPLEMENTARY_INFORMATION_CURRENT.md" in names
         assert "ANONYMOUS_BUNDLE_MANIFEST.json" in names
         assert "manuscript/TITLE_PAGE_TEMPLATE.md" not in names
+        assert "manuscript/SUPPLEMENTARY_INFORMATION_PRE_V7.md" not in names
+        assert "manuscript/V7_FINALIZATION_CONTRACT.md" not in names
         assert all("pollipi" not in name.lower() for name in names)
         assert all("insepi" not in name.lower() for name in names)
         combined = "\n".join(
@@ -152,8 +161,10 @@ def test_anonymous_bundle_is_deterministic_and_identity_scrubbed(tmp_path: Path)
     assert "insepi" not in lowered
     assert "d58d0a86034a6c2d53f90efbe4245370fd7cd2e9" not in lowered
     assert "980813bab996909020140fad5bd83b055eb3db9c" not in lowered
-    # JSONL trace schemas and keys must be anonymised too, not just filenames.
-    assert "observer_e_state" in combined
-    assert "observer_e-observer_o-visual-contradiction-v2" in combined
-    # 64-character scientific fingerprints are intentionally not scrubbed.
-    assert "9442a25c3c35febaf44b1bc8f1bedce5524aa34a926f80513069593891982ac3" in combined
+    assert "[[v7_locked_result" not in lowered
+
+    # Scientific 64-character fingerprints are intentionally retained.
+    assert "20ff5eccd33d13f6115bde53e97ad80f16ccb2437870d3c1aeff3a6523089dae" in combined
+    assert "f6af6292d7ce55bec6b3eefd0dd91b90e0a93de30d68e9fd22b3edf2bf41fd9b" in combined
+    assert "7879cb05359eb45df76b8f9b77b3d2b412d0ae1d85e2315cb5a5c38299986222" in combined
+    assert "96c44136f51d30060534b7157c9adc1c68a42883e401757db63193ebb7a8035d" in combined
