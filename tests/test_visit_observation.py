@@ -64,6 +64,17 @@ def test_low_target_high_miss_risk_is_not_negative_evidence() -> None:
     assert DiagnosticAction.AUDIT_NUISANCE in row.actions
 
 
+def test_limiting_support_component_is_preserved() -> None:
+    interpretation = ObservationTriadPolicy().decide(
+        TargetEvidence(0.1),
+        NuisanceEvidence(0.05, 0.05, 0.05),
+        ObservationSupport(0.95, 0.10, 0.95, 0.95, 0.95),
+    )
+    row = visit_record_from_interpretation("occluded", 10.0, interpretation)
+    assert row.status is VisitObservationStatus.CENSORED_UNOBSERVABLE
+    assert row.observability_limiting_component == "target_zone_visibility"
+
+
 def test_summary_separates_observed_effort_from_censored_effort() -> None:
     rows = [
         make_record("positive", 0.9, NuisanceEvidence(0.1, 0.1, 0.1), 0.9),
@@ -79,6 +90,7 @@ def test_summary_separates_observed_effort_from_censored_effort() -> None:
     assert result.visit_candidate_windows == 1
     assert result.observable_nondetection_windows == 1
     assert result.observable_fraction == 2 / 3
+    assert result.censored_limiting_components == (("target_zone_coverage", 1),)
 
 
 def test_record_contract_rejects_censored_denominator_entry() -> None:
@@ -95,6 +107,7 @@ def test_record_contract_rejects_censored_denominator_entry() -> None:
             target_score=0.0,
             nuisance_burden=0.0,
             observability_ceiling=0.0,
+            observability_limiting_component="target_zone_visibility",
             triad_state=TriadState.UNOBSERVABLE_CENSORED,
             actions=(DiagnosticAction.CENSOR_FROM_DENOMINATOR,),
         )
