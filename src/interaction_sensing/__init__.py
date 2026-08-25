@@ -31,6 +31,7 @@ from .observation_triad import (
 from .visit_validation import (
     VisitPredictionRecord,
     VisitTruthRecord,
+    VisitTruthResolution,
     VisitTruthState,
     VisitValidationSummary,
     evaluate_visit_predictions,
@@ -63,6 +64,7 @@ __all__ = [
     "TriadState",
     "VisitPredictionRecord",
     "VisitTruthRecord",
+    "VisitTruthResolution",
     "VisitTruthState",
     "VisitValidationSummary",
     "evaluate_visit_predictions",
