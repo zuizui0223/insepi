@@ -2,9 +2,10 @@
 
 Raw truth annotation is intentionally isolated from algorithm output. The schema
 contains primary/reference clip provenance, biological reference truth,
-target-coupled local-response truth, primary-stream observation support, and
-exogenous nuisance labels. It contains no PolliPi, InsePi, target-evidence,
-nuisance-score, triad-state, target-route, or acquisition-policy field.
+target-coupled local-response truth, component-level primary-stream observation
+support, and exogenous nuisance labels. It contains no PolliPi, InsePi,
+target-evidence, nuisance-score, triad-state, target-route, or acquisition-policy
+field.
 """
 from __future__ import annotations
 
@@ -12,7 +13,7 @@ from dataclasses import dataclass
 import re
 
 from .nuisance_effects import NuisanceEffect
-from .observation_triad import ObservationAvailability
+from .support_truth import PrimaryStreamSupportTruth, SupportTruthResolution
 from .visit_validation import (
     CoupledResponseResolution,
     VisitTruthResolution,
@@ -29,6 +30,9 @@ FORBIDDEN_ALGORITHM_FIELD_TOKENS = (
     "coupled_target_score",
     "target_route",
     "nuisance_burden",
+    "nuisance_score",
+    "observability_score",
+    "support_score",
     "triad_state",
     "prediction",
     "acquisition_policy",
@@ -46,7 +50,7 @@ class RawVisitAnnotation:
     reference_clip_sha256: str
     biological_truth_resolution: VisitTruthResolution
     biological_state: VisitTruthState | None
-    primary_support_truth: ObservationAvailability
+    primary_support_truth: PrimaryStreamSupportTruth
     nuisance_effects: tuple[NuisanceEffect, ...] = ()
     target_coupled_response_resolution: CoupledResponseResolution = CoupledResponseResolution.RESOLVED
     target_coupled_response_present: bool | None = False
@@ -85,6 +89,12 @@ class RawVisitAnnotation:
             if self.biological_state not in {VisitTruthState.TARGET_CONTACT, VisitTruthState.VISIT_EVENT}:
                 raise ValueError("target-coupled response requires target_contact or visit_event truth")
 
+    @property
+    def primary_support_availability(self):
+        """Derived observable/compromised/unobservable state, or None if unresolved."""
+
+        return self.primary_support_truth.availability
+
 
 @dataclass(frozen=True, slots=True)
 class AnnotationBatchSummary:
@@ -94,6 +104,7 @@ class AnnotationBatchSummary:
     double_annotation_fraction: float
     unresolved_reference_truth_windows: int
     unresolved_coupled_response_windows: int
+    unresolved_primary_support_windows: int
 
 
 def validate_raw_annotations(
@@ -103,9 +114,9 @@ def validate_raw_annotations(
 ) -> AnnotationBatchSummary:
     """Validate provenance and the preregistered independent-annotation fraction.
 
-    This validator never adjudicates biological or coupling labels automatically.
-    Conflicting raw annotations must be resolved by an explicit blinded
-    adjudication step before a final VisitTruthRecord is constructed.
+    This validator never adjudicates biological, coupling, nuisance, or support
+    labels automatically. Conflicting raw annotations must be resolved by an
+    explicit blinded adjudication step before a final VisitTruthRecord is built.
     """
 
     if not 0.0 <= minimum_double_annotation_fraction <= 1.0:
@@ -148,6 +159,10 @@ def validate_raw_annotations(
         all(row.target_coupled_response_resolution is CoupledResponseResolution.UNRESOLVED for row in items)
         for items in by_window.values()
     )
+    unresolved_support = sum(
+        all(row.primary_support_truth.resolution is SupportTruthResolution.UNRESOLVED for row in items)
+        for items in by_window.values()
+    )
     return AnnotationBatchSummary(
         windows=len(by_window),
         annotation_rows=len(rows),
@@ -155,6 +170,7 @@ def validate_raw_annotations(
         double_annotation_fraction=fraction,
         unresolved_reference_truth_windows=unresolved,
         unresolved_coupled_response_windows=unresolved_coupling,
+        unresolved_primary_support_windows=unresolved_support,
     )
 
 
