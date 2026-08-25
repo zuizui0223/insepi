@@ -1,0 +1,70 @@
+{
+  "schema": "pollipi-insepi-v14-observation-triad-contract-v1",
+  "generation": "V14",
+  "status": "development-contract-no-performance-claim",
+  "purpose": "Separate biological target evidence, nuisance risk, and observation support before validating visit observations.",
+  "axes": {
+    "target_evidence": {
+      "scientific_question": "Is there evidence for the focal insect/visit event?",
+      "reference_observer": "PolliPi-like biological-evidence observer",
+      "not_equivalent_to": ["absence truth", "observability"]
+    },
+    "nuisance_risk": {
+      "scientific_question": "Can a non-target process mimic, hide, or misattribute the focal event?",
+      "reference_observer": "InsePi-like observation-process observer",
+      "not_equivalent_to": ["all non-insect content", "one_minus_target_evidence", "unobservability"]
+    },
+    "observation_support": {
+      "scientific_question": "If an insect visit occurred in the focal interaction zone, was the measurement channel sufficient to observe it?",
+      "components": [
+        "target_zone_coverage",
+        "target_zone_visibility",
+        "spatial_resolution",
+        "photometric_sufficiency",
+        "temporal_continuity"
+      ],
+      "reference_ceiling": "minimum_component",
+      "not_equivalent_to": ["one_minus_nuisance", "detector_confidence"]
+    }
+  },
+  "reference_thresholds": {
+    "target_low": 0.25,
+    "target_high": 0.65,
+    "nuisance_high": 0.60,
+    "unobservable_ceiling": 0.30,
+    "observable_ceiling": 0.70
+  },
+  "hard_invariants": [
+    "low nuisance does not imply observability",
+    "high nuisance does not imply unobservability",
+    "unobservable windows are censored rather than counted as biological absence",
+    "a high target score in an unobservable window may be retained for audit but is not upgraded to a defensible visit",
+    "stable non-target context is not nuisance unless it can distort event inference",
+    "protected random audit remains necessary because agreement between target and nuisance observers cannot exclude a shared blind spot"
+  ],
+  "primary_diagnostic_states": [
+    "clean_target_candidate",
+    "target_nuisance_conflict",
+    "target_observability_conflict",
+    "nuisance_dominated_or_possible_miss",
+    "quiet_observable",
+    "quiet_compromised",
+    "unobservable_censored",
+    "ambiguous"
+  ],
+  "ecological_inference_contract": {
+    "positive_candidate": "May trigger visit-focused retention; confirmation still requires the relevant validation contract.",
+    "negative_evidence": "Allowed only for quiet_observable windows with missed-event risk below the nuisance threshold.",
+    "censored": "Must not be counted as absence or as a fully observed opportunity.",
+    "protected_random_sample": "Must sample independently of target/nuisance scores so quiet shared blind spots remain auditable."
+  },
+  "claim_ceiling": {
+    "current": "conceptual_and_software_contract_only",
+    "forbidden_before_validation": [
+      "field visit accuracy",
+      "calibrated detection probability",
+      "species identification accuracy",
+      "universal superiority over a single observer"
+    ]
+  }
+}
