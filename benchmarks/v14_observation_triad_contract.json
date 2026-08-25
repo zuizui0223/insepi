@@ -27,6 +27,18 @@
       "not_equivalent_to": ["one_minus_nuisance", "detector_confidence"]
     }
   },
+  "nuisance_effect_taxonomy": {
+    "mimic_target": "can create false target evidence",
+    "mask_target": "can hide a real target",
+    "corrupt_attribution": "can make target/event attribution ambiguous",
+    "degrade_observation_support": "can lower measurement support enough to become a censoring nuisance"
+  },
+  "censoring_nuisance_examples": [
+    "severe occlusion",
+    "severe blur or focus loss",
+    "lens contamination",
+    "camera displacement severe enough to destroy target-zone support"
+  ],
   "reference_thresholds": {
     "target_low": 0.25,
     "target_high": 0.65,
@@ -37,6 +49,7 @@
   "hard_invariants": [
     "low nuisance does not imply observability",
     "high nuisance does not imply unobservability",
+    "a censoring-capable nuisance is not automatically unobservable; severity must reduce observation support below the support threshold",
     "unobservable windows are censored rather than counted as biological absence",
     "a high target score in an unobservable window may be retained for audit but is not upgraded to a defensible visit",
     "stable non-target context is not nuisance unless it can distort event inference",
