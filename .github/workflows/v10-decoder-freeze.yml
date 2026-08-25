@@ -1,0 +1,45 @@
+name: V10 decoder identity freeze
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  freeze-decoder-before-pixels:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install the frozen decoder package only
+        run: python -m pip install imageio-ffmpeg==0.6.0
+      - name: Re-verify decoder executable identity without reading videos
+        run: python scripts/freeze_v10_decoder.py
+      - name: Audit frozen decoder identity
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          obj = json.loads(Path('.v10/v10_decoder_freeze.json').read_text())
+          frozen = json.loads(Path('benchmarks/v10_decoder_freeze.json').read_text())
+          assert obj['executable_sha256'] == frozen['executable_sha256']
+          assert obj['python_package_pin'] == frozen['python_package_pin']
+          assert obj['frame_selection_semantics']['ffmpeg_filter'] == frozen['frame_selection']['filter']
+          assert obj['video_bytes_accessed'] is False
+          assert obj['video_pixels_decoded'] is False
+          assert obj['observer_execution'] is False
+          assert obj['v7_materialisation'] is False
+          print('V10_DECODER_MATCHES_LOCK true')
+          print('V10_VIDEO_BYTES_ACCESSED false')
+          print('V10_VIDEO_PIXELS_DECODED false')
+          PY
+      - name: Upload decoder freeze receipt only
+        uses: actions/upload-artifact@v4
+        with:
+          name: v10-decoder-freeze
+          path: .v10/v10_decoder_freeze.json
+          if-no-files-found: error
+          retention-days: 30

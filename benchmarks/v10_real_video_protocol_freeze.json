@@ -1,0 +1,24 @@
+{
+  "schema": "interaction-sensing-v10-real-video-protocol-freeze-v1",
+  "status": "frozen-before-pixel-materialisation",
+  "protocol_path": "benchmarks/v10_real_video_protocol.json",
+  "protocol_sha256": "c84947c998f69d4c8f2d056e79c7f91c6c6736b938236c17386618ac5a924e03",
+  "protocol_first_commit_sha": "71b5dc74d8e4160ef7a7a493b004f633b5c2f287",
+  "canonical_preflight": {
+    "workflow_run_id": 32616306392,
+    "head_sha": "eb015fa995012ae3242e4e5eca9dd581baabfd1f",
+    "contract_tests_passed": 7,
+    "base_windows": 364,
+    "condition_count": 6916,
+    "allocation_panels": 18,
+    "observer_execution": false
+  },
+  "pre_result_facts": {
+    "v10_video_pixels_materialised_before_freeze": false,
+    "pollipi_run_on_v10_before_freeze": false,
+    "insepi_run_on_v10_before_freeze": false,
+    "v7_materialised_by_v10": false,
+    "clip_selection_after_observer_output": false
+  },
+  "change_rule": "Any change to source videos, frame cadence, canonicalisation, perturbation families/intensities, panel assignment, policies, metrics or claim ceiling after this freeze requires a new validation generation label rather than a V10 edit."
+}

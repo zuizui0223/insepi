@@ -1,0 +1,23 @@
+{
+  "schema": "interaction-sensing-v10-decoder-freeze-v1",
+  "canonical_workflow_run_id": 32616079128,
+  "canonical_head_sha": "2959f49ea313972556246db650a71c655743f31e",
+  "workflow_artifact_zip_sha256": "5b28e732a3a2697ddccf091632f58a6b33d286a33b8d46ae2c553f5bfd92832a",
+  "decoder_receipt_json_sha256": "6eb87bc9bdd7cd667fee4f7caeb18e7a7ce96425eeb2d4a039102cadf7c96001",
+  "python_package_pin": "imageio-ffmpeg==0.6.0",
+  "executable_name": "ffmpeg-linux-x86_64-v7.0.2",
+  "executable_sha256": "e7e7fb30477f717e6f55f9180a70386c62677ef8a4d4d1a5d948f4098aa3eb99",
+  "ffmpeg_version_line": "ffmpeg version 7.0.2-static https://johnvansickle.com/ffmpeg/  Copyright (c) 2000-2024 the FFmpeg developers",
+  "frame_selection": {
+    "filter": "select='not(mod(n,60))'",
+    "selected_input_indices": "n mod 60 == 0, beginning at n=0",
+    "fps_mode": "passthrough",
+    "output_format": "rawvideo",
+    "output_pixel_format": "rgb24",
+    "timestamp_resampling": false
+  },
+  "video_bytes_accessed_during_freeze": false,
+  "video_pixels_decoded_during_freeze": false,
+  "observer_execution_during_freeze": false,
+  "v7_materialisation_during_freeze": false
+}

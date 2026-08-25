@@ -1,0 +1,86 @@
+{
+  "schema": "interaction-sensing-v13-observer-measurement-freeze-v1",
+  "status": "pre-field-frozen",
+  "observer_commits": {
+    "pollipi": "d58d0a86034a6c2d53f90efbe4245370fd7cd2e9",
+    "insepi": "980813bab996909020140fad5bd83b055eb3db9c"
+  },
+  "recording_contract": {
+    "width": 1920,
+    "height": 1080,
+    "fps": 30,
+    "constant_frame_rate_required": true,
+    "phase_duration_seconds": 10,
+    "expected_frames_per_phase": 300,
+    "pixel_format_after_decode": "rgb24",
+    "archive_full_native_video": true
+  },
+  "decoder": {
+    "reuse_v10_canonicalizer": "interaction_sensing.simulation.real_video_v10.canonicalize_rgb24",
+    "ffmpeg_package": "imageio-ffmpeg==0.6.0",
+    "ffmpeg_executable": "ffmpeg-linux-x86_64-v7.0.2",
+    "ffmpeg_executable_sha256": "e7e7fb30477f717e6f55f9180a70386c62677ef8a4d4d1a5d948f4098aa3eb99",
+    "sample_times_seconds": [2.5, 3.5, 4.5, 5.5, 6.5, 7.5, 8.5, 9.5],
+    "sample_native_frame_indices_at_30fps": [75, 105, 135, 165, 195, 225, 255, 285],
+    "sample_count_per_phase": 8,
+    "timestamp_resampling": false,
+    "selection_rule": "decode exact native CFR frame indices; do not seek/resample by output timestamp"
+  },
+  "canonical_pixels": {
+    "input": "1920x1080 uint8 RGB24",
+    "grayscale_weights": [77, 150, 29],
+    "grayscale_denominator": 256,
+    "downsample": "15x15 integer block mean from 1080x1920 gray to 72x128",
+    "pad": "12 edge-repeated rows above and below to 96x128",
+    "output_shape": [96, 128],
+    "output_dtype": "uint8"
+  },
+  "within_block_background": {
+    "source": "eight retained placebo canonical frames from the same block",
+    "operation": "per-pixel median of 8 uint8 frames",
+    "even_count_rule": "sort each pixel; integer half-up average of order statistics 4 and 5 (zero-index 3 and 4): (a+b+1)//2",
+    "same_background_used_for_placebo_and_all_three_active_phases": true,
+    "background_must_not_use_active_phase_pixels": true
+  },
+  "observer_call_contract": {
+    "pollipi_input": "frame, block_placebo_background only",
+    "insepi_input": "block_placebo_background, frame, bookkeeping_frame_index=0 only",
+    "insepi_bookkeeping_frame_index_constant": 0,
+    "truth_metadata_passed_to_observers": false,
+    "latent_treatment_class_passed_to_observers": false,
+    "phase_name_may_be_recorded_after_decision": true
+  },
+  "scalar_outputs": {
+    "evidence_score": {
+      "strong_visitation_candidate": 1.0,
+      "uncertain_local_activity": 0.7,
+      "environmental_noise": 0.0,
+      "no_activity": 0.0
+    },
+    "observability_risk": "max(false_event_risk, missed_event_risk, attribution_risk)",
+    "mapping_is_for_diagnostic_response_only_not_biological_accuracy": true
+  },
+  "phase_summary": {
+    "sample_count": 8,
+    "evidence": "median of eight evidence scores",
+    "observability": "median of eight observability-risk scores",
+    "no_frame_level_confidence_interval": true
+  },
+  "paired_response": {
+    "delta_evidence": "active_phase_median_evidence - placebo_median_evidence",
+    "delta_observability": "active_phase_median_observability - placebo_median_observability",
+    "same_placebo_summary_for_all_active_interventions_within_block": true,
+    "heldout_truth_join_after_all_observer_phase_summaries_and_predictions": true
+  },
+  "fail_closed": [
+    "input clip is not 1920x1080 constant 30 fps",
+    "required native frame index is absent",
+    "decoded frame is not uint8 RGB24",
+    "phase has fewer or more than eight retained samples",
+    "block lacks exactly one placebo and three active phases",
+    "active phase pixels are used in background construction",
+    "observer source commit differs from frozen exact V5 commit",
+    "InsePi decision changes with bookkeeping frame index on pre-field smoke pixels",
+    "observer-facing metadata contains latent treatment truth"
+  ]
+}

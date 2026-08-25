@@ -1,0 +1,69 @@
+{
+  "schema": "interaction-sensing-v10-annotation-provenance-audit-v1",
+  "status": "complete-no-frame-level-human-truth-for-experiment-1",
+  "canonical_workflow_run_id": 32615437253,
+  "canonical_head_sha": "f2cd89b1316091e69903557b1b541ba889239612",
+  "workflow_artifact_zip_sha256": "1454a8f10aef504baba3782597d8f11d77a05483208474ef3814ac8fb32a55df",
+  "video_pixels_accessed": false,
+  "observer_execution": false,
+  "v7_materialisation": false,
+  "experiment_1": {
+    "human_reference_granularity_available": "aggregate-counts-only",
+    "frame_level_human_position_or_visibility_record_found": false,
+    "files": [
+      {
+        "name": "Experiment1-Results.xlsx",
+        "sha256": "8a6194ac2254bf4d455295ddd9031e948d9220b03753cf35a73a33008d706818",
+        "classification": "mixed-aggregate-human-reference-and-algorithm-summary",
+        "sheets": ["Detection-rate", "Tracking-time"],
+        "human_aggregate_fields": ["Total Frames", "HB Occluded Frames", "HB visible frames"],
+        "algorithm_summary_fields": ["HyDaT Detected Frames", "HyDaT Detection rate", "Stand-alone YOLO Detected Frames", "Stand-alone YOLO Detection rate"],
+        "frame_level_human_coordinates": false,
+        "frame_level_human_visibility_labels": false,
+        "notable_manual_adjustment": "Detection-rate!E9 formula is =1338-78 rather than a direct frame-level human-label derivation."
+      },
+      {
+        "name": "Experiment_1-CSV_HyDaT.zip",
+        "sha256": "ad25266b432ca93224cac5b5ae565470980891e1c4107da2ca0ffa44b2cc1de1",
+        "classification": "algorithm-output",
+        "member_pattern": "bee_test_HyDaT_1.csv ... bee_test_HyDaT_7.csv plus run timestamp txt files",
+        "csv_columns": ["nframe", "x0", "y0", "area", "x", "y", "occlusion", "sx", "sy", "method", "px", "py", "x0i", "y0i", "sx11", "sy11", "speed", "speeds", "angle", "delta_area", "mse_area", "state"],
+        "human_reference_columns_found": false,
+        "evidence": "For videos 1-6 the count of rows with algorithm occlusion==0 exactly equals the HyDaT detected-frame count in Experiment1-Results.xlsx. The same field behaves differently from the YOLO output and therefore cannot be a shared human label."
+      },
+      {
+        "name": "Experiment_1-CSV_YOLO.zip",
+        "sha256": "33482f89461e2358257bf4aab16e6ca6e792fdd41ee5ff3c2e2a7bf243a518b4",
+        "classification": "algorithm-output",
+        "member_pattern": "bee_test_ML_1.csv ... bee_test_ML_7.csv plus run timestamp txt files",
+        "csv_columns": ["nframe", "x0", "y0", "area", "x", "y", "occlusion", "sx", "sy", "method", "px", "py", "x0i", "y0i", "sx11", "sy11", "speed", "speeds", "angle", "delta_area", "mse_area", "state"],
+        "human_reference_columns_found": false,
+        "evidence": "For all seven videos the count of rows with algorithm occlusion==0 exactly equals the stand-alone YOLO detected-frame count in Experiment1-Results.xlsx."
+      }
+    ],
+    "aggregate_human_counts": [
+      {"video": 1, "total_frames": 3540, "human_occluded_frames": 870, "human_visible_frames": 2670},
+      {"video": 2, "total_frames": 2940, "human_occluded_frames": 792, "human_visible_frames": 2148},
+      {"video": 3, "total_frames": 3600, "human_occluded_frames": 584, "human_visible_frames": 3016},
+      {"video": 4, "total_frames": 2820, "human_occluded_frames": 1208, "human_visible_frames": 1612},
+      {"video": 5, "total_frames": 3480, "human_occluded_frames": 678, "human_visible_frames": 2802},
+      {"video": 6, "total_frames": 4260, "human_occluded_frames": 378, "human_visible_frames": 3882},
+      {"video": 7, "total_frames": 1620, "human_occluded_frames": 206, "human_visible_frames": 1414}
+    ]
+  },
+  "experiment_2_comparator": {
+    "name": "Experiment_2 - Observations_Record.xlsx",
+    "sha256": "4c124d65312330eea1fbec72cfe80cd31448ad814c023bec25b09e1ad13cbb37",
+    "classification": "explicit-human-observation-record-for-different-experiment",
+    "applicable_as_truth_for_experiment_1_videos": false,
+    "structure": "Per-honeybee contingency entries explicitly headed Human Observation with Occluded / Exited FoV / Other, cross-tabulated against HyDaT Estimate.",
+    "provenance_implication": "The deposit explicitly labels human-observation records when they are supplied. No analogous Experiment 1 observation-record file is present in the complete Experiment_Data.zip member index."
+  },
+  "decision": {
+    "use_experiment_1_hydat_csv_as_ground_truth": false,
+    "use_experiment_1_yolo_csv_as_ground_truth": false,
+    "use_experiment_1_results_xlsx_as_frame_level_ground_truth": false,
+    "permitted_use_of_experiment_1_results_xlsx": "secondary video-level aggregate context only",
+    "primary_v10_truth_strategy": "controlled known perturbations on byte-frozen real video pixels; do not claim biological-event detection accuracy without a new independent human annotation source"
+  }
+}

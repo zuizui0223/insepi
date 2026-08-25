@@ -1,0 +1,76 @@
+name: V12 causal intervention reproducibility
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  reproduce-v12:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11.16"
+
+      - name: Install pinned runtime
+        run: |
+          python -m pip install "numpy==2.4.6"
+          python -m pip install -e ".[dev]"
+          python - <<'PY'
+          import platform, numpy as np
+          assert platform.python_version() == '3.11.16'
+          assert np.__version__ == '2.4.6'
+          print('V12_PINNED_RUNTIME PASS', platform.python_version(), np.__version__)
+          PY
+
+      - name: Verify frozen canonical identities and contracts
+        run: |
+          python - <<'PY'
+          import json
+          p=json.load(open('benchmarks/v12_causal_intervention_protocol.json'))
+          s=json.load(open('benchmarks/v12_causal_intervention_result_summary.json'))
+          assert p['status']=='pre-result-frozen'
+          assert s['status']=='canonical-first-run-frozen'
+          assert s['protocol_sha256']=='50c26e86af83e460f244c8c3b5a89bc6f62914fb043a9ff0f2738161c92935b8'
+          assert s['result_sha256']=='7879cb05359eb45df76b8f9b77b3d2b412d0ae1d85e2315cb5a5c38299986222'
+          assert s['claim']=={'level':'B','label':'conditional_causal_identification_advantage'}
+          assert s['historical_results_retained']['v7']=={'gate':'FAIL','claim_level':'C'}
+          assert s['historical_results_retained']['v11']['claim_level']=='D'
+          print('V12_CANONICAL_IDENTITY PASS')
+          PY
+          pytest -q tests/test_causal_intervention_v12.py
+
+      - name: Reproduce frozen V12 twice under distinct hash seeds
+        env:
+          PYTHONPATH: src
+        run: |
+          mkdir -p .v12/a .v12/b
+          PYTHONHASHSEED=12 python scripts/run_v12_causal_intervention.py --output .v12/a/v12_result.json | tee .v12/a/console.txt
+          PYTHONHASHSEED=1201 python scripts/run_v12_causal_intervention.py --output .v12/b/v12_result.json | tee .v12/b/console.txt
+
+      - name: Require canonical byte identity
+        run: |
+          expected="7879cb05359eb45df76b8f9b77b3d2b412d0ae1d85e2315cb5a5c38299986222"
+          sha_a="$(sha256sum .v12/a/v12_result.json | awk '{print $1}')"
+          sha_b="$(sha256sum .v12/b/v12_result.json | awk '{print $1}')"
+          test "$sha_a" = "$sha_b" || { echo "V12 nondeterminism: $sha_a != $sha_b"; exit 1; }
+          test "$sha_a" = "$expected" || { echo "V12 canonical drift: $sha_a != $expected"; exit 1; }
+          mkdir -p .v12/reproduction
+          cp .v12/a/v12_result.json .v12/reproduction/
+          cp .v12/a/console.txt .v12/reproduction/
+          cp benchmarks/v12_causal_intervention_protocol.json .v12/reproduction/
+          cp benchmarks/v12_causal_intervention_result_summary.json .v12/reproduction/
+          cp docs/V12_RESULT.md .v12/reproduction/
+          echo "V12_CANONICAL_REPRODUCTION PASS $sha_a"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: v12-causal-intervention-reproduction
+          path: .v12/reproduction/
+          if-no-files-found: error
+          retention-days: 90

@@ -1,0 +1,182 @@
+{
+  "schema": "interaction-sensing-v13-physical-intervention-protocol-v1",
+  "status": "pre-field-frozen-template",
+  "scientific_question": "Do controlled physical interventions on the same camera stream produce transferable observer-response signatures that support held-out causal treatment identification without treating frames as independent replicates?",
+  "historical_boundary": {
+    "v7": {"gate": "FAIL", "claim_level": "C"},
+    "v11": {"claim_level": "D", "result_sha256": "654d0be81c459f11d35b37ca91fa7251f395e352a31f44993384bac92b1107c1"},
+    "v12": {"claim_level": "B", "result_sha256": "7879cb05359eb45df76b8f9b77b3d2b412d0ae1d85e2315cb5a5c38299986222"},
+    "v12_may_not_be_retuned": true
+  },
+  "experimental_unit": "one physical block = one day x scene x latent treatment class x replicate; frames within a block are repeated measurements, not independent replicates",
+  "splits": {
+    "development": {
+      "day_count": 3,
+      "scene_count_per_day": 3,
+      "treatment_classes": 4,
+      "replicates_per_day_scene_class": 3,
+      "expected_block_count": 108
+    },
+    "heldout": {
+      "day_count": 2,
+      "scene_count_per_day": 3,
+      "treatment_classes": 4,
+      "replicates_per_day_scene_class": 3,
+      "expected_block_count": 72,
+      "days_and_scenes_must_not_appear_in_development": true
+    },
+    "total_expected_block_count": 180
+  },
+  "actual_physical_cluster_contract": {
+    "cluster_identity_source": "completed capture log recording_date_local x physical_scene_code",
+    "randomisation_day_scene_slots_used_for_final_uncertainty": false,
+    "blocks_per_day_x_scene_cluster": 12,
+    "replicates_per_treatment_class_per_day_x_scene_cluster": 3,
+    "development_day_x_scene_cluster_count": 9,
+    "heldout_day_x_scene_cluster_count": 6,
+    "development_and_heldout_recording_dates_must_be_disjoint": true,
+    "development_and_heldout_physical_scenes_must_be_disjoint": true
+  },
+  "latent_physical_treatment_classes": {
+    "event_side": {
+      "development_subtype": "local_target_contrast_attenuation",
+      "heldout_subtype": "local_target_scale_or_visibility_shift",
+      "principle": "manipulate the local event signal while keeping the nuisance source unchanged"
+    },
+    "nuisance_side": {
+      "development_subtype": "fan_driven_background_motion",
+      "heldout_subtype": "moving_shadow_or_lighting_nuisance",
+      "principle": "manipulate background observation nuisance while keeping the local event target unchanged"
+    },
+    "shared_optical": {
+      "development_subtype": "partial_optical_occlusion",
+      "heldout_subtype": "glare_or_diffusion_filter",
+      "principle": "apply an optical perturbation capable of affecting both local event evidence and scene observability"
+    },
+    "no_fault": {
+      "development_subtype": "matched_clean_control",
+      "heldout_subtype": "matched_clean_control_new_day_scene",
+      "principle": "no intentional event-side, nuisance-side or shared optical impairment"
+    }
+  },
+  "diagnostic_phases": {
+    "placebo": {
+      "always_first": true,
+      "duration_seconds": 10,
+      "counts_against_diagnostic_budget": false
+    },
+    "active": {
+      "names": ["event_restore", "observability_restore", "shared_restore"],
+      "duration_seconds_each": 10,
+      "washout_seconds_between_phases": 5,
+      "physical_collection_collects_all_three": true,
+      "heldout_primary_analysis_replays_only_algorithm_selected_two": true,
+      "full_battery_analysis_is_secondary": true
+    },
+    "phase_summary": {
+      "discard_initial_stabilisation_seconds": 2,
+      "remaining_seconds_are_repeated_measurements": true,
+      "observer_output_summary": "median within phase after stabilisation",
+      "paired_response": "phase median minus placebo median for each observer channel"
+    }
+  },
+  "diagnostic_intervention_semantics": {
+    "event_restore": "restore or introduce a standard high-visibility local event reference while preserving the current nuisance/optical condition",
+    "observability_restore": "remove or neutralise the nuisance source while preserving the local event target and shared optical condition",
+    "shared_restore": "remove the shared optical impairment while preserving the local event target and nuisance treatment"
+  },
+  "randomisation": {
+    "placebo_position_fixed": 0,
+    "active_phase_order": "deterministic SHA256 random permutation within every block",
+    "seed_domain": "interaction-sensing-v13-physical-block-randomisation-v1",
+    "same_randomisation_ledger_used_for_all_observers": true,
+    "no_reordering_after_observer_output": true
+  },
+  "blinding": {
+    "observer_input_manifest_contains": ["opaque_block_id", "split", "phase_name", "phase_order", "video_path"],
+    "observer_input_manifest_excludes": ["latent_treatment_class", "treatment_subtype", "operator_notes_about_treatment_success", "heldout_truth"],
+    "heldout_predictions_emitted_before_truth_join": true,
+    "private_truth_ledger_sha256_committed_before_observer_run": true,
+    "annotators_do_not_see_observer_outputs": true
+  },
+  "physical_qc": {
+    "protected_qc_fraction": 0.25,
+    "assignment_domain": "interaction-sensing-v13-protected-physical-qc-v1",
+    "blinded_annotation_targets": ["local_event_reference_present_as_planned", "nuisance_treatment_present_as_planned", "shared_optical_treatment_present_as_planned", "gross_protocol_violation"],
+    "qc_annotations_validate_treatment_compliance_but_do_not_relabel_failure_class_post_hoc": true
+  },
+  "camera_and_scene_lock": {
+    "same_camera_within_block": true,
+    "exposure_focus_gain_and_resolution_recorded_for_every_block": true,
+    "settings_may_not_change_within_block_except_predeclared_shared_optical_intervention": true,
+    "device_id_firmware_lens_and_mount_recorded": true,
+    "weather_and_ambient_light_metadata_recorded_not_used_as_heldout_truth": true
+  },
+  "analysis": {
+    "generic_api": "interaction_sensing.causal_diagnostics",
+    "representations": ["event_only", "observability_only", "early_scalar_fusion", "dual_observer_vector"],
+    "development_uses_full_physical_battery": true,
+    "heldout_primary_active_intervention_budget": 2,
+    "algorithm": "same centroid scaling, first maximin intervention, nearest-two next-intervention rule and nearest-centroid diagnosis as generic V12 API",
+    "no_hyperparameter_tuning_on_heldout": true,
+    "no_frame_level_resampling_for_uncertainty": true,
+    "uncertainty_unit": "day_x_scene cluster",
+    "heldout_cluster_count": 6,
+    "synthetic_randomisation_day_scene_slots_used_for_cluster_bootstrap": false,
+    "required_blocks_per_heldout_cluster": 12,
+    "required_replicates_per_treatment_per_heldout_cluster": 3,
+    "cluster_bootstrap": {"enabled": true, "resamples": 5000, "seed": 1313},
+    "report_per_cluster_results": true
+  },
+  "primary_metrics": [
+    "heldout_block_localisation_accuracy_budget2",
+    "heldout_cluster_mean_localisation_accuracy_budget2",
+    "heldout_min_cluster_localisation_accuracy_budget2",
+    "accuracy_after_one_intervention",
+    "shared_optical_recall_budget2",
+    "no_fault_false_intervention_rate_budget2",
+    "wrong_treatment_class_intervention_rate_budget2",
+    "full_battery_localisation_accuracy",
+    "protected_qc_protocol_violation_rate"
+  ],
+  "claim_ceiling": {
+    "A": {
+      "requirements": [
+        "dual heldout block accuracy >= 0.80",
+        "dual heldout block accuracy >= best comparator + 0.10",
+        "dual shared-optical recall >= 0.75",
+        "dual no-fault false intervention <= 0.20",
+        "dual minimum day_x_scene cluster accuracy >= 0.65",
+        "no gross protocol violation in protected QC"
+      ],
+      "allowed_claim": "Distinct observer responses to controlled physical interventions materially improve held-out causal treatment identification across new days and scenes in the tested physical system."
+    },
+    "B": {
+      "requirements": [
+        "dual heldout block accuracy >= best comparator",
+        "dual shared-optical recall >= 0.65",
+        "dual minimum day_x_scene cluster accuracy >= 0.55"
+      ],
+      "allowed_claim": "Physical intervention responses support conditional held-out causal identification, with distinct channels competitive or advantageous under the tested days and scenes."
+    },
+    "C": {
+      "requirements": ["neither A, B nor D"],
+      "allowed_claim": "Physical intervention transfer is mixed across treatments or day-scene blocks; retain boundary results without a general superiority claim."
+    },
+    "D": {
+      "requirements": [
+        "dual heldout block accuracy < best comparator - 0.05 OR dual shared-optical recall < 0.50 OR protected QC shows a gross protocol violation that invalidates treatment identity"
+      ],
+      "allowed_claim": "The preregistered physical intervention protocol does not establish reliable held-out causal treatment identification."
+    }
+  },
+  "forbidden_claims": [
+    "frames are independent replicates",
+    "treatment compliance is inferred from observer output",
+    "V13 validates universal causal mechanisms",
+    "physical proxy-event accuracy equals natural pollinator detection accuracy",
+    "statistical independence of observer errors",
+    "V13 rescues V7 or V11",
+    "V13 upgrades V12 beyond its locked B claim"
+  ]
+}

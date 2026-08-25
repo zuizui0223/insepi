@@ -1,0 +1,67 @@
+{
+  "schema": "interaction-sensing-v10-evaluator-freeze-v1",
+  "status": "pre-observer-frozen",
+  "protocol_sha256": "c84947c998f69d4c8f2d056e79c7f91c6c6736b938236c17386618ac5a924e03",
+  "pixel_artifact_freeze": "benchmarks/v10_real_pixel_artifact_freeze.json",
+  "required_pixel_npz_sha256": "b971caa2b0c06b45ccf114df99d6515765ea9ec5fb8e58ded226b424f8afad66",
+  "condition_registry_sha256": "1689f5ce102abfef722e3e8667e8c6e290a42fe1d4563c1655b7f14520cde393",
+  "panel_registry_sha256": "b1e59cda67977e5ab8d09e1ea28236b442d72c616c92df0c22adca89122cac8a",
+  "condition_count": 6916,
+  "pollipi_trace_schema": "pollipi-insepi-v10-pollipi-trace-v1",
+  "insepi_trace_schema": "pollipi-insepi-v10-insepi-trace-v1",
+  "required_observer_commits": {
+    "pollipi": "d58d0a86034a6c2d53f90efbe4245370fd7cd2e9",
+    "insepi": "980813bab996909020140fad5bd83b055eb3db9c"
+  },
+  "pollipi_evidence_score": {
+    "strong_visitation_candidate": 1.0,
+    "uncertain_local_activity": 0.70,
+    "environmental_noise": 0.0,
+    "no_activity": 0.0,
+    "unknown_state_rule": "fail"
+  },
+  "insepi_observability_score": "max(false_event_risk, missed_event_risk, attribution_risk)",
+  "risk_value_contract": "Each of the three risk fields must be finite and lie in [0,1]; otherwise fail.",
+  "paired_native_rule": "For each base_index, variant_index 0 is the unique native condition. Each variant 1..18 is paired only to that base_index's native condition.",
+  "dose_monotonicity_rule": "For each family, compute the median InsePi risk across the 364 conditions independently at tier0, tier1 and tier2. The family is dose-monotone iff median_risk_tier0 <= median_risk_tier1 <= median_risk_tier2 exactly; no tolerance or fitted trend is used.",
+  "positive_high_tier_rule": "A family counts positive iff median paired risk_delta at tier2 is strictly > 0.",
+  "global_high_tier_rule": "Median paired risk_delta pooled across all 6*364 tier2 perturbed conditions.",
+  "allocation": {
+    "budget_tokens": {"0.1":"0.10","0.25":"0.25","0.5":"0.50"},
+    "budget_values": [0.10,0.25,0.50],
+    "replicates": 200,
+    "selection_seed_domain": "interaction-sensing-v10-panel-selection-v1",
+    "selection_seed_serialization": "SHA256(domain|panel_id|budget_token|decimal_replicate_index), first 8 bytes big-endian unsigned",
+    "paired_uniform_ratio_rule": "Within each panel/budget/replicate, divide policy known-disturbance recall by the recall from uniform using the same selection seed. Regime-cell ratio is the arithmetic mean of the 200 replicate-level ratios, not ratio of means.",
+    "zero_uniform_recall_rule": "fail; with balanced 182/364 truth and the preregistered budgets this is not expected and is not silently smoothed.",
+    "v6_cell_pass": "regime-cell mean paired recall ratio >= 1.0",
+    "v6_allocation_pass": "at least 45 of 54 regime cells pass and arithmetic mean of the 54 V6 cell ratios is strictly > 1.0",
+    "policy_ties": "No winner claim is required. Report all six fixed policy results; V10 claim level depends only on frozen V6 versus paired uniform."
+  },
+  "representation_tv": {
+    "source_video_categories": 7,
+    "video_temporal_quartile_categories": 28,
+    "definition": "0.5 * sum(abs(selected category proportion - full-panel category proportion)) over the complete frozen category registry; categories absent from the selected set contribute zero selected mass, and categories absent from the full panel are impossible."
+  },
+  "claim_precedence": [
+    "D if positive_high_tier_family_count <= 2 OR global_high_tier_median_risk_delta <= 0",
+    "A if positive_high_tier_family_count >= 5 AND dose_monotone_family_count >= 4 AND v6_allocation_pass",
+    "B if positive_high_tier_family_count >= 5 AND dose_monotone_family_count >= 4 AND NOT v6_allocation_pass",
+    "C otherwise"
+  ],
+  "claim_labels": {
+    "A":"broad_real_pixel_transfer",
+    "B":"observer_transfer_allocation_mixed",
+    "C":"partial_or_family_specific_transfer",
+    "D":"null_or_adverse_real_pixel_transfer"
+  },
+  "trace_truth_boundary": "Observer result records may contain condition_index/id and observer outputs only. Family, tier, known_disturbed, video identity, temporal quartile and panel assignment are always joined from the frozen artifact registries by the evaluator after trace generation.",
+  "no_same_generation_changes": [
+    "No score mapping change",
+    "No budget/replicate change",
+    "No comparator addition/removal",
+    "No claim-threshold change",
+    "No perturbation-family removal",
+    "No V6 weight change"
+  ]
+}
