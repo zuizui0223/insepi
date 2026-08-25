@@ -1,12 +1,12 @@
 {
   "schema": "interaction-sensing-v13-execution-freeze-v1",
   "status": "pre-field-scientific-execution-frozen",
-  "scientific_execution_digest_sha256": "f7797611eb3ca7a262554652d53f2d711bd865f487dcf56c0a13539589cc97c8",
-  "critical_path_count": 21,
+  "scientific_execution_digest_sha256": "ef806e2ea264ec9db001520ea77396cd33001ee70f1c5c6be425b8774bed96bb",
+  "critical_path_count": 22,
   "digest_helper": {
     "path": "scripts/v13_execution_digest.py",
-    "git_blob_sha1": "2192904bca68ebe5178d64f58967e01bc30061cb",
-    "sha256": "9ba9a4a0cc90d15fd5f82464ff7d5b00531acebfe2bd9623310e8b2c2daecb51"
+    "git_blob_sha1": "3a2a5741202e60c6823a7b8f789c89e0aa036ab7",
+    "sha256": "1fe6efdd62a5d288ba4688d109bbae958b05e83096b981217439f01943fe7346"
   },
   "runtime": {
     "python": "3.11.16",
@@ -33,5 +33,5 @@
     "heldout_truth_unsealed": false,
     "scientific_report_present": false
   },
-  "change_rule": "After physical acquisition begins, any change to one of the 21 critical paths requires a new generation label; workflow, documentation, and verification-plumbing repairs may not alter the scientific execution digest."
+  "change_rule": "After physical acquisition begins, any change to one of the 22 critical paths requires a new generation label; workflow, documentation, and verification-plumbing repairs may not alter the scientific execution digest."
 }
