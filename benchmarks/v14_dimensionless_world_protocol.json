@@ -1,0 +1,81 @@
+{
+  "schema": "insepi-v14-dimensionless-world-protocol-v1",
+  "generation": "V14a",
+  "status": "development-world-frozen-before-phase-sweep",
+  "scientific_scope": "closed-world dimensionless process geometry; not field calibration or visit-accuracy validation",
+  "ontology": {
+    "baseline": "no deviation; no classification question is triggered",
+    "deviation_truth": {
+      "target_process": "positive latent process; may co-occur with nuisance",
+      "nuisance_process": "positive latent process that can mimic, hide, or corrupt target inference; harmless non-target context is not nuisance",
+      "coupling": "target-driven change in the nuisance/scene channel; coexistence is allowed and must not be forced into one exclusive class"
+    },
+    "observation_layer": "observability is independent of nuisance burden and asks whether target presence/absence is inferable from the available measurement channel",
+    "output_layer": "visit inference is PRESENT / ABSENT / UNDETERMINED, with reason codes retained; internal target/nuisance support remains non-exclusive"
+  },
+  "indeterminacy_reason_codes": [
+    "information_absent",
+    "essential_ambiguity",
+    "model_uncertainty"
+  ],
+  "non_indeterminacy_contradiction": "process_coupling: target and nuisance can both be true; do not resolve by forcing exclusivity",
+  "dimensionless_coordinates": {
+    "pi1": "observation_window_duration / target_process_timescale",
+    "pi2": "nuisance_or_flower_response_timescale / target_process_timescale",
+    "pi3": "direct_target_motion_amplitude / nuisance_motion_amplitude",
+    "pi4": "target_driven_local_response_amplitude / nuisance_motion_amplitude"
+  },
+  "sweep": {
+    "log10_values": [-2.0, -1.0, -0.5, 0.0, 0.5, 1.0, 2.0],
+    "coordinate_rule": "pi = 10 ** log10_value",
+    "latent_deviation_regimes": ["target_only", "nuisance_only", "coupled"],
+    "replicates_per_coordinate_regime": 8,
+    "samples_per_window": 256,
+    "expected_coordinate_count": 2401,
+    "expected_deviation_world_count": 57624
+  },
+  "process_model": {
+    "target": "localized non-stationary transit with entry/exit over normalized target timescale 1",
+    "nuisance": "restorative spatially coherent oscillatory scene process with normalized timescale pi2",
+    "coupling": "target-triggered local damped flower/scene response added only at the focal location, with amplitude pi4",
+    "neighbor_channel": "receives coherent nuisance but not target-triggered local coupling",
+    "direct_target_channel": "scaled by pi3 and may become weak independently of the local coupling channel"
+  },
+  "dimensionless_sufficient_statistics": [
+    "net_displacement_over_path_length",
+    "focal_neighbor_motion_correlation",
+    "normalized_autocorrelation_or_spectral_concentration",
+    "entry_exit_completeness",
+    "local_excess_motion_fraction",
+    "direct_target_signal_fraction"
+  ],
+  "primary_surfaces": [
+    "undetermined_rate(pi1,pi2,pi3,pi4)",
+    "information_absence_rate(pi1,pi2,pi3,pi4)",
+    "essential_ambiguity_rate(pi1,pi2,pi3,pi4)",
+    "both_target_and_nuisance_supported_rate(pi1,pi2,pi3,pi4)",
+    "indirect_target_rescue_rate(pi1,pi2,pi3,pi4)"
+  ],
+  "pre_sweep_predictions": [
+    "smaller pi1 should increase information-absence because the observation window captures a smaller fraction of target-process structure",
+    "smaller pi3 should weaken direct target evidence",
+    "pi2 near 1 should thicken the essential-ambiguity band only where other separating evidence is weak; temporal overlap alone is not defined as ambiguity truth",
+    "larger pi4 should create a region where indirect local response can rescue target inference when direct target evidence is weak",
+    "larger pi4 should also increase legitimate both-supported target+nuisance/coupled states; these must not be counted as classifier errors solely because both channels are high"
+  ],
+  "development_rules": {
+    "no_field_constants": true,
+    "no_absolute_pixel_or_second_thresholds_in_primary_sweep": true,
+    "target_and_nuisance_must_not_be_defined_as_negations_of_each_other": true,
+    "coupled_truth_must_be_representable": true,
+    "unobservable_must_not_equal_high_nuisance": true,
+    "low_nuisance_must_not_equal_observable": true,
+    "classifier_uncertainty_must_not_be_relabelled_as_structural_unobservability": true,
+    "phase_sweep_must_report_residual_indeterminacy_not_minimize_it": true
+  },
+  "later_phases": {
+    "V14b": "alternate frozen development of target-focused and nuisance-focused observers using contradiction classes; never co-adapt both on the same step",
+    "V14c": "freeze both observers after contradiction-type saturation and measure residual response surfaces without further tuning",
+    "open_world_loop": "use real/open-world material only to expand process vocabulary, then return new vocabulary to a truth-known closed world before claim-bearing measurement"
+  }
+}
