@@ -1,8 +1,8 @@
 {
-  "schema": "pollipi-insepi-v15-visit-observation-validation-v1",
+  "schema": "pollipi-insepi-v15-visit-observation-validation-v2",
   "generation": "V15",
   "status": "pre-data-protocol-draft-not-yet-frozen",
-  "purpose": "Validate whether explicit target evidence, nuisance risk, and observability censoring improve real insect-visit observation without conflating non-detection with biological absence.",
+  "purpose": "Validate whether explicit direct/coupled target evidence, exogenous nuisance risk, and observability censoring improve real insect-visit observation without conflating non-detection with biological absence.",
   "truth_layers": {
     "biological_event": {
       "source": "synchronised independent reference observation (reference camera and/or direct observer), annotated without algorithm outputs",
@@ -11,10 +11,23 @@
       "visit_definition": "operational interaction event at the focal floral target; does not imply pollination effectiveness",
       "hard_rule": "If the reference truth channel cannot resolve the biological state, the window is truth_unresolved and cannot be relabelled no_insect."
     },
+    "target_coupled_response": {
+      "source": "synchronised reference annotation of target-linked local flower/target response, independent of algorithm outputs",
+      "states": ["absent", "present"],
+      "resolution": ["resolved", "unresolved"],
+      "definition": "local response causally attributable to focal insect contact/visit; exogenous wind/background motion is excluded",
+      "hard_rules": [
+        "resolved present coupling requires resolved target_contact or visit_event biological truth",
+        "if causal attribution to the insect cannot be supported, coupling truth is unresolved rather than present",
+        "target-coupled response is never stored as exogenous nuisance truth"
+      ]
+    },
     "nuisance": {
       "source": "human/physical annotation independent of observer outputs",
+      "scope": "exogenous non-target processes only",
       "multi_label": true,
-      "effects": ["mimic_target", "mask_target", "corrupt_attribution", "degrade_observation_support"]
+      "effects": ["mimic_target", "mask_target", "corrupt_attribution", "degrade_observation_support"],
+      "hard_rule": "Target-driven local flower response is not nuisance merely because it is motion."
     },
     "observation_support": {
       "source": "annotation/physical measurement of the primary system-under-test stream, independent of PolliPi/InsePi outputs",
@@ -22,6 +35,12 @@
       "question": "If a visit occurred in the focal interaction zone, was the primary system-under-test stream sufficient to observe it?",
       "independence_rule": "Primary-stream unobservability does not prevent biological truth from being resolved by the independent reference truth channel."
     }
+  },
+  "target_route_contract": {
+    "direct_route": "evidence for the insect/actor itself",
+    "coupled_route": "evidence for target-linked local response, retained separately from direct evidence",
+    "aggregate_use": "an aggregate target score may be used operationally, but V15 evaluation preserves direct and coupled route scores",
+    "nuisance_independence": "exogenous nuisance observer outputs are not inputs to the target-route calculation"
   },
   "reference_truth_contract": {
     "primary_stream": "the camera stream evaluated by PolliPi/InsePi/V14",
@@ -44,13 +63,15 @@
     "double_annotation_fraction_min": 0.20,
     "disagreements_adjudicated_before_model_scoring": true,
     "unobservable_is_not_relabelled_as_no_visit": true,
-    "unresolved_reference_truth_is_not_relabelled_as_no_insect": true
+    "unresolved_reference_truth_is_not_relabelled_as_no_insect": true,
+    "unresolved_coupling_truth_is_not_relabelled_as_no_coupling": true
   },
   "comparison_systems": [
-    "target_only_naive",
+    "direct_target_only_naive",
+    "direct_plus_coupled_target_without_nuisance_or_support",
     "target_plus_nuisance_without_support_gate",
     "target_plus_support_without_nuisance",
-    "full_target_nuisance_observability_triad",
+    "full_direct_coupled_target_nuisance_observability_triad",
     "protected_random_reference"
   ],
   "primary_metrics": [
@@ -63,12 +84,16 @@
     "reference_truth_unresolved_fraction",
     "shared_blind_spot_discovery_rate",
     "review_or_capture_burden",
+    "indirect_target_rescue_rate_on_weak_direct_coupled_visits",
+    "spurious_coupled_candidate_rate_on_observable_no_insect",
     "block_level_visit_rate_bias",
     "block_level_visit_rate_rmse"
   ],
   "primary_questions": [
     "Does explicit observability censoring reduce false absence compared with treating low target evidence as absence?",
-    "Does nuisance information identify false-positive/miss-risk conditions that target evidence alone cannot diagnose?",
+    "Does exogenous nuisance information identify false-positive/miss-risk conditions that target evidence alone cannot diagnose?",
+    "Can target-coupled local flower response rescue real visits when direct insect evidence is weak?",
+    "Does preserving coupling separately avoid falsely relabelling exogenous flower/background motion as insect evidence?",
     "Does the protected probability sample recover visits or observation failures missed by both targeted observers?",
     "Does the full triad preserve a more defensible visit-rate denominator than targeted-only sampling?"
   ],
@@ -78,8 +103,9 @@
       "field visit accuracy",
       "calibrated detection probability",
       "pollination effectiveness",
-      "universal superiority of the triad"
+      "universal superiority of the triad",
+      "universal validity of indirect flower-response evidence"
     ]
   },
-  "freeze_rule": "Before held-out scoring, sample-size/power plan, development calibration rule, final metric formulas, and claim thresholds must be committed and hashed."
+  "freeze_rule": "Before held-out scoring, sample-size/power plan, development calibration rule, final metric formulas, coupling annotation rule, and claim thresholds must be committed and hashed."
 }
