@@ -4,6 +4,8 @@ import interaction_sensing as sensing
 def test_v14_public_api_exposes_triad_and_visit_semantics() -> None:
     for name in (
         "TargetEvidence",
+        "TargetRouteEvidence",
+        "TargetEvidenceRoute",
         "NuisanceEvidence",
         "ObservationSupport",
         "ObservationTriadPolicy",
