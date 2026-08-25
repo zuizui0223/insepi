@@ -8,8 +8,10 @@ on:
       - "docs/METHOD_PAPER_GATE.md"
       - "docs/LICENSE_DECISION_GATE.md"
       - "scripts/build_mee_submission_manuscript.py"
+      - "scripts/build_current_figures.py"
       - "scripts/build_anonymous_peer_review_bundle.py"
       - "tests/test_mee_submission_package.py"
+      - "tests/test_current_figures.py"
       - ".github/workflows/mee-submission-package.yml"
   workflow_dispatch:
 
@@ -26,10 +28,15 @@ jobs:
           python-version: "3.11"
       - name: Install test tools
         run: python -m pip install pytest
-      - name: Test current journal-format and anonymisation contracts
-        run: pytest -q tests/test_mee_submission_package.py
+      - name: Test current journal-format, figure and anonymisation contracts
+        run: |
+          pytest -q \
+            tests/test_mee_submission_package.py \
+            tests/test_current_figures.py
       - name: Build current MEE-format reviewer manuscript
         run: python scripts/build_mee_submission_manuscript.py
+      - name: Build current deterministic V1-V13 figures
+        run: python scripts/build_current_figures.py
       - name: Build deterministic current anonymous peer-review bundle
         run: python scripts/build_anonymous_peer_review_bundle.py
       - name: Audit current package state
@@ -45,14 +52,26 @@ jobs:
           assert '### 2.15. AI-assisted software and manuscript development' in manuscript
           assert 'PolliPi' not in manuscript and 'InsePi' not in manuscript
           assert '**Target journal:**' not in manuscript and '**Status:**' not in manuscript
-          assert '0.9247839629' in manuscript  # locked V7 failure retained
-          assert 'partial_or_family_specific_transfer' in manuscript  # locked V10 C retained
-          assert '0.9608' in manuscript and '0.7367' in manuscript  # V12 first-intervention contrast
+          assert '0.9247839629' in manuscript
+          assert 'partial_or_family_specific_transfer' in manuscript
+          assert '0.9608' in manuscript and '0.7367' in manuscript
           assert 'V13 physical validation is frozen but not yet claim-bearing' in manuscript
 
           current_si = Path('manuscript/SUPPLEMENTARY_INFORMATION_CURRENT.md').read_text(encoding='utf-8')
           assert 'V13 contains no scientific result' in current_si
           assert '[[V7_LOCKED_RESULT' not in current_si
+
+          figure_dir = Path('manuscript/figures/current')
+          expected_figures = {
+              'fig1_architecture.svg',
+              'fig2_generation_ledger.svg',
+              'fig3_allocation_evidence.svg',
+              'fig4_protected_random_audit.svg',
+              'fig5_causal_diagnosis.svg',
+              'fig6_transfer_boundary.svg',
+          }
+          assert expected_figures <= {p.name for p in figure_dir.glob('*.svg')}
+          assert 'RESULT PENDING' in (figure_dir / 'fig6_transfer_boundary.svg').read_text(encoding='utf-8')
 
           manifest = json.loads(Path('.peer-review/anonymous/ANONYMOUS_BUNDLE_MANIFEST.json').read_text())
           assert manifest['schema'] == 'mee-anonymous-peer-review-bundle-v2'
@@ -71,9 +90,11 @@ jobs:
           print('MEE_PACKAGE_MANIFEST', manifest['manifest_sha256'])
 
           with zipfile.ZipFile('.peer-review/mee-anonymous-peer-review.zip') as archive:
-              names = archive.namelist()
+              names = set(archive.namelist())
               assert 'manuscript/generated/MEE_CURRENT_SUBMISSION.md' in names
               assert 'manuscript/SUPPLEMENTARY_INFORMATION_CURRENT.md' in names
+              for name in expected_figures:
+                  assert f'manuscript/figures/current/{name}' in names
               assert 'manuscript/TITLE_PAGE_TEMPLATE.md' not in names
               assert 'manuscript/SUPPLEMENTARY_INFORMATION_PRE_V7.md' not in names
               assert 'manuscript/V7_FINALIZATION_CONTRACT.md' not in names
@@ -88,6 +109,7 @@ jobs:
           path: |
             manuscript/generated/MEE_CURRENT_SUBMISSION.md
             manuscript/SUPPLEMENTARY_INFORMATION_CURRENT.md
+            manuscript/figures/current/
             .peer-review/mee-anonymous-peer-review.zip
             .peer-review/anonymous/ANONYMOUS_BUNDLE_MANIFEST.json
           if-no-files-found: error
