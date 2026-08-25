@@ -7,7 +7,11 @@ from interaction_sensing.visit_annotation import (
     assert_algorithm_fields_absent,
     validate_raw_annotations,
 )
-from interaction_sensing.visit_validation import VisitTruthResolution, VisitTruthState
+from interaction_sensing.visit_validation import (
+    CoupledResponseResolution,
+    VisitTruthResolution,
+    VisitTruthState,
+)
 
 
 SHA_A = "a" * 64
@@ -20,6 +24,8 @@ def row(
     *,
     resolution: VisitTruthResolution = VisitTruthResolution.RESOLVED,
     biological_state: VisitTruthState | None = VisitTruthState.NO_INSECT,
+    coupling_resolution: CoupledResponseResolution = CoupledResponseResolution.RESOLVED,
+    coupling_present: bool | None = False,
 ) -> RawVisitAnnotation:
     return RawVisitAnnotation(
         window_id=window_id,
@@ -33,6 +39,8 @@ def row(
         biological_state=biological_state,
         primary_support_truth=ObservationAvailability.OBSERVABLE,
         nuisance_effects=(NuisanceEffect.MIMIC_TARGET,),
+        target_coupled_response_resolution=coupling_resolution,
+        target_coupled_response_present=coupling_present,
     )
 
 
@@ -62,6 +70,8 @@ def test_unresolved_reference_truth_has_no_biological_label() -> None:
         "a",
         resolution=VisitTruthResolution.UNRESOLVED,
         biological_state=None,
+        coupling_resolution=CoupledResponseResolution.UNRESOLVED,
+        coupling_present=None,
     )
     assert unresolved.biological_state is None
 
@@ -74,6 +84,47 @@ def test_unresolved_reference_truth_cannot_be_no_insect() -> None:
             resolution=VisitTruthResolution.UNRESOLVED,
             biological_state=VisitTruthState.NO_INSECT,
         )
+
+
+def test_unresolved_coupling_truth_cannot_be_silently_labelled_absent() -> None:
+    with pytest.raises(ValueError, match="unresolved coupled-response"):
+        row(
+            "w1",
+            "a",
+            coupling_resolution=CoupledResponseResolution.UNRESOLVED,
+            coupling_present=False,
+        )
+
+
+def test_positive_coupled_response_requires_contact_or_visit_truth() -> None:
+    with pytest.raises(ValueError, match="requires target_contact or visit_event"):
+        row(
+            "w1",
+            "a",
+            biological_state=VisitTruthState.NO_INSECT,
+            coupling_present=True,
+        )
+
+    coupled = row(
+        "w2",
+        "a",
+        biological_state=VisitTruthState.TARGET_CONTACT,
+        coupling_present=True,
+    )
+    assert coupled.target_coupled_response_present is True
+
+
+def test_annotation_summary_retains_unresolved_coupling_fraction_count() -> None:
+    rows = [
+        row("w1", "a", coupling_resolution=CoupledResponseResolution.UNRESOLVED, coupling_present=None),
+        row("w1", "b", coupling_resolution=CoupledResponseResolution.UNRESOLVED, coupling_present=None),
+        row("w2", "a"),
+        row("w3", "a"),
+        row("w4", "a"),
+        row("w5", "a"),
+    ]
+    summary = validate_raw_annotations(rows)
+    assert summary.unresolved_coupled_response_windows == 1
 
 
 def test_annotation_provenance_mismatch_fails() -> None:
@@ -99,12 +150,13 @@ def test_raw_truth_schema_rejects_algorithm_fields() -> None:
         [
             "window_id",
             "biological_state",
+            "target_coupled_response_present",
             "primary_support_truth",
             "reference_clip_sha256",
         ]
     )
     with pytest.raises(ValueError, match="algorithm-derived fields"):
-        assert_algorithm_fields_absent(["window_id", "pollipi_state", "triad_state"])
+        assert_algorithm_fields_absent(["window_id", "pollipi_state", "triad_state", "coupled_target_score"])
 
 
 def test_clip_hashes_are_required() -> None:
