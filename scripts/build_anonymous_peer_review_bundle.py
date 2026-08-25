@@ -21,7 +21,16 @@ import zipfile
 INCLUDE_DIRS = ("src", "tests", "benchmarks", "scripts", "docs", "manuscript")
 INCLUDE_FILES = ("pyproject.toml", "README.md")
 EXCLUDE_PARTS = {"__pycache__", ".pytest_cache", ".ruff_cache", ".git"}
-EXCLUDE_RELATIVE = {"manuscript/TITLE_PAGE_TEMPLATE.md"}
+EXCLUDE_RELATIVE = {
+    "manuscript/TITLE_PAGE_TEMPLATE.md",
+    # Historical publication-plumbing artefacts are retained in the canonical
+    # repository but excluded from the current reviewer bundle so they cannot be
+    # mistaken for the current submission state.
+    "manuscript/SUPPLEMENTARY_INFORMATION_PRE_V7.md",
+    "manuscript/V7_FINALIZATION_CONTRACT.md",
+    "manuscript/generated/MEE_PRE_V7_SUBMISSION.md",
+    "manuscript/generated/MEE_FINAL_SUBMISSION.md",
+}
 TEXT_SUFFIXES = {".py", ".md", ".toml", ".json", ".jsonl", ".bib", ".tsv", ".csv", ".txt", ".yml", ".yaml", ".svg"}
 GIT_SHA_RE = re.compile(r"(?<![0-9a-fA-F])[0-9a-fA-F]{40}(?![0-9a-fA-F])")
 EMAIL_RE = re.compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}")
@@ -37,8 +46,6 @@ def sanitise_text(text: str) -> str:
     text = re.sub(r"zuizui0223", "anonymous-review", text, flags=re.IGNORECASE)
     text = text.replace("ZHANG Ruiqi", "Anonymous Author")
     text = text.replace("張瑞琪", "Anonymous Author")
-    # Project names are unique/searchable. Replace every case variant so Python
-    # constants, JSONL schemas, log labels and prose are all scrubbed consistently.
     text = POLLIPI_RE.sub("observer_e", text)
     text = INSEPI_RE.sub("observer_o", text)
     text = EMAIL_RE.sub("anonymous@example.invalid", text)
@@ -61,6 +68,10 @@ def should_copy(path: Path, root: Path) -> bool:
     if rel.as_posix() in EXCLUDE_RELATIVE:
         return False
     if any(part in EXCLUDE_PARTS for part in rel.parts):
+        return False
+    # Current review package has exactly one generated manuscript. Historical
+    # finalizer outputs may be created by tests but are not reviewer evidence.
+    if rel.parts[:2] == ("manuscript", "generated") and rel.name != "MEE_CURRENT_SUBMISSION.md":
         return False
     if path.suffix.lower() in {".zip", ".png", ".jpg", ".jpeg", ".pyc"}:
         return False
@@ -88,6 +99,13 @@ def build(root: Path, staging: Path, zip_path: Path) -> dict[str, object]:
         shutil.rmtree(staging)
     staging.mkdir(parents=True)
 
+    current_manuscript = root / "manuscript" / "generated" / "MEE_CURRENT_SUBMISSION.md"
+    current_supplement = root / "manuscript" / "SUPPLEMENTARY_INFORMATION_CURRENT.md"
+    if not current_manuscript.is_file():
+        raise FileNotFoundError("build MEE_CURRENT_SUBMISSION.md before anonymous bundle")
+    if not current_supplement.is_file():
+        raise FileNotFoundError("current Supplementary Information is missing")
+
     copied: list[str] = []
     for directory in INCLUDE_DIRS:
         base = root / directory
@@ -113,9 +131,16 @@ def build(root: Path, staging: Path, zip_path: Path) -> dict[str, object]:
         copy_sanitised(license_path, staging / license_path.name)
         copied.append(license_path.name)
 
-    readme = """# Anonymous peer-review code bundle\n\nThis bundle accompanies a double-anonymous methods-paper submission. Repository ownership, email addresses, project-facing observer names and Git commit identifiers have been anonymised for review. Scientific 64-character SHA-256 evidence fingerprints are retained. The separate title-page file is intentionally excluded.\n\nReviewer-facing observer labels are `observer_e` (biological evidence) and `observer_o` (observability risk). Public project names and canonical git provenance are restored only after double-anonymous review.\n\nThe final public archive will restore canonical repository provenance after peer review.\n"""
+    readme = """# Anonymous peer-review code bundle
+
+This bundle accompanies a double-anonymous methods-paper submission. Repository ownership, email addresses, public observer-project names and Git commit identifiers have been anonymised for review. Scientific 64-character SHA-256 evidence fingerprints are retained.
+
+Reviewer-facing observer labels are `observer_e` (biological evidence) and `observer_o` (observability risk). The bundle contains the completed locked evidence chain through V12 and the pre-field-frozen V13 protocol. V13 has no physical scientific result in this package.
+
+Historical pre-V7 publication placeholders/finalizer documents are intentionally excluded from the current reviewer bundle. The canonical repository retains those files as provenance.
+"""
     if not license_ready:
-        readme += "\n**Packaging blocker:** no open-source software licence has yet been selected. This bundle is suitable for internal anonymous QA but must not be submitted until an explicit licence is chosen by the copyright holder.\n"
+        readme += "\n**Packaging blocker:** no open-source software licence has yet been selected. This bundle is suitable for anonymous QA but must not be submitted until an explicit licence is chosen by the copyright holder.\n"
     (staging / "ANONYMOUS_REVIEW_README.md").write_text(readme, encoding="utf-8")
 
     identity_tokens = ("zuizui0223", "github.com/zuizui0223", "pollipi", "insepi")
@@ -132,13 +157,25 @@ def build(root: Path, staging: Path, zip_path: Path) -> dict[str, object]:
     if leaks or path_leaks:
         raise ValueError(f"identity tokens remain in anonymous bundle: text={leaks}, paths={path_leaks}")
 
+    staged_current = staging / "manuscript" / "generated" / "MEE_CURRENT_SUBMISSION.md"
+    staged_si = staging / "manuscript" / "SUPPLEMENTARY_INFORMATION_CURRENT.md"
+    if not staged_current.is_file() or not staged_si.is_file():
+        raise RuntimeError("current manuscript/SI missing from anonymous staging tree")
+    if "[[V7_LOCKED_RESULT" in staged_current.read_text(encoding="utf-8"):
+        raise RuntimeError("obsolete V7 placeholder reached anonymous manuscript")
+
     manifest: dict[str, object] = {
-        "schema": "mee-anonymous-peer-review-bundle-v1",
+        "schema": "mee-anonymous-peer-review-bundle-v2",
         "double_anonymous": True,
         "observer_names_anonymised": True,
         "title_page_excluded": True,
         "license_ready": license_ready,
-        "v7_materialised": False,
+        "current_submission_present": True,
+        "current_supplement_present": True,
+        "completed_locked_generations_represented": ["V7", "V10", "V11", "V12"],
+        "v13_pre_field_protocol_present": True,
+        "v13_scientific_result_present": False,
+        "historical_pre_v7_submission_excluded": True,
         "files": sorted(set(copied + ["ANONYMOUS_REVIEW_README.md"])),
     }
     canonical = json.dumps(manifest, sort_keys=True, separators=(",", ":")).encode("utf-8")
@@ -169,6 +206,8 @@ def main() -> None:
     manifest = build(Path(args.root).resolve(), Path(args.staging), Path(args.zip_path))
     print("MEE_ANONYMOUS_BUNDLE", Path(args.zip_path))
     print("MEE_LICENSE_READY", str(manifest["license_ready"]).lower())
+    print("MEE_CURRENT_SUBMISSION_PRESENT true")
+    print("MEE_V13_RESULT_PRESENT false")
     print("MEE_BUNDLE_MANIFEST", manifest["manifest_sha256"])
 
 
