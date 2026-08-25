@@ -2,8 +2,9 @@
 
 Raw truth annotation is intentionally isolated from algorithm output. The schema
 contains primary/reference clip provenance, biological reference truth,
-primary-stream observation support, and nuisance labels. It contains no PolliPi,
-InsePi, target-evidence, nuisance-score, triad-state, or acquisition-policy field.
+target-coupled local-response truth, primary-stream observation support, and
+exogenous nuisance labels. It contains no PolliPi, InsePi, target-evidence,
+nuisance-score, triad-state, target-route, or acquisition-policy field.
 """
 from __future__ import annotations
 
@@ -12,7 +13,11 @@ import re
 
 from .nuisance_effects import NuisanceEffect
 from .observation_triad import ObservationAvailability
-from .visit_validation import VisitTruthResolution, VisitTruthState
+from .visit_validation import (
+    CoupledResponseResolution,
+    VisitTruthResolution,
+    VisitTruthState,
+)
 
 
 _SHA256 = re.compile(r"^[0-9a-f]{64}$")
@@ -20,6 +25,9 @@ FORBIDDEN_ALGORITHM_FIELD_TOKENS = (
     "pollipi",
     "insepi",
     "target_score",
+    "direct_target_score",
+    "coupled_target_score",
+    "target_route",
     "nuisance_burden",
     "triad_state",
     "prediction",
@@ -40,6 +48,8 @@ class RawVisitAnnotation:
     biological_state: VisitTruthState | None
     primary_support_truth: ObservationAvailability
     nuisance_effects: tuple[NuisanceEffect, ...] = ()
+    target_coupled_response_resolution: CoupledResponseResolution = CoupledResponseResolution.RESOLVED
+    target_coupled_response_present: bool | None = False
     notes: str = ""
 
     def __post_init__(self) -> None:
@@ -63,6 +73,18 @@ class RawVisitAnnotation:
         if self.biological_truth_resolution is VisitTruthResolution.UNRESOLVED and self.biological_state is not None:
             raise ValueError("unresolved annotation must not carry biological_state")
 
+        if self.target_coupled_response_resolution is CoupledResponseResolution.RESOLVED:
+            if self.target_coupled_response_present is None:
+                raise ValueError("resolved coupled-response annotation requires a boolean state")
+        elif self.target_coupled_response_present is not None:
+            raise ValueError("unresolved coupled-response annotation must not carry a present/absent state")
+
+        if self.target_coupled_response_present is True:
+            if self.biological_truth_resolution is not VisitTruthResolution.RESOLVED:
+                raise ValueError("resolved target-coupled response requires resolved biological truth")
+            if self.biological_state not in {VisitTruthState.TARGET_CONTACT, VisitTruthState.VISIT_EVENT}:
+                raise ValueError("target-coupled response requires target_contact or visit_event truth")
+
 
 @dataclass(frozen=True, slots=True)
 class AnnotationBatchSummary:
@@ -71,6 +93,7 @@ class AnnotationBatchSummary:
     multiply_annotated_windows: int
     double_annotation_fraction: float
     unresolved_reference_truth_windows: int
+    unresolved_coupled_response_windows: int
 
 
 def validate_raw_annotations(
@@ -80,9 +103,9 @@ def validate_raw_annotations(
 ) -> AnnotationBatchSummary:
     """Validate provenance and the preregistered independent-annotation fraction.
 
-    This validator never adjudicates biological labels automatically. Conflicting
-    raw annotations must be resolved by an explicit blinded adjudication step
-    before a final VisitTruthRecord is constructed.
+    This validator never adjudicates biological or coupling labels automatically.
+    Conflicting raw annotations must be resolved by an explicit blinded
+    adjudication step before a final VisitTruthRecord is constructed.
     """
 
     if not 0.0 <= minimum_double_annotation_fraction <= 1.0:
@@ -121,12 +144,17 @@ def validate_raw_annotations(
         all(row.biological_truth_resolution is VisitTruthResolution.UNRESOLVED for row in items)
         for items in by_window.values()
     )
+    unresolved_coupling = sum(
+        all(row.target_coupled_response_resolution is CoupledResponseResolution.UNRESOLVED for row in items)
+        for items in by_window.values()
+    )
     return AnnotationBatchSummary(
         windows=len(by_window),
         annotation_rows=len(rows),
         multiply_annotated_windows=multiply,
         double_annotation_fraction=fraction,
         unresolved_reference_truth_windows=unresolved,
+        unresolved_coupled_response_windows=unresolved_coupling,
     )
 
 
