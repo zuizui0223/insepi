@@ -1,0 +1,73 @@
+{
+  "schema": "pollipi-insepi-v15-visit-observation-validation-v1",
+  "generation": "V15",
+  "status": "pre-data-protocol-draft-not-yet-frozen",
+  "purpose": "Validate whether explicit target evidence, nuisance risk, and observability censoring improve real insect-visit observation without conflating non-detection with biological absence.",
+  "truth_layers": {
+    "biological_event": {
+      "source": "human annotation independent of observer outputs",
+      "states": ["no_insect", "insect_in_context", "target_contact", "visit_event"],
+      "visit_definition": "operational interaction event at the focal floral target; does not imply pollination effectiveness"
+    },
+    "nuisance": {
+      "source": "human/physical annotation independent of observer outputs",
+      "multi_label": true,
+      "effects": ["mimic_target", "mask_target", "corrupt_attribution", "degrade_observation_support"]
+    },
+    "observation_support": {
+      "source": "annotation/physical measurement independent of PolliPi/InsePi outputs",
+      "states": ["observable", "compromised", "unobservable"],
+      "question": "If a visit occurred in the focal interaction zone, was the available stream sufficient to observe it?"
+    }
+  },
+  "split_contract": {
+    "development": "threshold calibration and contradiction-guided failure diagnosis only",
+    "held_out": "entirely new recording days and focal scenes/flowers",
+    "forbidden": [
+      "random frame split across the same recording block",
+      "held-out tuning after observer output inspection",
+      "counting frames as independent biological replicates"
+    ]
+  },
+  "annotation_contract": {
+    "algorithm_outputs_hidden_from_annotators": true,
+    "double_annotation_fraction_min": 0.20,
+    "disagreements_adjudicated_before_model_scoring": true,
+    "unobservable_is_not_relabelled_as_no_visit": true
+  },
+  "comparison_systems": [
+    "target_only_naive",
+    "target_plus_nuisance_without_support_gate",
+    "target_plus_support_without_nuisance",
+    "full_target_nuisance_observability_triad",
+    "protected_random_reference"
+  ],
+  "primary_metrics": [
+    "visit_recall_on_observable_truth",
+    "false_positive_visit_rate",
+    "false_absence_rate",
+    "unobservable_recall",
+    "observable_false_censor_rate",
+    "fraction_censored",
+    "shared_blind_spot_discovery_rate",
+    "review_or_capture_burden",
+    "block_level_visit_rate_bias",
+    "block_level_visit_rate_rmse"
+  ],
+  "primary_questions": [
+    "Does explicit observability censoring reduce false absence compared with treating low target evidence as absence?",
+    "Does nuisance information identify false-positive/miss-risk conditions that target evidence alone cannot diagnose?",
+    "Does the protected probability sample recover visits or observation failures missed by both targeted observers?",
+    "Does the full triad preserve a more defensible visit-rate denominator than targeted-only sampling?"
+  ],
+  "claim_ceiling_before_data": {
+    "allowed": "protocol and software readiness only",
+    "forbidden": [
+      "field visit accuracy",
+      "calibrated detection probability",
+      "pollination effectiveness",
+      "universal superiority of the triad"
+    ]
+  },
+  "freeze_rule": "Before held-out scoring, sample-size/power plan, development calibration rule, final metric formulas, and claim thresholds must be committed and hashed."
+}
