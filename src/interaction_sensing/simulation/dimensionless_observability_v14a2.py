@@ -1,13 +1,9 @@
 """V14a2 prefrozen spatiotemporal closed-world generator.
 
-This module fixes the *design* required after the negative V14a Pi2 result.  It
-adds an independent spatial correlation-length coordinate (Pi5) and an explicit
-sampling coordinate (Pi6).  It is safe to unit-test construction invariants, but
-this prefreeze generation must not run or inspect the registered full scientific
-sweep until the exact prefreeze commit and protocol hash are recorded.
-
-The generator preserves the V14 ontology: target T, exogenous nuisance N, and
-target-driven coupling C are positive, non-exclusive processes; C implies T.
+This module fixes the design required after the negative V14a Pi2 result. It
+adds an independent spatial correlation-length coordinate (Pi5) and explicit
+sampling coordinate (Pi6). Construction invariants may be unit-tested, but the
+registered full scientific sweep remains blocked until prefreeze receipt.
 """
 from __future__ import annotations
 
@@ -138,15 +134,13 @@ def truth(regime: LatentRegime) -> tuple[bool, bool, bool]:
 
 
 def spatial_shared_weight(distance_target_widths: float, pi5: float) -> float:
-    """Shared nuisance weight from an exponential spatial correlation kernel."""
     if distance_target_widths < 0 or pi5 <= 0:
         raise ValueError("distance must be non-negative and pi5 positive")
     return float(exp(-distance_target_widths / pi5))
 
 
 def _time_grid(point: SpatiotemporalPoint) -> np.ndarray:
-    # Pi6 controls the actual sample count.  Do not silently restore high temporal
-    # resolution for low-Pi6 worlds: undersampling is part of the design.
+    # Pi6 controls the actual sample count. Low-Pi6 worlds remain undersampled.
     n = max(2, int(floor(point.pi1 * point.pi6)) + 1)
     return np.linspace(-point.pi1 / 2.0, point.pi1 / 2.0, n, dtype=float)
 
@@ -167,13 +161,7 @@ def nuisance_field(
     *,
     seed: int,
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
-    """Return times, focal nuisance, and three reference-region nuisance traces.
-
-    The focal trace is the shared temporal component.  A reference at distance d
-    receives rho*shared + sqrt(1-rho^2)*local, rho=exp(-d/Pi5).  Thus Pi5 changes
-    spatial statistical dependence rather than merely rescaling one identical
-    waveform.
-    """
+    """Return times, focal nuisance, and three reference-region nuisance traces."""
     times = _time_grid(point)
     dt = float(times[1] - times[0])
     rng = np.random.default_rng(seed)
@@ -187,12 +175,7 @@ def nuisance_field(
 
 
 def normalized_spatial_structure(focal: np.ndarray, reference: np.ndarray) -> float:
-    """Amplitude-sensitive normalized structure function in [0,1].
-
-    Unlike Pearson correlation, this changes when two traces have the same shape
-    but different amplitudes.  Zero means identical traces; larger values mean
-    stronger scale-sensitive spatial mismatch.
-    """
+    """Amplitude-sensitive normalized structure function in [0,1]."""
     if focal.shape != reference.shape:
         raise ValueError("focal and reference must share shape")
     numerator = float(np.sqrt(np.mean(np.square(focal - reference))))
@@ -216,7 +199,6 @@ def _rms(a: np.ndarray) -> float:
 
 
 def _restoration_score(a: np.ndarray) -> float:
-    """Evidence that increments oppose displacement from the equilibrium."""
     if len(a) < 3 or np.std(a[:-1]) <= _EPS or np.std(np.diff(a)) <= _EPS:
         return 0.0
     value = float(np.corrcoef(a[:-1], -np.diff(a))[0, 1])
@@ -317,16 +299,18 @@ def signature_for(
         target_present=target_present,
         coupling_present=coupling_present,
     )
-    observed_focal = actor + focal_nuisance + coupling
+    scene_focal = focal_nuisance + coupling
     reference = np.median(references, axis=0)
 
     corr = _abs_corr(focal_nuisance, reference)
     structure = normalized_spatial_structure(focal_nuisance, reference)
     coherence = 1.0 - structure
-    local_excess = normalized_spatial_structure(observed_focal, reference)
+    # Crucial route separation: direct actor pixels are NOT part of the coupled
+    # scene-response route. Local excess is computed from scene motion only.
+    local_excess = normalized_spatial_structure(scene_focal, reference)
     direct_rms = _rms(actor)
-    nuisance_rms = _rms(focal_nuisance + coupling)
-    direct_fraction = direct_rms / (direct_rms + nuisance_rms + _EPS)
+    scene_rms = _rms(scene_focal)
+    direct_fraction = direct_rms / (direct_rms + scene_rms + _EPS)
     target_sampling, nuisance_sampling, nuisance_window = sampling_support(point)
 
     return SpatiotemporalSignature(
@@ -334,8 +318,8 @@ def signature_for(
         focal_reference_correlation=corr,
         spatial_coherence=float(np.clip(coherence, 0.0, 1.0)),
         spatial_structure_function=structure,
-        restoration_score=_restoration_score(focal_nuisance + coupling),
-        spectral_concentration=_spectral_concentration(focal_nuisance + coupling),
+        restoration_score=_restoration_score(scene_focal),
+        spectral_concentration=_spectral_concentration(scene_focal),
         entry_exit_completeness=completeness,
         local_excess_motion_fraction=local_excess,
         direct_target_signal_fraction=float(np.clip(direct_fraction, 0.0, 1.0)),
@@ -364,10 +348,17 @@ def route_scores(signature: SpatiotemporalSignature) -> tuple[float, float, floa
     return tuple(float(np.clip(v, 0.0, 1.0)) for v in (direct, indirect, nuisance))
 
 
-def observation_support(point: SpatiotemporalPoint) -> float:
+def observation_support(
+    point: SpatiotemporalPoint,
+    *,
+    coupling_available: bool,
+) -> float:
+    """Counterfactual target-observation support without unrealised-route leakage."""
     target_sampling, _, _ = sampling_support(point)
     window_support = min(1.0, point.pi1)
-    amplitude_support = max(point.pi3 / (1.0 + point.pi3), point.pi4 / (1.0 + point.pi4))
+    direct_support = point.pi3 / (1.0 + point.pi3)
+    coupled_support = point.pi4 / (1.0 + point.pi4) if coupling_available else 0.0
+    amplitude_support = max(direct_support, coupled_support)
     return float(np.clip(min(window_support, target_sampling, amplitude_support), 0.0, 1.0))
 
 
@@ -376,10 +367,7 @@ def _prototype_vector(point: SpatiotemporalPoint, regime: LatentRegime) -> np.nd
     return np.mean(np.stack(vectors, axis=0), axis=0)
 
 
-def identifiability_margin(
-    point: SpatiotemporalPoint,
-    signature: SpatiotemporalSignature,
-) -> float:
+def identifiability_margin(point: SpatiotemporalPoint, signature: SpatiotemporalSignature) -> float:
     regimes = (
         LatentRegime.TARGET_ONLY,
         LatentRegime.NUISANCE_ONLY,
@@ -410,10 +398,16 @@ def analyse_point(
     nuisance_high: float = 0.55,
 ) -> SpatiotemporalInterpretation:
     target_truth, nuisance_truth, coupling_truth = truth(regime)
+    coupling_available_for_support = coupling_truth or not target_truth
+    support = observation_support(
+        point,
+        coupling_available=coupling_available_for_support,
+    )
+
     if regime is LatentRegime.BASELINE:
         zero = SpatiotemporalSignature(*(0.0 for _ in range(12)))
         return SpatiotemporalInterpretation(
-            point, regime, zero, 0.0, 0.0, observation_support(point), 1.0,
+            point, regime, zero, 0.0, 0.0, support, 1.0,
             VisitInferenceA2.NO_QUERY, IndeterminacyReasonA2.NONE,
             False, False, False, False, False,
         )
@@ -421,7 +415,6 @@ def analyse_point(
     signature = signature_for(point, regime, seed=seed)
     direct, indirect, nuisance = route_scores(signature)
     target = max(direct, indirect)
-    support = observation_support(point)
     margin = identifiability_margin(point, signature)
 
     if support < support_minimum:
@@ -431,7 +424,6 @@ def analyse_point(
         inference = VisitInferenceA2.UNDETERMINED
         reason = IndeterminacyReasonA2.ESSENTIAL_AMBIGUITY
     elif target >= target_high:
-        # Positive target evidence remains positive even with simultaneous nuisance.
         inference = VisitInferenceA2.PRESENT
         reason = IndeterminacyReasonA2.NONE
     elif target <= target_low and nuisance < nuisance_high:
