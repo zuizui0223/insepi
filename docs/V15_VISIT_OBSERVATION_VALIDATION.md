@@ -2,16 +2,16 @@
 
 ## Goal
 
-V14 separates three questions:
+V14 rejects `insect = signal / everything else = noise` and separates four things that matter for visit observation:
 
-1. **target evidence** — is there evidence for the focal insect/visit event?
-2. **nuisance risk** — can non-target processes mimic, hide, or misattribute it?
-3. **observation support** — if a visit happened, was the primary interaction opportunity observable at all?
+1. **direct target evidence** — evidence for the insect/actor itself;
+2. **target-coupled response** — a local flower/target response causally attributable to the insect interaction;
+3. **exogenous nuisance risk** — non-target processes that can mimic, hide, or misattribute the event;
+4. **observation support** — whether the primary interaction opportunity was measurable well enough that presence/absence can be interpreted.
 
-V15 is the first generation intended to test whether that separation improves
-actual visit observation rather than only software diagnosis or proxy transfer.
+The second item is essential. Flower movement is not automatically nuisance. Wind-driven flower motion is exogenous nuisance; insect-driven flower response is an indirect target route. V15 is designed to distinguish them with independent truth rather than by relabelling whichever signal helps the detector.
 
-The central ecological error to prevent is:
+The central ecological error to prevent remains:
 
 ```text
 low target evidence -> biological absence
@@ -20,36 +20,32 @@ low target evidence -> biological absence
 when the correct interpretation may be:
 
 ```text
-low target evidence + poor observation support -> censored / unknown
+weak direct insect evidence
++ target-coupled flower response -> indirect visit evidence
+```
+
+or
+
+```text
+low target evidence
++ poor observation support -> censored / unknown
 ```
 
 ## Two observation channels are required for validation
 
-The **primary stream** is the stream under test and is the only image stream
-available to PolliPi/InsePi/V14.
+The **primary stream** is the stream under test and is the only image stream available to the target/nuisance/observability algorithms.
 
-A separate synchronised **reference truth stream** is required for biological
-validation. It may be a higher-quality/wider-angle reference camera, direct human
-observation, or another independently justified observation channel. It is used
-only to establish event truth and is never supplied to the algorithms under test.
+A separate synchronised **reference truth stream** is required for biological validation. It may be a higher-quality/wider-angle reference camera, direct human observation, or another independently justified observation channel. It is used only to establish truth and is never supplied to the algorithms under test.
 
-This separation is essential. If the primary stream is truly `unobservable`, a
-human inspecting that same stream cannot establish that a hidden visit did or did
-not occur. Without an independent truth channel, false absence under
-unobservability is logically untestable.
+This separation is essential. If the primary stream is truly `unobservable`, a human inspecting that same stream cannot establish that a hidden visit did or did not occur. Without an independent truth channel, false absence under unobservability is logically untestable.
 
-If the reference truth stream also cannot resolve the biological state, the window
-is labelled `truth_unresolved`. It is **not** relabelled `no_insect`. Such windows
-are excluded from biological-accuracy denominators but retained when evaluating
-the primary stream's observability/support gate and recording burden.
+If the reference truth stream also cannot resolve the biological state, the window is labelled `truth_unresolved`. It is **not** relabelled `no_insect`. Such windows are excluded from biological-accuracy denominators but retained when evaluating the primary stream's observability/support gate and recording burden.
 
-## Independent truth layers
+## Four independent truth layers
 
-V15 therefore requires three truth layers that are independent of the algorithms.
+### 1. Biological-event truth
 
-### Biological-event truth
-
-Reference-channel reviewers annotate an operational interaction hierarchy:
+Reference-channel reviewers annotate:
 
 - `no_insect`;
 - `insect_in_context`;
@@ -57,227 +53,209 @@ Reference-channel reviewers annotate an operational interaction hierarchy:
 - `visit_event`;
 - or `truth_unresolved` when the reference channel itself is insufficient.
 
-A `visit_event` is an observed insect interaction with the focal floral target.
-It does **not** by itself establish pollen transfer or pollination effectiveness.
+A `visit_event` is an observed insect interaction with the focal floral target. It does **not** by itself establish pollen transfer or pollination effectiveness.
 
-### Nuisance truth
+### 2. Target-coupled response truth
 
-Nuisance is multi-label. Reviewers or physical logs record whether a process can:
+Reference-channel reviewers separately annotate whether a local response of the focal flower/target can be causally attributed to the insect interaction.
+
+The coupling label is:
+
+- `present`;
+- `absent`;
+- or `unresolved` when causal attribution cannot be supported.
+
+A resolved `present` label requires resolved `target_contact` or `visit_event` biological truth. If the flower moved but the reference channel cannot establish that the insect caused it, coupling remains unresolved rather than being upgraded to target evidence.
+
+This truth layer directly tests the V14 prediction:
+
+```text
+weak direct insect signal + target-linked local response -> possible indirect visit rescue
+```
+
+### 3. Exogenous nuisance truth
+
+Nuisance is multi-label and excludes target-driven coupling by definition. Reviewers or physical logs record whether a non-target process can:
 
 - mimic the target;
 - mask the target;
 - corrupt attribution;
 - degrade observation support.
 
-The same physical disturbance may have multiple effects.
+Wind-driven target motion, camera shake, moving shadow, occlusion, blur and similar processes may therefore be nuisance. A flower response caused by an insect contact is not moved into this category simply because its pixel signature resembles motion noise.
 
-### Primary-stream observation-support truth
+### 4. Primary-stream observation-support truth
 
 A separate annotation of the **primary stream** asks:
 
-> If a visit occurred in the focal interaction zone during this window, was the
-> primary camera stream sufficient to observe it?
+> If a visit occurred in the focal interaction zone during this window, was the primary camera stream sufficient to observe it?
 
-The label is `observable`, `compromised`, or `unobservable` and must not be
-inferred from PolliPi/InsePi outputs or from the biological label. A primary-stream
-window may therefore be unobservable while the independent reference stream still
-resolves a true visit.
+The label is `observable`, `compromised`, or `unobservable` and must not be inferred from target/nuisance outputs or from the biological label. A primary-stream window may therefore be unobservable while the independent reference stream still resolves a true visit.
 
-## Why the three truths must be separate
+## Why all four truths must be separate
 
-A true visit can occur in an unobservable primary window. A nuisance process can
-be strong while the visit remains observable. A visually quiet window can be
-unobservable because the flower is covered or outside usable coverage.
+The system must permit all of the following:
 
-Therefore the benchmark must permit all combinations rather than defining
-observability from event or nuisance labels.
+- true visit + no target-coupled response;
+- true visit + target-coupled response;
+- true visit + exogenous nuisance;
+- target-coupled response + exogenous nuisance simultaneously;
+- strong nuisance while the visit remains observable;
+- quiet scene while the visit opportunity is unobservable;
+- unresolved reference biological truth while primary-stream observability remains measurable.
+
+The validation cannot define one layer from another without circularity.
+
+## Target-side routes under test
+
+### Direct route
+
+Evidence for the insect/actor itself: visible transit, local actor motion or other target-focused signal.
+
+### Coupled route
+
+Evidence for a local response at the focal biological target. The operational coupled score is retained separately from the direct route and requires target-link evidence. It is not computed from InsePi nuisance output.
+
+### Aggregate target evidence
+
+The acquisition/runtime layer may combine direct and coupled target routes, but V15 preserves both component scores in the prediction ledger. This permits two opposite evaluations:
+
+- **indirect rescue:** true visit, observable opportunity, resolved coupled response, weak direct route, strong coupled route;
+- **spurious rescue:** resolved no-insect truth but strong coupled route causes a retained candidate.
+
+The method is successful only if rescue is gained without uncontrolled spurious coupling calls.
 
 ## Experimental unit and split
 
-Frames are never treated as independent replicates.
-
-Primary grouping is at least:
+Frames are never treated as independent replicates. Primary grouping is at least:
 
 ```text
 recording day × focal flower/scene × recording block
 ```
 
-Development data may be used to calibrate V14 reference thresholds and to inspect
-contradictions. Held-out validation must use new recording days **and** new focal
-scenes/flowers so consecutive frames from the same stream cannot leak across the
-split.
+Development data may be used to calibrate reference thresholds and inspect contradictions. Held-out validation must use new recording days **and** new focal scenes/flowers so consecutive frames from the same stream cannot leak across the split.
 
-At least 20% of truth material is independently double-annotated. Annotation
-adjudication occurs before algorithm scoring. Annotators do not receive PolliPi,
-InsePi, triad-state, or acquisition-policy outputs. Reference-stream footage is
-never input to the tested algorithms.
+At least 20% of truth material is independently double-annotated. Annotation adjudication occurs before algorithm scoring. Annotators do not receive target scores, nuisance scores, target-route labels, triad states or acquisition-policy outputs. Reference-stream footage is never input to the tested algorithms.
 
 ## Systems compared
 
-### A. Target-only naive
+### A. Direct target-only naive
 
-PolliPi-like target evidence is used alone. Low target evidence is treated as a
-negative observation. This is the baseline most vulnerable to false absence.
+Only the direct insect route is used. Low direct evidence is treated as a negative observation.
 
-### B. Target + nuisance, no explicit support gate
+### B. Direct + coupled target, no nuisance/support
 
-Nuisance conflicts may trigger audit, but there is no independent
-observable/compromised/unobservable censoring layer.
+Both target routes are available, isolating the value and risk of indirect target rescue without nuisance diagnosis or censoring.
 
-### C. Target + observation support, no nuisance diagnosis
+### C. Target + nuisance, no explicit support gate
 
-This isolates the value of censoring from the value of nuisance-specific
-explanation.
+Target evidence and exogenous nuisance conflicts may trigger audit, but there is no independent observable/compromised/unobservable censoring layer.
 
-### D. Full target–nuisance–observability triad
+### D. Target + support, no nuisance diagnosis
 
-The V14 state model is used. Unobservable windows are censored; high target/high
-nuisance and low target/high nuisance remain explicit conflicts.
+This isolates the value of censoring from the value of nuisance-specific explanation.
 
-### E. Protected random reference
+### E. Full direct/coupled-target–nuisance–observability triad
 
-A probability sample is selected independently of all three algorithmic scores.
-It is not a competing classifier. It supplies an unbiased audit lane for shared
-misses and a reference denominator for block-level inference.
+The complete V14 state model is used. Unobservable windows are censored; target/nuisance conflicts remain explicit; direct and coupled target routes remain separately auditable.
+
+### F. Protected random reference
+
+A probability sample is selected independently of all algorithmic scores. It is not a competing classifier. It supplies an audit lane for shared misses and a reference denominator for block-level inference.
 
 ## Primary metrics
 
 ### 1. Visit recall on observable, resolved truth
 
-Among true visit events resolved by the independent reference channel and labelled
-observable in the primary stream, how many are retained as target candidates?
-
-This prevents the observability gate from appearing good merely by censoring hard
-positive cases.
+Among true visit events resolved by the independent reference channel and labelled observable in the primary stream, how many are retained as target candidates?
 
 ### 2. False-positive visit rate on resolved truth
 
-How often does target evidence produce a visit candidate when independently
-resolved biological truth is no visit?
-
-Nuisance-stratified versions identify whether false positives concentrate in
-specific disturbance mechanisms.
+How often does the system retain a visit candidate when resolved biological truth is no visit/no insect?
 
 ### 3. False-absence rate on resolved truth
 
-The key V15 metric is the rate at which a system emits interpretable negative
-evidence for a window in which the independent reference channel resolves a true
-visit.
-
-The full triad should only emit negative evidence for `quiet_observable` windows.
-Primary-stream unobservable windows are censored rather than silently becoming
-zeros. Windows with unresolved reference truth cannot enter this accuracy metric.
+The key V15 metric remains the rate at which a system emits interpretable negative evidence for a window in which the independent reference channel resolves a true visit.
 
 ### 4. Unobservable recall and false censor rate
 
-The support gate must recover independently labelled unobservable primary windows
-without censoring large fractions of genuinely observable opportunities.
+The support gate must recover independently labelled unobservable primary windows without censoring large fractions of genuinely observable opportunities.
 
-These support metrics use all windows for which primary-stream support truth is
-available, including windows whose biological reference truth is unresolved.
+### 5. Indirect target-rescue rate
 
-Both directions are necessary. A gate that labels everything unobservable would
-trivially eliminate false absence while destroying useful observation effort.
+Among observable resolved visits where:
 
-### 5. Reference-truth unresolved fraction
+- target-coupled response truth is resolved `present`;
+- direct target score is below the frozen low threshold;
+- a route-specific coupled target score is available;
 
-Report the fraction of primary windows for which the independent reference channel
-cannot resolve biological truth. This makes the effective biological-validation
-sample size visible rather than silently treating uncertain truth as absence.
+measure the fraction retained by a strong coupled route. This quantifies whether local flower response rescues visits whose insect image is weak.
 
-### 6. Shared-blind-spot discovery
+### 6. Spurious coupled-candidate rate
 
-Among resolved true visits or severe primary-stream support failures for which
-both target evidence and nuisance risk are low, how many are recovered by the
-protected random audit lane?
+Among observable windows with resolved `no_insect` truth, measure the fraction retained with a high coupled-target score. This is the essential guardrail against calling arbitrary flower motion an insect interaction.
 
-This directly tests the reason random audit is retained even when the two targeted
-observers agree.
+### 7. Reference-truth unresolved fractions
 
-### 7. Review/capture burden
+Report biological-truth unresolved fraction and target-coupling unresolved fraction separately. Neither is silently converted to absence.
 
-For each system, report the number/fraction of windows requiring high-resolution
-retention or human audit. Accuracy gains are interpreted jointly with this burden,
-not as a free resource improvement.
+### 8. Shared-blind-spot discovery
 
-### 8. Block-level visit-rate bias and RMSE
+Among true visits or severe primary support failures for which both target evidence and nuisance risk are low, how many are recovered by protected random audit?
 
-Using resolved independent biological truth as evaluation-only reference, compare
-visit-rate estimates from:
+### 9. Review/capture burden
 
-- naive targeted data;
-- observable opportunities selected by the full triad;
-- the protected probability sample with its known inclusion design.
+Report the fraction of windows requiring high-resolution retention or human audit for every comparison system.
 
-Windows with unresolved biological reference truth are reported separately and do
-not become implicit zeros. The purpose is to quantify how selection and
-unobservable-time censoring distort the empirical visit rate under benchmark
-truth, not to claim pollination effectiveness.
+### 10. Block-level visit-rate bias and RMSE
 
-## Contradiction-guided development stage
+Using resolved independent biological truth as evaluation-only reference, compare visit-rate estimates from naive targeted data, observable triad opportunities and the protected probability sample. Censored and unresolved time remain explicit rather than implicit zero visits.
 
-Development data are not used merely to optimise one score. Error cases are first
-partitioned by the V14 diagnostic states:
+## Contradiction-guided development
 
-```text
-clean target candidate
-target–nuisance conflict
-target–observability conflict
-nuisance dominated / possible miss
-quiet observable
-quiet compromised
-unobservable censored
-ambiguous
-```
+Development contradictions are not optimised away blindly. Each recurrent contradiction is first classified as one of:
 
-For each recurrent failure, the next diagnostic experiment should modify one
-candidate mechanism at a time. Examples:
+- definition defect;
+- target representation defect;
+- nuisance representation defect;
+- observation-support failure;
+- information absence;
+- essential ambiguity;
+- legitimate target+nuisance superposition;
+- legitimate target-coupled response.
 
-- improve temporal context if target evidence fires during camera shake;
-- restore visibility or target-zone coverage for an observability conflict;
-- increase context duration if nuisance and target evidence cannot be separated;
-- use random-audit errors to reveal conditions where both observers are quiet.
+The next diagnostic intervention or observation should discriminate these possibilities. Examples include increasing temporal context, adding a second view, restoring visibility, comparing focal-versus-neighbour flower motion, or using protected random-audit examples where all targeted signals were quiet.
 
-After the development calibration rule is frozen, held-out data cannot trigger
-threshold or representation changes under the same V15 generation.
+The goal is not zero contradiction. The goal is to reduce *unexplained* contradiction while preserving legitimate multi-process states.
 
 ## What would count as success
 
-Before held-out scoring, V15 still needs a sample-size/power plan and numerical
-claim thresholds. Those values are intentionally not invented here.
+Before held-out scoring, V15 still requires a sample-size/power plan, frozen calibration rule, cluster-level uncertainty model and numerical claim thresholds. Those values are deliberately not invented here.
 
-The qualitative success pattern is nevertheless fixed:
+The qualitative success pattern is fixed:
 
-1. explicit observability censoring reduces false absence relative to target-only
-   negative calls;
-2. observable-window visit recall remains competitive rather than being obtained
-   by censoring all hard cases;
-3. nuisance information explains/recovers error families not captured by support
-   alone;
-4. protected random audit recovers at least some shared misses or support failures
-   outside targeted attention;
-5. block-level visit-rate distortion is lower when the probability-sample and
-   censoring information are retained;
-6. unresolved reference truth remains explicit rather than being converted to
-   apparent biological absence.
+1. explicit observability censoring reduces false absence;
+2. observable-window visit recall remains competitive;
+3. exogenous nuisance information explains error families not captured by support alone;
+4. coupled target response rescues some weak-direct true visits;
+5. spurious coupled rescue on no-insect truth remains controlled;
+6. protected random audit recovers shared misses/support failures outside targeted attention;
+7. block-level visit-rate distortion decreases when censoring and probability-sample information are retained;
+8. unresolved biological or coupling truth remains explicit.
 
-Failure of any component lowers the corresponding claim rather than being repaired
-post hoc on the held-out split.
+Failure lowers the corresponding claim rather than triggering repair on the held-out split.
 
 ## Final intended product
 
-If V15 succeeds, the visit-observation method is no longer described as “an insect
-detector plus a noise detector”. It becomes an observation system with explicit
-scientific semantics:
+If V15 succeeds, the method is not “an insect detector plus a noise detector”. It is an observation system with explicit scientific semantics:
 
 ```text
-biological actor evidence
-+ nuisance diagnosis
+direct insect evidence
++ target-coupled local response
++ exogenous nuisance diagnosis
 + observation-availability censoring
 + protected probability audit
 + independent reference truth for validation
 ```
 
-That is the structure required for a strong visit-monitoring method because it
-separates **event enrichment**, **measurement failure**, **absence validity**, and
-**sampling validity** instead of forcing them into a single confidence score.
+That is the structure needed for strong visit monitoring because it separates **direct event evidence**, **indirect interaction evidence**, **measurement confounding**, **absence validity**, and **sampling validity** rather than forcing all variation into one confidence score.
