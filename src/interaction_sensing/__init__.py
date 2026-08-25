@@ -28,6 +28,7 @@ from .observation_triad import (
     TargetEvidence,
     TriadState,
 )
+from .target_routes import TargetEvidenceRoute, TargetRouteEvidence
 from .visit_annotation import (
     AnnotationBatchSummary,
     RawVisitAnnotation,
@@ -35,6 +36,7 @@ from .visit_annotation import (
     validate_raw_annotations,
 )
 from .visit_validation import (
+    CoupledResponseResolution,
     VisitPredictionRecord,
     VisitTruthRecord,
     VisitTruthResolution,
@@ -49,6 +51,7 @@ __all__ = [
     "AuditRecord",
     "BBox",
     "Candidate",
+    "CoupledResponseResolution",
     "ErrorClass",
     "InferentialStatus",
     "InteractionEvent",
@@ -68,6 +71,8 @@ __all__ = [
     "RawVisitAnnotation",
     "SceneState",
     "TargetEvidence",
+    "TargetEvidenceRoute",
+    "TargetRouteEvidence",
     "TargetSpec",
     "TriadState",
     "VisitPredictionRecord",
