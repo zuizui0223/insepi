@@ -25,6 +25,7 @@ from .observation_triad import (
     ObservationInterpretation,
     ObservationSupport,
     ObservationTriadPolicy,
+    ProcessPreservingObservationTriadPolicy,
     TargetEvidence,
     TriadState,
 )
@@ -58,6 +59,7 @@ __all__ = [
     "ObservationInterpretation",
     "ObservationSupport",
     "ObservationTriadPolicy",
+    "ProcessPreservingObservationTriadPolicy",
     "ObservabilityDecision",
     "ObservabilityState",
     "SceneState",
