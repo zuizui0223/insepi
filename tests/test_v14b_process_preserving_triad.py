@@ -55,6 +55,7 @@ def test_superposition_remains_positive_downstream_without_dropping_nuisance_met
     assert record.nuisance_burden == 0.85
     assert DiagnosticAction.RETAIN_TARGET_CLIP in record.actions
     assert DiagnosticAction.RECORD_HIGH_RES_CONTEXT in record.actions
+    assert DiagnosticAction.AUDIT_NUISANCE in record.actions
 
 
 def test_compromised_support_takes_precedence_over_superposition() -> None:
