@@ -28,6 +28,12 @@ from .observation_triad import (
     TargetEvidence,
     TriadState,
 )
+from .visit_annotation import (
+    AnnotationBatchSummary,
+    RawVisitAnnotation,
+    assert_algorithm_fields_absent,
+    validate_raw_annotations,
+)
 from .visit_validation import (
     VisitPredictionRecord,
     VisitTruthRecord,
@@ -39,6 +45,7 @@ from .visit_validation import (
 )
 
 __all__ = [
+    "AnnotationBatchSummary",
     "AuditRecord",
     "BBox",
     "Candidate",
@@ -58,6 +65,7 @@ __all__ = [
     "ObservationTriadPolicy",
     "ObservabilityDecision",
     "ObservabilityState",
+    "RawVisitAnnotation",
     "SceneState",
     "TargetEvidence",
     "TargetSpec",
@@ -67,9 +75,11 @@ __all__ = [
     "VisitTruthResolution",
     "VisitTruthState",
     "VisitValidationSummary",
+    "assert_algorithm_fields_absent",
     "evaluate_visit_predictions",
     "prediction_from_triad",
     "profile_for",
+    "validate_raw_annotations",
 ]
 
 __version__ = "0.1.0"
