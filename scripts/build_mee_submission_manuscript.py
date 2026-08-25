@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
-"""Build a journal-compliant, double-anonymous pre-V7 manuscript.
+"""Build the current double-anonymous MEE reviewer manuscript.
 
-This presentation layer converts the working manuscript to the current Methods in
-Ecology and Evolution initial-submission structure while preserving the scientific
-content and the locked V7 boundary.
+This is a presentation layer only. It preserves the current scientific narrative
+and locked V7/V10/V11/V12 outcomes, inserts journal-facing peer-review and AI-use
+statements, replaces the working bibliography with the audited bibliography, and
+anonymises repository-identifying observer names and 40-character Git commits.
+
+It must not recreate the obsolete pre-V7 placeholder manuscript.
 """
 from __future__ import annotations
 
@@ -13,26 +16,14 @@ from pathlib import Path
 import re
 
 
-ABSTRACT = """## Abstract
+DATA_CODE = """## Data/Code for peer review
 
-1. Autonomous ecological sensors can conserve storage, power and review effort by preferentially recording windows that appear biologically informative, but preferential acquisition also changes the distribution of observation conditions. We therefore distinguish biological-event evidence from observation-process reliability and ask how adaptive sensing can use both without losing non-preferential coverage.
-
-2. We developed two deliberately non-equivalent observation programs in parallel: a biological-evidence observer (Observer-E) and an observability/error-risk observer (Observer-O). They remained independently executable and were compared only after inference on shared latent and byte-identical visual simulations. An early equal-budget test showed that direct disagreement was not automatically beneficial, and a one-shot locked validation subsequently falsified the stronger hypothesis that a fixed scalar disagreement ranking would remain robust under event-prevalence shift, despite persistent complementary observer information.
-
-3. We replaced scalar ranking with an exploration-guarded portfolio that reserves uniform sampling and assigns separate quotas to biological-evidence and observability-risk signals. High-resolution development froze a 50% exploration, 10% evidence, 40% observability-risk instance with zero direct disagreement quota. Across nine inspected prevalence-by-budget development regimes, its worst joint event/error-recovery ratio relative to uniform sampling was 1.00846, mean joint ratio 1.11642 and maximum disturbance-distribution total-variation distance 0.21919. For Q = αU + (1−α)R, the exploration guard also gives TV(Q,U)=(1−α)TV(R,U), Q(A)≥αU(A), and U(x)/Q(x)≤1/α. [[V7_LOCKED_RESULT]]
-
-4. The resulting contribution is a simulation-first methodology for adaptive ecological sensing: preserve epistemically distinct observers, use contradiction to falsify acquisition assumptions rather than force consensus, retain guaranteed exploration in the final sampling design, and separate method development from locked validation. The study does not claim field accuracy; empirical deployment is external validation.
-
-## Data/Code for peer review
-
-All simulation code, tests, benchmark registries, pre-V7 figures and manuscript build scripts are prepared as an anonymised peer-review bundle. The final V7 seed, pixels, traces and result are intentionally absent until the preregistered one-shot validation is reproducibly unblocked by exact frozen-commit reachability. A formal public archive/DOI will be created only after the final locked result is preserved. An open-source software licence is required before submission and is tracked as an explicit packaging gate rather than selected automatically.
-
-**Keywords:** adaptive sampling; ecological monitoring; preferential sampling; edge sensing; observability; falsification; active learning; simulation; reproducible methods
+An anonymised review bundle contains the simulation and diagnostic code, tests, benchmark registries, locked-result provenance needed to audit the completed V7, V10, V11 and V12 generations, and the frozen pre-field V13 protocol. V13 physical data do not yet exist and no V13 performance result is represented in this manuscript. A formal public archive/DOI will be created for the accepted evidence package. An explicit open-source software licence remains a submission gate and is not selected automatically by the build system.
 """
 
-AI_DISCLOSURE = """### 2.13. AI-assisted software and manuscript development
+AI_DISCLOSURE = """### 2.15. AI-assisted software and manuscript development
 
-Generative AI systems were used as coding and writing assistants during portions of software development, testing, documentation and manuscript preparation. OpenAI ChatGPT (GPT-5.6 Sol) was used during the final V6/V7 infrastructure and manuscript-packaging phase. Repository commit metadata also records Anthropic Claude Opus 4.8 and Claude Sonnet 5 assistance in earlier software development. AI outputs were treated as proposed code or text rather than authoritative results: executable changes were subjected to repository tests and CI, simulation claims were tied to preserved ledgers and hashes, and the corresponding author assumes responsibility for the final code, analyses and manuscript text. AI systems were not treated as authors.
+Generative AI systems were used as coding and writing assistants during portions of software development, testing, documentation and manuscript preparation. OpenAI ChatGPT (GPT-5.6 Sol) was used during V6–V13 infrastructure, validation, reproducibility and manuscript-packaging work. Repository commit metadata also records Anthropic Claude Opus 4.8 and Claude Sonnet 5 assistance in earlier software development. AI outputs were treated as proposed code or text rather than authoritative results: executable changes were subjected to repository tests and CI, scientific claims were tied to preserved protocols, ledgers, result hashes and claim ceilings, and the corresponding author assumes responsibility for the final code, analyses and manuscript text. AI systems were not treated as authors.
 """
 
 REFERENCES = """## References
@@ -61,12 +52,6 @@ Seung, H.S., Opper, M. & Sompolinsky, H. (1992). Query by committee. In *Proceed
 """
 
 GIT_SHA_RE = re.compile(r"(?<![0-9a-fA-F])[0-9a-fA-F]{40}(?![0-9a-fA-F])")
-V7_CONTEXT_MARKERS = (
-    "[[V7_LOCKED_RESULT:ABSTRACT]]",
-    "[[V7_LOCKED_RESULT:TABLE]]",
-    "[[V7_LOCKED_RESULT:RESULTS]]",
-    "[[V7_LOCKED_RESULT:DISCUSSION]]",
-)
 
 
 def anonymous_commit_id(original: str) -> str:
@@ -75,64 +60,62 @@ def anonymous_commit_id(original: str) -> str:
 
 
 def anonymise_review_text(text: str) -> str:
-    # Observer project names are unique enough to reveal the public repositories,
-    # so the review manuscript uses role labels. Public names are restored only
-    # after double-anonymous review.
     text = text.replace("PolliPi", "Observer-E")
     text = text.replace("InsePi", "Observer-O")
     text = GIT_SHA_RE.sub(lambda match: anonymous_commit_id(match.group(0)), text)
     return text
 
 
-def specialise_v7_placeholders(text: str) -> str:
-    """Assign each generic V7 placeholder a fixed manuscript role before V7 exists."""
-
-    generic = "[[V7_LOCKED_RESULT]]"
-    if text.count(generic) != len(V7_CONTEXT_MARKERS):
-        raise ValueError(
-            f"expected {len(V7_CONTEXT_MARKERS)} generic V7 placeholders, found {text.count(generic)}"
-        )
-    for marker in V7_CONTEXT_MARKERS:
-        text = text.replace(generic, marker, 1)
-    return text
-
-
-def strip_internal_header(source_prefix: str) -> str:
-    title = source_prefix.splitlines()[0].strip()
-    if not title.startswith("# "):
+def strip_internal_metadata(source: str) -> str:
+    lines = source.splitlines()
+    if not lines or not lines[0].startswith("# "):
         raise ValueError("working manuscript must start with a Markdown title")
-    return title + "\n\n"
+    abstract_start = source.index("## Abstract")
+    return lines[0].rstrip() + "\n\n" + source[abstract_start:]
+
+
+def insert_peer_review_statement(text: str) -> str:
+    if "## Data/Code for peer review" in text:
+        raise ValueError("working manuscript unexpectedly already contains reviewer Data/Code statement")
+    keyword_marker = "**Keywords:**"
+    if keyword_marker not in text:
+        raise ValueError("cannot locate keyword line after abstract")
+    return text.replace(keyword_marker, DATA_CODE.rstrip() + "\n\n" + keyword_marker, 1)
 
 
 def add_verified_citation_context(text: str) -> str:
-    state_sentence = "These constraints create a strong incentive to allocate observation effort adaptively."
-    state_addition = (
-        state_sentence
-        + " The broader distinction between biological state and observation process is familiar from imperfect-detection ecology: a non-detection cannot be equated with biological absence unless detection is certain (MacKenzie et al., 2002)."
-    )
-    if state_sentence not in text:
-        raise ValueError("cannot locate observation-process citation anchor")
-    text = text.replace(state_sentence, state_addition, 1)
+    anchors = [
+        (
+            "Autonomous ecological sensors observe biological processes through an observation process.",
+            "Autonomous ecological sensors observe biological processes through an observation process. The distinction between biological state and observation is familiar from imperfect-detection ecology: non-detection cannot be equated with biological absence when detection is uncertain (MacKenzie et al., 2002).",
+        ),
+        (
+            "Preferential sampling is already known to bias ecological inference when the observation process depends on the system or conditions under study (Diggle, Menezes & Su, 2010; Conn, Thorson & Johnson, 2017), and adaptive ecological sampling raises related challenges for representativeness and downstream inference (Henrys, Mondain-Monval & Jarvis, 2024).",
+            "Preferential sampling is already known to bias ecological inference when the observation process depends on the system or conditions under study (Diggle, Menezes & Su, 2010; Conn, Thorson & Johnson, 2017), and adaptive ecological sampling raises related challenges for representativeness and downstream inference (Henrys, Mondain-Monval & Jarvis, 2024). Simulation studies likewise show that preferential inclusion can bias ecological status estimates, with the magnitude depending on the association between inclusion and the variable of interest and on sampling effort (Aubry, Francesiaz & Guillemain, 2024).",
+        ),
+        (
+            "Locked failure reduced the claim ceiling but did not trigger tuning under the same generation.",
+            "Locked failure reduced the claim ceiling but did not trigger tuning under the same generation. Simulation studies are particularly useful for method evaluation because the data-generating truth is known (Morris, White & Crowther, 2019), while repeated adaptation to held-out evidence can compromise naïve validation if the analysis changes after inspection (Dwork et al., 2015).",
+        ),
+        (
+            "Likewise, the method is not a new disagreement-based active learner.",
+            "Likewise, the method is not a new disagreement-based active learner. Active-learning workflows have already been developed for ecological image classification (Bothmann et al., 2023); our protected random component and non-equivalent observer objectives address a different sampling-design problem.",
+        ),
+    ]
+    for old, new in anchors:
+        if old not in text:
+            raise ValueError(f"cannot locate verified-citation anchor: {old[:72]}")
+        text = text.replace(old, new, 1)
+    return text
 
-    adaptive_sentence = (
-        "Recent work on adaptive ecological sampling similarly emphasises that targeted data collection can make raw samples non-representative unless the changing design is accounted for (Henrys, Mondain-Monval & Jarvis, 2024)."
-    )
-    adaptive_addition = (
-        adaptive_sentence
-        + " Simulation work also demonstrates that preferential sampling can bias ecological status estimates, with the magnitude depending on the association between inclusion and the variable of interest and on sampling effort (Aubry, Francesiaz & Guillemain, 2024)."
-    )
-    if adaptive_sentence not in text:
-        raise ValueError("cannot locate preferential-sampling citation anchor")
-    text = text.replace(adaptive_sentence, adaptive_addition, 1)
 
-    generation_sentence = "No result from V5 was used to retune the same scalar disagreement score. Instead, its failure triggered a change in policy class."
-    generation_addition = (
-        generation_sentence
-        + " More generally, simulation studies permit direct method evaluation because the data-generating truth is known (Morris, White & Crowther, 2019), while adaptive reuse of held-out evidence can compromise naïve validation if the analysis itself changes after inspection (Dwork et al., 2015). These considerations motivated a new untouched validation generation rather than continued reuse of V4 or V5 as final evidence."
-    )
-    if generation_sentence not in text:
-        raise ValueError("cannot locate simulation-validation citation anchor")
-    return text.replace(generation_sentence, generation_addition, 1)
+def insert_ai_disclosure(text: str) -> str:
+    if "AI-assisted software and manuscript development" in text:
+        raise ValueError("working manuscript unexpectedly already contains AI disclosure")
+    results_marker = "\n---\n\n## 3. Results"
+    if results_marker not in text:
+        raise ValueError("cannot locate Results boundary for AI disclosure")
+    return text.replace(results_marker, "\n\n" + AI_DISCLOSURE.rstrip() + results_marker, 1)
 
 
 def replace_working_references(text: str) -> str:
@@ -143,27 +126,21 @@ def replace_working_references(text: str) -> str:
 
 
 def build(source: str) -> str:
-    abstract_start = source.index("## Abstract")
-    intro_start = source.index("---\n\n## 1. Introduction")
-    prefix = strip_internal_header(source[:abstract_start])
-    rewritten = prefix + ABSTRACT + "\n---\n\n## 1. Introduction" + source[intro_start + len("---\n\n## 1. Introduction"):]
+    rewritten = strip_internal_metadata(source)
+    rewritten = insert_peer_review_statement(rewritten)
     rewritten = add_verified_citation_context(rewritten)
+    rewritten = insert_ai_disclosure(rewritten)
     rewritten = replace_working_references(rewritten)
-
-    results_marker = "\n---\n\n## 3. Results"
-    if results_marker not in rewritten:
-        raise ValueError("cannot locate Results boundary for AI disclosure")
-    rewritten = rewritten.replace(results_marker, "\n\n" + AI_DISCLOSURE + results_marker, 1)
-    rewritten = specialise_v7_placeholders(rewritten)
+    if "[[V7_LOCKED_RESULT" in rewritten:
+        raise ValueError("obsolete V7 publication placeholder remains in current manuscript")
     return anonymise_review_text(rewritten)
 
 
 def abstract_word_count(text: str) -> int:
     start = text.index("## Abstract")
     end = text.index("## Data/Code for peer review")
-    block = text[start:end]
-    words = [token for token in block.replace("## Abstract", "").split() if not token.startswith("[[V7_LOCKED_RESULT")]
-    return len(words)
+    block = text[start:end].replace("## Abstract", "")
+    return len(block.split())
 
 
 def total_word_count(text: str) -> int:
@@ -173,7 +150,7 @@ def total_word_count(text: str) -> int:
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--source", default="manuscript/METHODS_PAPER_DRAFT.md")
-    parser.add_argument("--output", default="manuscript/generated/MEE_PRE_V7_SUBMISSION.md")
+    parser.add_argument("--output", default="manuscript/generated/MEE_CURRENT_SUBMISSION.md")
     args = parser.parse_args()
 
     source = Path(args.source).read_text(encoding="utf-8")
@@ -181,14 +158,14 @@ def main() -> None:
     abstract_count = abstract_word_count(output)
     total_count = total_word_count(output)
     if abstract_count > 350:
-        raise SystemExit(f"MEE abstract exceeds 350 words before V7 insertion: {abstract_count}")
-    if total_count > 7600:
-        raise SystemExit(f"pre-V7 manuscript leaves insufficient room under MEE 8000-word ceiling: {total_count}")
+        raise SystemExit(f"MEE abstract exceeds 350 words: {abstract_count}")
+    if total_count > 8000:
+        raise SystemExit(f"MEE manuscript exceeds 8000-word ceiling: {total_count}")
     path = Path(args.output)
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(output, encoding="utf-8")
-    print(f"MEE_PRE_V7_ABSTRACT_WORDS {abstract_count}")
-    print(f"MEE_PRE_V7_TOTAL_WORDS {total_count}")
+    print(f"MEE_CURRENT_ABSTRACT_WORDS {abstract_count}")
+    print(f"MEE_CURRENT_TOTAL_WORDS {total_count}")
     print(path)
 
 
