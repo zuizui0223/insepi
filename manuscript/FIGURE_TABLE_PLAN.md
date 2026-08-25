@@ -1,164 +1,205 @@
 # Figure and table production plan
 
-The main-text figures should tell the falsification story before they display the
-final candidate. Do not lead with V6 as though it had been the original hypothesis.
+The main-text figures should tell the falsification and diagnostic story. Do not lead with 50/10/40 as though it were the final method.
 
-## Figure 1 — Two observation questions, one sensor stream
+## Figure 1 — Three observation lanes and the role of contradiction
 
-**Purpose:** establish the conceptual method before implementation details.
+**Purpose:** establish the final conceptual architecture.
 
 Panels:
 
-- **A. Raw observation stream.** One ecological scene feeds two independently
-  executable programs.
-- **B. Biological-evidence axis.** PolliPi-like observer asks whether local evidence
-  supports a candidate event.
-- **C. Observability axis.** InsePi-like observer asks whether false-event,
-  missed-event or attribution risk makes the window difficult to interpret.
-- **D. Same pixels, separate traces.** Hidden truth is inaccessible during observer
-  decisions and used only downstream for simulation scoring.
-- **E. Contradiction categories.** supported candidate; supported absence;
-  candidate under confounding; suppression versus audit risk; possible miss under
-  unobservable conditions.
+- **A. Same ecological stream.** One sensor stream feeds independently executable observation programs.
+- **B. Biological-evidence lane.** Event evidence / candidate enrichment.
+- **C. Observability lane.** False-event, missed-event and attribution risk / audit enrichment.
+- **D. Protected random lane.** Probability-sample audit and ecological denominator.
+- **E. Contradiction as a diagnostic trigger.** Agreement/disagreement leads to competing failure hypotheses and candidate interventions, not directly to a priority score.
+- **F. Controlled intervention response.** Paired `(delta evidence, delta observability)` separates candidate causes when static contradiction cannot.
 
-Main visual rule: **no arrow from disagreement directly to acquisition**. Show
-contradiction first as a development/falsification channel.
+Visual prohibition: **no arrow from disagreement directly to “truth” or to final acquisition priority.**
 
-## Figure 2 — Method generations and explicit falsification
+## Figure 2 — Generational falsification ledger V1–V13
 
-**Purpose:** make the paper visibly non-post-hoc.
+**Purpose:** make the method visibly non-post-hoc.
 
 Horizontal sequence:
 
 ```text
-V1 policy contradictions
-  -> V2 identical pixels
-  -> V3 disagreement allocation: negative
-  -> V4 observer diagnosis/development
+V1–V2 structured contradictions
+  -> V3 direct disagreement allocation: negative
   -> V5 scalar disagreement: LOCKED FAIL
-  -> V6 policy-class change + exploration guard
-  -> V7 one-shot locked challenge
+  -> V6 guarded portfolio development
+  -> V7 frozen 50/10/40: LOCKED FAIL/C
+  -> V8 generality map
+  -> V9 design-based inference
+  -> V10 real-pixel partial transfer/C
+  -> V11 static causal localisation: LOCKED FAIL/D
+  -> V12 controlled interventions: B
+  -> V13 blinded physical validation: frozen/pending
 ```
 
-For each generation show:
+For every generation show:
 
-- hypothesis;
-- whether data were development or locked;
-- pass/fail;
-- what was allowed to change next.
+- scientific question;
+- development vs locked status;
+- pass/fail/claim level;
+- what was allowed to change next;
+- evidence hash/run identifier where appropriate.
 
-Highlight V3 and V5 in the same visual weight as positive development stages.
+Negative generations should have the same visual weight as positive generations.
 
-## Figure 3 — V5 falsification surface
+## Figure 3 — Why allocation stopped being the central claim
 
-**Purpose:** headline negative-result figure.
+**Purpose:** show the full allocation evidence without hiding failure.
 
-Layout: 3 × 3 prevalence-by-budget grid for fixed scalar disagreement.
+Panel A — V5 prevalence × budget falsification surface.
 
-For each cell show:
+- fixed scalar disagreement Pareto membership;
+- paired performance relative to uniform;
+- disturbance TV;
+- complementary observer signal retained despite allocator failure.
 
-- Pareto membership;
-- joint event/error performance relative to uniform;
-- dominant/competing policy if the candidate failed;
-- disturbance TV.
+Panel B — V6 focused development frontier.
 
-Annotations required:
+- U40/P10/I50;
+- U50/P10/I40;
+- U60/P10/I30;
+- U70/P10/I20;
+- axes: worst joint ratio vs maximum TV;
+- mark U50 as frozen development candidate, never “optimal”.
 
-- rare 10% and 25%: outside frontier / beaten by single-view removal;
-- common 25%: InsePi-only higher hidden-error recall;
-- 10% budget: show the extreme TV ≈ .833 concentration case;
-- only balanced 25% satisfies the complete fixed-disagreement gate.
+Panel C — locked V7 result.
 
-Side panel: complementary observer signals remain in 6–7 disturbance families,
-visually separating “observer complementarity survives” from “allocation fails”.
+- worst joint ratio `0.9248`;
+- mean joint ratio `0.9509`;
+- max TV `0.2025`;
+- claim C / gate FAIL.
 
-## Figure 4 — Failure localisation and policy-class change
+Panel D — V8 generality map.
 
-**Purpose:** explain why V6 is not retuning V5.
+- 794/864 regimes joint >= uniform;
+- 185/864 regime-wise best same-alpha;
+- highlight common-event and high-error-correlation failure regions.
 
-Left:
+Headline message: **guarded allocation can be robust without being generally superior.**
 
-```text
-PolliPi evidence -----\
-                       > fixed allocation_score -> one ranking -> prevalence-sensitive concentration
-InsePi risk ----------/
-```
+## Figure 4 — Protected random audit is an inferential design component
 
-Cross out the scalar seam, not either observer.
+**Purpose:** separate sampling safety from targeting performance.
 
-Right:
+Panel A — ideal mixture `Q = alpha U + (1-alpha)R`.
 
-```text
-                ┌ uniform exploration (guaranteed)
-finite budget ──┼ biological-evidence quota
-                └ observability-risk quota
-
-disagreement -> diagnostic/falsification channel only
-```
-
-Include exact quota spillover rule: exhausted targeted quota returns to uniform
-exploration, not another targeted arm.
-
-## Figure 5 — V6 candidate frontier and analytical guard
-
-**Purpose:** show both empirical development and transferable theory.
-
-Panel A: focused candidates U40/P10/I50, U50/P10/I40, U60/P10/I30,
-U70/P10/I20 plotted in coordinates:
-
-- x = max TV (lower is better);
-- y = worst joint ratio (higher is better);
-- point size or label = mean joint ratio.
-
-Draw locked development boundaries at worst joint=1 and TV=.25. Mark U50 as
-frozen and U60 as a passing alternative, making selection sensitivity transparent.
-
-Panel B: exploration mixture diagram `Q = αU + (1−α)R`.
-
-Panel C: three guarantees:
+Show:
 
 - exact TV contraction;
-- support/coverage lower bound;
+- support lower bound;
 - importance-ratio upper bound.
 
-Do not use language such as “optimal”.
+Panel B — finite-population rare-family miss probability.
 
-## Figure 6 — Locked V7 outcome
+`P(miss) = C(N-m,q_U) / C(N,q_U)`.
 
-**Status:** DO NOT BUILD FROM A FINAL V7 WORLD BEFORE ONE-SHOT EXECUTION.
+Panel C — V9 estimator comparison.
 
-Template only:
+Show paired distributions or compact summary for:
 
-- columns = prevalence .1/.5/.9;
-- x-axis = budgets .1/.25/.5;
-- ratio-to-uniform panels for event and PolliPi-relative hidden-error recall;
-- TV panel;
-- frozen V6, arm removals, uniform and legacy baselines;
-- secondary observer-independent disturbance coverage panel;
-- final claim-level badge A–E generated from the execution ledger.
+- protected-exploration estimator bias ~0;
+- naive targeted-sample bias `+0.0426`;
+- 95% coverage `97.75%` vs `52.4%`;
+- RMSE vs theoretical finite-population SD.
 
-Every number must be read from the immutable V7 report.
+Panel D — shared-blind-spot logic.
+
+Two targeted observers may agree and both miss a condition; the protected probability sample remains independent of that agreement.
+
+## Figure 5 — Static contradiction fails; interventions restore identifiability
+
+**Purpose:** make V11 → V12 the methodological pivot.
+
+Panel A — V11 static diagnostic-state representation.
+
+- event-only / observability-only / early fusion / contradiction-state representation;
+- held-out localisation;
+- dominant fault→no-fault collapse;
+- claim D.
+
+Panel B — intervention-response geometry.
+
+For each causal hypothesis show centroids in `(delta evidence, delta observability)` space under:
+
+- `event_restore`;
+- `observability_restore`;
+- `shared_restore`.
+
+Panel C — why scalar fusion can destroy identifiability.
+
+Show two distinct response vectors that project to the same scalar value.
+
+Panel D — V12 diagnostic efficiency.
+
+Plot accuracy after intervention 1 and intervention 2:
+
+- dual: `0.9608` → `0.9858`;
+- early fusion: `0.7367` → `0.9658`;
+- event-only and observability-only final values for context.
+
+Panel E — wrong-module intervention rate / interventions to stable diagnosis.
+
+Headline message: **the main distinct-channel gain is earlier causal separation, not a dramatic final two-step accuracy difference.**
+
+## Figure 6 — Transfer boundary: real pixels and blinded physical validation
+
+**Purpose:** show exactly what has and has not transferred beyond synthetic worlds.
+
+Panel A — V10 real-pixel artifact.
+
+- seven frozen honeybee evaluation videos;
+- six perturbation families × three tiers;
+- no human biological-event truth.
+
+Panel B — V10 locked result.
+
+- positive high-tier families `4/6`;
+- dose-monotone `5/6`;
+- global high-tier median paired risk delta `0.6272`;
+- V6 allocation paired-uniform cells `54/54`;
+- claim C.
+
+Label explicitly: **observation-process transfer, not pollinator accuracy**.
+
+Panel C — V13 physical same-stream design.
+
+- actual day × scene × treatment × replicate block;
+- placebo + three non-cumulative interventions;
+- private-salt order;
+- 108 development / 72 held-out blocks;
+- development and held-out day/scene separation;
+- prediction commitment before truth unseal.
+
+Panel D — V13 result slot.
+
+**Do not populate before locked execution.** After V13, display block accuracy, six physical-cluster results, shared-optical recall, intervention efficiency, QC result and claim A/B/C/D directly from the frozen evaluator.
 
 ---
 
 # Main tables
 
-## Table 1 — Observer contracts
+## Table 1 — Observation-program contracts
 
 Columns:
 
-1. observer role;
+1. program role;
 2. scientific question;
 3. input;
-4. primary output;
-5. acquisition interpretation;
-6. characteristic failure;
+4. output;
+5. legitimate use;
+6. characteristic blind spot;
 7. forbidden interpretation.
 
 Rows:
 
 - biological-evidence observer;
-- observability-risk observer.
+- observability-risk observer;
+- protected random audit / probability-sample lane.
 
 ## Table 2 — Generational evidence ledger
 
@@ -166,100 +207,135 @@ Columns:
 
 - generation;
 - hypothesis;
-- shared input level;
 - development vs locked;
 - primary result;
-- permitted next change;
-- evidence identifier/hash.
+- claim level if locked;
+- what changed next;
+- immutable evidence identifier/hash.
 
-This table should contain V1–V7 and is the easiest place for reviewers to audit
-benchmark reuse.
+Include V1–V13. This is the main audit table for reviewers.
 
-## Table 3 — V7 hard rules and claim consequences
+## Table 3 — Claim boundaries
+
+Rows should include:
+
+- disagreement as allocation priority;
+- 50/10/40 general superiority;
+- protected-sampling safety;
+- design-based inference;
+- real-pixel observation-risk transfer;
+- static causal localisation;
+- intervention-response causal diagnosis;
+- physical transfer;
+- biological field accuracy.
 
 Columns:
 
-- rule;
-- threshold;
-- scientific reason;
-- failure interpretation;
-- maximum claim level.
-
-Use `V7_CLAIM_CEILING.md` exactly. Do not revise after V7.
+- claim;
+- strongest supporting generation;
+- result;
+- permitted wording;
+- explicitly forbidden wording.
 
 ---
 
-# Supplementary package
+# Supplementary figures
 
-## Figure S1 — Complete V2 same-pixel state matrix
+## Figure S1 — Complete V2 shared-pixel contradiction matrix
 
-Rows = scenarios; columns = PolliPi state, InsePi state/risk, latent event,
-contradiction category.
+Rows = scenarios; columns = biological state, observability state/risk, latent event and contradiction category.
 
 ## Figure S2 — V4 family-level observer performance
 
-Show PolliPi candidate recovery and InsePi disturbance-risk recall separately,
-including the retained lens OOD miss.
+Retain the lens OOD miss. V4 must remain labelled development evidence.
 
-## Figure S3 — V6 development search history
+## Figure S3 — Full V5 policy surface
 
-Show forced four-arm, sparse, arm-removal, single-arm screens and focused
-high-resolution candidates. This documents that direct disagreement went to zero
-rather than being manually deleted after the fact.
+All policies × prevalence × budget metrics, including TV and Pareto status.
 
-## Figure S4 — Selection-distribution distortion
+## Figure S4 — V6 search history and ablations
 
-Compare full disturbance distributions with samples from uniform, single-observer,
-legacy disagreement and frozen V6 at each budget.
+Forced four-arm, sparse, arm removals, single arms and focused candidates. Show that direct disagreement went to zero during development rather than being deleted post hoc.
 
-## Figure S5 — Generic guarded-portfolio parity
+## Figure S5 — V8 complete generality slices
 
-Demonstrate exact selection parity between the frozen PolliPi/InsePi wiring and the
-generic evidence/observability reference API on representative test worlds.
+Facets by prevalence, budget, observer quality and residual correlation. Show both favourable and adverse regimes.
 
-## Table S1 — Complete scenario/disturbance registry
+## Figure S6 — V9 finite-population calibration
 
-List V1/V2/V4 development conditions and the seed-independent V7 family contract.
-Do not include final V7 seeds before execution.
+Empirical RMSE vs theoretical SD; interval coverage by prevalence/budget.
 
-## Table S2 — All V5 policy metrics
+## Figure S7 — V10 family × intensity transfer
 
-Include all policies and all prevalence × budget regimes, not only failures
-mentioned in the main text.
+Per-family paired risk deltas and dose monotonicity, including the two families that prevented a stronger claim.
 
-## Table S3 — V6 candidate weights considered
+## Figure S8 — V11 failure audit
 
-Preserve every candidate family that influenced method selection. Separate
-screening results from high-resolution focused comparison.
+Confusion matrix and fault→no-fault collapse; development vs held-out meaning of low/low shared-miss state.
 
-## Table S4 — Reproducibility ledger
+## Figure S9 — V12 full causal-diagnostic comparison
 
-Include:
+Class-level performance, audit/no-audit split, intervention-choice frequencies and full-battery ceiling.
 
-- method commits;
-- generator commit;
-- allocator commit;
-- evaluator/materializer commits;
-- world-spec hashes;
-- baseline hash;
-- V5 evidence hashes;
-- V7 artifact/trace/report hashes after execution;
-- unit-test counts and CI run identifiers.
+## Figure S10 — Generic causal-diagnostic parity
+
+Exact parity between V12 dual-channel wiring and observer-agnostic API.
+
+## Figure S11 — V13 apparatus and blinding ledger
+
+Before results:
+
+- apparatus tolerances;
+- capture-log schema;
+- randomisation commitment;
+- actual cluster contract;
+- execution digest.
+
+After results, add only frozen output provenance; do not alter pre-field design panels.
+
+---
+
+# Supplementary tables
+
+## Table S1 — Complete generation registry
+
+V1–V13 questions, inputs, split use, inspected/locked status, hashes and CI run identifiers.
+
+## Table S2 — All V5 and V7 allocation metrics
+
+Preserve failed rules and comparator results, not only headline values.
+
+## Table S3 — V8 regime-level results
+
+All 864 regimes and same-alpha comparator outcomes.
+
+## Table S4 — V9 finite-population inference results
+
+Bias, RMSE, coverage and theoretical variance by regime.
+
+## Table S5 — V10 transfer metrics
+
+All six perturbation families × tiers, trace/report/runtime provenance.
+
+## Table S6 — V11/V12 diagnostic comparison
+
+All representations, class-specific results, intervention metrics and claim thresholds.
+
+## Table S7 — Reproducibility ledger
+
+Include exact observer commits, scientific execution digests, artifact hashes, result hashes and frozen claim levels for V5/V7/V10/V11/V12/V13.
 
 ---
 
 # Production order
 
-Before V7, figures 1–5 and Tables 1–3 can be prepared from frozen/development
-evidence. Figure 6 and V7 rows in supplementary outputs remain templates only.
+Current order:
 
-Recommended production sequence:
+1. Figure 2 generational falsification ledger;
+2. Figure 5 V11→V12 causal-diagnostic pivot;
+3. Figure 4 protected random audit / V9 inference;
+4. Figure 3 allocation falsification/generalisation;
+5. Figure 1 conceptual three-lane architecture;
+6. Figure 6 V10 real-pixel boundary + fixed V13 protocol panel.
 
-1. Figure 2 generation timeline;
-2. Figure 3 V5 falsification surface;
-3. Figure 4 failure localisation;
-4. Figure 5 V6 + theorem;
-5. Figure 1 conceptual overview;
-6. V7 only after the immutable ledger exists.
-
-This order prioritises the scientific argument over decorative architecture.
+Do not build the V13 result panel before locked V13 evaluation. A negative V13 result must occupy the same panel and visual weight as a positive one.
