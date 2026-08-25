@@ -3,9 +3,9 @@
 Biological truth, target-coupled response truth, exogenous nuisance truth, and
 primary-stream observation support remain separate. Biological truth may be
 unresolved when even the independent reference truth channel cannot determine
-whether a visit occurred. Such windows remain available for primary-stream
-observability/QC evaluation but are excluded from biological-accuracy
-denominators rather than being silently labelled no-insect.
+whether a visit occurred. Primary-stream support may independently be unresolved
+when no support component is known to fail but at least one required component
+cannot be adjudicated. Neither unresolved state is silently converted to absence.
 
 Window-level classification is also kept distinct from event-rate inference. A
 single biological visit can span multiple analysis windows; resolved visit windows
@@ -22,6 +22,7 @@ from .observation_triad import (
     ObservationAvailability,
     ObservationInterpretation,
 )
+from .support_truth import PrimaryStreamSupportTruth, SupportTruthResolution
 from .target_routes import TargetRouteEvidence
 
 
@@ -51,7 +52,7 @@ class VisitTruthRecord:
     window_id: str
     block_id: str
     biological_state: VisitTruthState | None
-    support_truth: ObservationAvailability
+    primary_support_truth: PrimaryStreamSupportTruth
     nuisance_labels: tuple[str, ...] = ()
     biological_truth_resolution: VisitTruthResolution = VisitTruthResolution.RESOLVED
     reference_truth_source: str | None = None
@@ -99,6 +100,16 @@ class VisitTruthRecord:
         return self.target_coupled_response_resolution is CoupledResponseResolution.RESOLVED
 
     @property
+    def support_truth_resolved(self) -> bool:
+        return self.primary_support_truth.resolution is SupportTruthResolution.RESOLVED
+
+    @property
+    def support_truth(self) -> ObservationAvailability | None:
+        """Derived support availability; None means support truth is unresolved."""
+
+        return self.primary_support_truth.availability
+
+    @property
     def is_visit(self) -> bool:
         return self.biological_truth_resolved and self.biological_state is VisitTruthState.VISIT_EVENT
 
@@ -142,6 +153,9 @@ class VisitValidationSummary:
     resolved_biological_truth_windows: int
     unresolved_biological_truth_windows: int
     reference_truth_unresolved_fraction: float
+    resolved_primary_support_windows: int
+    unresolved_primary_support_windows: int
+    primary_support_unresolved_fraction: float
     resolved_visit_events: int
     observable_true_visit_windows: int
     retained_observable_true_visits: int
@@ -214,11 +228,12 @@ def evaluate_visit_predictions(
     """Evaluate visit inference, indirect target rescue and censoring.
 
     Biological metrics use resolved reference truth only. Observation-support
-    metrics use every window because primary-stream observability can be annotated
-    even when biological truth is unresolved. Target-coupling metrics additionally
-    require resolved coupling truth and route-specific prediction scores.
-    Confidence intervals and event-rate estimators remain outside this pre-data
-    evaluator until the V15 cluster/exposure-time design is frozen.
+    metrics use windows whose component-level support truth resolves to an
+    availability state; unresolved support truth is reported separately rather
+    than being forced into observable or unobservable. Target-coupling metrics
+    additionally require resolved coupling truth and route-specific prediction
+    scores. Confidence intervals and event-rate estimators remain outside this
+    pre-data evaluator until the V15 cluster/exposure-time design is frozen.
     """
 
     truth_by_id = {row.window_id: row for row in truth}
@@ -235,6 +250,8 @@ def evaluate_visit_predictions(
     rows = [(truth_by_id[key], pred_by_id[key]) for key in sorted(truth_by_id)]
     resolved_rows = [(t, p) for t, p in rows if t.biological_truth_resolved]
     unresolved_rows = [(t, p) for t, p in rows if not t.biological_truth_resolved]
+    resolved_support_rows = [(t, p) for t, p in rows if t.support_truth_resolved]
+    unresolved_support_rows = [(t, p) for t, p in rows if not t.support_truth_resolved]
     resolved_visit_event_ids = {t.event_id for t, _ in resolved_rows if t.is_visit and t.event_id is not None}
 
     observable_visits = [
@@ -252,9 +269,9 @@ def evaluate_visit_predictions(
     all_visits = [(t, p) for t, p in resolved_rows if t.is_visit]
     visits_called_negative = sum(p.negative_evidence for _, p in all_visits)
 
-    unobservable_rows = [(t, p) for t, p in rows if t.support_truth is ObservationAvailability.UNOBSERVABLE]
+    unobservable_rows = [(t, p) for t, p in resolved_support_rows if t.support_truth is ObservationAvailability.UNOBSERVABLE]
     censored_unobservable = sum(p.censored for _, p in unobservable_rows)
-    observable_rows = [(t, p) for t, p in rows if t.support_truth is ObservationAvailability.OBSERVABLE]
+    observable_rows = [(t, p) for t, p in resolved_support_rows if t.support_truth is ObservationAvailability.OBSERVABLE]
     censored_observable = sum(p.censored for _, p in observable_rows)
 
     shared_blind_spots = [
@@ -301,6 +318,9 @@ def evaluate_visit_predictions(
         resolved_biological_truth_windows=len(resolved_rows),
         unresolved_biological_truth_windows=len(unresolved_rows),
         reference_truth_unresolved_fraction=_ratio(len(unresolved_rows), len(rows)),
+        resolved_primary_support_windows=len(resolved_support_rows),
+        unresolved_primary_support_windows=len(unresolved_support_rows),
+        primary_support_unresolved_fraction=_ratio(len(unresolved_support_rows), len(rows)),
         resolved_visit_events=len(resolved_visit_event_ids),
         observable_true_visit_windows=len(observable_visits),
         retained_observable_true_visits=retained_observable_visits,
