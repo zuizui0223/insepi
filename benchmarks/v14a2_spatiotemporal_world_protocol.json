@@ -54,6 +54,14 @@
     "direct_actor_route_must_not_leak_into_coupled_scene_route": true,
     "sampling_adequacy_must_be_explicit": true
   },
+  "determinism": {
+    "coordinate_order": "lexicographic itertools.product in listed Pi1,Pi2,Pi3,Pi4,Pi5,Pi6 order within each sweep",
+    "deviation_regime_order": ["target_only", "nuisance_only", "target_coupled", "target_nuisance_superposed", "target_nuisance_coupled"],
+    "prototype_seeds": [101, 211, 307, 401],
+    "replicate_seed_base": 1402000000,
+    "replicate_seed_rule": "base + coordinate_index*1000 + regime_index*100 + replicate",
+    "runtime_python_and_numpy_versions_must_be_recorded_in_prefreeze_receipt": true
+  },
   "coarse_sweep": {
     "pi1_values": [0.1, 0.31622776601683794, 1.0, 3.1622776601683795, 10.0],
     "pi2_values": [0.01, 0.1, 0.31622776601683794, 1.0, 3.1622776601683795, 10.0, 100.0],
@@ -96,6 +104,14 @@
     "minimum_samples_per_process_timescale_for_resolved_slice": 8.0,
     "minimum_process_timescales_per_window_for_resolved_slice": 1.0
   },
+  "registered_contrasts": {
+    "Q1_sampling": "coarse sweep: mean information-absence rate at minimum Pi6 minus mean information-absence rate at maximum Pi6",
+    "Q3_collision_interaction_population": "focused sweep rows restricted to temporally resolved coordinates, mixed T+N regimes, Pi3<=0.31622776601683794 and Pi4<=0.31622776601683794",
+    "Q3_temporal_collision_at_matched_spatial_scale": "ambiguity(Pi2=1,Pi5=1) - ambiguity(Pi2 in {0.31622776601683794,3.1622776601683795},Pi5=1)",
+    "Q3_temporal_collision_at_broad_nuisance_scale": "ambiguity(Pi2=1,Pi5=3.1622776601683795) - ambiguity(Pi2 in {0.31622776601683794,3.1622776601683795},Pi5=3.1622776601683795)",
+    "Q3_interaction": "temporal_collision_at_matched_spatial_scale - temporal_collision_at_broad_nuisance_scale",
+    "Q3_support_rule": "supported descriptively only if temporal_collision_at_matched_spatial_scale > 0 and Q3_interaction > 0; never a CI pass gate"
+  },
   "pre_sweep_predictions": {
     "Q1_sampling": "At fixed Pi1-Pi5, decreasing Pi6 increases information absence once the target process is undersampled.",
     "Q2_spatial": "At fixed temporal coordinates, changing Pi5 changes observed spatial-coherence and structure-function signatures; the direction of final ambiguity is measured rather than assumed.",
@@ -108,13 +124,15 @@
     "do_not_change_axes_after_first_scientific_sweep": true,
     "do_not_change_feature_family_after_first_scientific_sweep": true,
     "do_not_change_operational_thresholds_after_first_scientific_sweep": true,
+    "do_not_change_registered_contrasts_after_first_scientific_sweep": true,
     "prediction_checks_are_results_not_ci_gates": true,
     "first_full_sweep_must_be_retained_if_unfavorable": true,
     "new_generator_must_not_import_pollipi": true
   },
   "execution_gate": {
     "current_state": "BLOCKED_BY_DESIGN_PREFREEZE",
-    "unlock_condition": "generator contract tests and ordinary CI green on the exact prefreeze commit, then record commit and protocol SHA-256 before first full sweep",
+    "unlock_condition": "generator, sweep helpers, canonical runner and contract tests pass ordinary CI; then a separate receipt records exact design commit, runtime versions and SHA-256 hashes before first full sweep",
+    "receipt_must_hash": ["protocol", "generator", "sweep_helpers", "runner"],
     "scientific_sweep_must_not_run_in_this_prefreeze_pr": true
   }
 }
