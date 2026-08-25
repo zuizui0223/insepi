@@ -83,14 +83,46 @@ def test_summary_separates_observed_effort_from_censored_effort() -> None:
     ]
     result = summarise_visit_observations(rows)
     assert result.n_windows == 3
+    assert result.total_seconds == 30.0
     assert result.eligible_windows == 2
     assert result.eligible_seconds == 20.0
     assert result.censored_windows == 1
     assert result.censored_seconds == 10.0
+    assert result.uncertain_noneligible_windows == 0
+    assert result.uncertain_noneligible_seconds == 0.0
     assert result.visit_candidate_windows == 1
     assert result.observable_nondetection_windows == 1
     assert result.observable_fraction == 2 / 3
+    assert result.censored_fraction == 1 / 3
+    assert result.uncertain_noneligible_fraction == 0.0
     assert result.censored_limiting_components == (("target_zone_coverage", 1),)
+
+
+def test_summary_does_not_drop_compromised_or_high_miss_effort() -> None:
+    rows = [
+        make_record("eligible", 0.1, NuisanceEvidence(0.1, 0.1, 0.1), 0.9),
+        make_record("censored", 0.1, NuisanceEvidence(0.1, 0.1, 0.1), 0.1),
+        make_record("compromised", 0.1, NuisanceEvidence(0.1, 0.1, 0.1), 0.5),
+        make_record("high_miss", 0.1, NuisanceEvidence(0.1, 0.9, 0.1), 0.9),
+    ]
+    result = summarise_visit_observations(rows)
+    assert result.n_windows == 4
+    assert result.total_seconds == 40.0
+    assert result.eligible_windows == 1
+    assert result.censored_windows == 1
+    assert result.uncertain_noneligible_windows == 2
+    assert result.eligible_seconds == 10.0
+    assert result.censored_seconds == 10.0
+    assert result.uncertain_noneligible_seconds == 20.0
+    assert result.observable_fraction == 0.25
+    assert result.censored_fraction == 0.25
+    assert result.uncertain_noneligible_fraction == 0.50
+    assert (
+        result.observable_fraction
+        + result.censored_fraction
+        + result.uncertain_noneligible_fraction
+        == 1.0
+    )
 
 
 def test_record_contract_rejects_censored_denominator_entry() -> None:
