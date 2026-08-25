@@ -139,7 +139,10 @@ def diagnostic_actions(interpretation: ObservationInterpretation) -> tuple[Diagn
     if interpretation.record_high_resolution_context:
         actions.append(DiagnosticAction.RECORD_HIGH_RES_CONTEXT)
 
-    if state is TriadState.TARGET_NUISANCE_CONFLICT:
+    if state in {
+        TriadState.TARGET_NUISANCE_CONFLICT,
+        TriadState.TARGET_NUISANCE_SUPERPOSITION,
+    }:
         actions.append(DiagnosticAction.AUDIT_NUISANCE)
     elif state is TriadState.NUISANCE_DOMINATED_OR_POSSIBLE_MISS:
         actions.extend((DiagnosticAction.AUDIT_NUISANCE, DiagnosticAction.PROTECTED_RANDOM_AUDIT))
