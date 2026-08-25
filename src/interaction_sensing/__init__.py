@@ -28,6 +28,7 @@ from .observation_triad import (
     TargetEvidence,
     TriadState,
 )
+from .target_routes import TargetEvidenceRoute, TargetRouteEvidence
 from .visit_observation import (
     DiagnosticAction,
     VisitObservationRecord,
@@ -61,6 +62,8 @@ __all__ = [
     "ObservabilityState",
     "SceneState",
     "TargetEvidence",
+    "TargetEvidenceRoute",
+    "TargetRouteEvidence",
     "TargetSpec",
     "TriadState",
     "VisitObservationRecord",
