@@ -319,7 +319,11 @@ class ProcessPreservingObservationTriadPolicy(ObservationTriadPolicy):
         nuisance: NuisanceEvidence,
         support: ObservationSupport,
     ) -> ObservationInterpretation:
-        historical = super().decide(target, nuisance, support)
+        # Explicit base-class dispatch avoids zero-argument super() interacting
+        # badly with dataclass(slots=True) class replacement on some Python
+        # versions. This is behaviour-identical to calling the historical V14a
+        # policy first, then applying the V14b semantic overlay below.
+        historical = ObservationTriadPolicy.decide(self, target, nuisance, support)
         target_high = target.score >= self.target_high_threshold
         nuisance_high = nuisance.burden >= self.nuisance_high_threshold
 
