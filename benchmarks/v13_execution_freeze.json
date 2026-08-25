@@ -1,7 +1,7 @@
 {
   "schema": "interaction-sensing-v13-execution-freeze-v1",
   "status": "pre-field-scientific-execution-frozen",
-  "scientific_execution_digest_sha256": "ef806e2ea264ec9db001520ea77396cd33001ee70f1c5c6be425b8774bed96bb",
+  "scientific_execution_digest_sha256": "96c44136f51d30060534b7157c9adc1c68a42883e401757db63193ebb7a8035d",
   "critical_path_count": 22,
   "digest_helper": {
     "path": "scripts/v13_execution_digest.py",
