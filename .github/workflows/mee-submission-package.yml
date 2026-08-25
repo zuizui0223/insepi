@@ -5,15 +5,11 @@ on:
     paths:
       - "manuscript/**"
       - "editor/**"
+      - "docs/METHOD_PAPER_GATE.md"
+      - "docs/LICENSE_DECISION_GATE.md"
       - "scripts/build_mee_submission_manuscript.py"
       - "scripts/build_anonymous_peer_review_bundle.py"
-      - "scripts/build_pre_v7_figures.py"
-      - "scripts/polish_pre_v7_figures.py"
-      - "scripts/finalize_submission_from_v7.py"
-      - "scripts/finalize_cover_letter_from_v7.py"
       - "tests/test_mee_submission_package.py"
-      - "tests/test_v7_submission_finalizer.py"
-      - "tests/test_v7_cover_letter_finalizer.py"
       - ".github/workflows/mee-submission-package.yml"
   workflow_dispatch:
 
@@ -30,68 +26,68 @@ jobs:
           python-version: "3.11"
       - name: Install test tools
         run: python -m pip install pytest
-      - name: Test journal-format, anonymisation, and post-V7 finalization contracts
-        run: |
-          pytest -q \
-            tests/test_mee_submission_package.py \
-            tests/test_pre_v7_figures.py \
-            tests/test_pre_v7_figure_polish.py \
-            tests/test_v7_submission_finalizer.py \
-            tests/test_v7_cover_letter_finalizer.py
-      - name: Build MEE-format pre-V7 manuscript
+      - name: Test current journal-format and anonymisation contracts
+        run: pytest -q tests/test_mee_submission_package.py
+      - name: Build current MEE-format reviewer manuscript
         run: python scripts/build_mee_submission_manuscript.py
-      - name: Build and polish pre-V7 figures
-        run: |
-          python scripts/build_pre_v7_figures.py
-          python scripts/polish_pre_v7_figures.py
-      - name: Build deterministic anonymous peer-review bundle
+      - name: Build deterministic current anonymous peer-review bundle
         run: python scripts/build_anonymous_peer_review_bundle.py
-      - name: Audit package state
+      - name: Audit current package state
         run: |
           python - <<'PY'
           import json
           from pathlib import Path
           import zipfile
 
-          manuscript = Path('manuscript/generated/MEE_PRE_V7_SUBMISSION.md').read_text(encoding='utf-8')
-          for marker in (
-              '[[V7_LOCKED_RESULT:ABSTRACT]]',
-              '[[V7_LOCKED_RESULT:TABLE]]',
-              '[[V7_LOCKED_RESULT:RESULTS]]',
-              '[[V7_LOCKED_RESULT:DISCUSSION]]',
-              '[[V7_LOCKED_RESULT:REPRODUCIBILITY_LEDGER]]',
-          ):
-              assert manuscript.count(marker) == 1
+          manuscript = Path('manuscript/generated/MEE_CURRENT_SUBMISSION.md').read_text(encoding='utf-8')
+          assert '[[V7_LOCKED_RESULT' not in manuscript
           assert '## Data/Code for peer review' in manuscript
-          assert '### 2.13. AI-assisted software and manuscript development' in manuscript
+          assert '### 2.15. AI-assisted software and manuscript development' in manuscript
           assert 'PolliPi' not in manuscript and 'InsePi' not in manuscript
           assert '**Target journal:**' not in manuscript and '**Status:**' not in manuscript
-          assert not Path('.v7/run/v7_pixels.npz').exists()
+          assert '0.9247839629' in manuscript  # locked V7 failure retained
+          assert 'partial_or_family_specific_transfer' in manuscript  # locked V10 C retained
+          assert '0.9608' in manuscript and '0.7367' in manuscript  # V12 first-intervention contrast
+          assert 'V13 physical validation is frozen but not yet claim-bearing' in manuscript
+
+          current_si = Path('manuscript/SUPPLEMENTARY_INFORMATION_CURRENT.md').read_text(encoding='utf-8')
+          assert 'V13 contains no scientific result' in current_si
+          assert '[[V7_LOCKED_RESULT' not in current_si
 
           manifest = json.loads(Path('.peer-review/anonymous/ANONYMOUS_BUNDLE_MANIFEST.json').read_text())
+          assert manifest['schema'] == 'mee-anonymous-peer-review-bundle-v2'
           assert manifest['double_anonymous'] is True
           assert manifest['observer_names_anonymised'] is True
           assert manifest['title_page_excluded'] is True
-          assert manifest['v7_materialised'] is False
+          assert manifest['current_submission_present'] is True
+          assert manifest['current_supplement_present'] is True
+          assert manifest['completed_locked_generations_represented'] == ['V7','V10','V11','V12']
+          assert manifest['v13_pre_field_protocol_present'] is True
+          assert manifest['v13_scientific_result_present'] is False
+          assert manifest['historical_pre_v7_submission_excluded'] is True
           print('MEE_PACKAGE_DOUBLE_ANONYMOUS true')
-          print('MEE_PACKAGE_OBSERVER_NAMES_ANONYMISED true')
           print('MEE_PACKAGE_LICENSE_READY', str(manifest['license_ready']).lower())
-          print('MEE_PACKAGE_V7_MATERIALISED false')
+          print('MEE_PACKAGE_V13_RESULT_PRESENT false')
           print('MEE_PACKAGE_MANIFEST', manifest['manifest_sha256'])
 
           with zipfile.ZipFile('.peer-review/mee-anonymous-peer-review.zip') as archive:
               names = archive.namelist()
+              assert 'manuscript/generated/MEE_CURRENT_SUBMISSION.md' in names
+              assert 'manuscript/SUPPLEMENTARY_INFORMATION_CURRENT.md' in names
               assert 'manuscript/TITLE_PAGE_TEMPLATE.md' not in names
+              assert 'manuscript/SUPPLEMENTARY_INFORMATION_PRE_V7.md' not in names
+              assert 'manuscript/V7_FINALIZATION_CONTRACT.md' not in names
               assert 'editor/EDITOR_COVER_LETTER_TEMPLATE.md' not in names
               assert all('pollipi' not in name.lower() for name in names)
               assert all('insepi' not in name.lower() for name in names)
           PY
-      - name: Upload anonymous peer-review package
+      - name: Upload current anonymous peer-review package
         uses: actions/upload-artifact@v4
         with:
-          name: mee-anonymous-peer-review-pre-v7
+          name: mee-anonymous-peer-review-current-v13-era
           path: |
-            manuscript/generated/MEE_PRE_V7_SUBMISSION.md
+            manuscript/generated/MEE_CURRENT_SUBMISSION.md
+            manuscript/SUPPLEMENTARY_INFORMATION_CURRENT.md
             .peer-review/mee-anonymous-peer-review.zip
             .peer-review/anonymous/ANONYMOUS_BUNDLE_MANIFEST.json
           if-no-files-found: error
