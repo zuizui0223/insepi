@@ -1,0 +1,118 @@
+{
+  "schema": "insepi-v14a2-spatiotemporal-world-protocol-v1",
+  "generation": "V14a2",
+  "status": "prefrozen-before-first-scientific-sweep",
+  "parent_generation": "V14a",
+  "parent_negative_result": "P3 Pi2-near-one ambiguity prediction not supported",
+  "scientific_scope": "closed-world spatiotemporal identifiability geometry; no field calibration, no observer tuning, no physical transition claim",
+  "dimensionless_coordinates": {
+    "pi1": "observation_window_duration / target_process_timescale",
+    "pi2": "nuisance_or_target_coupled_response_timescale / target_process_timescale",
+    "pi3": "direct_target_motion_amplitude / reference_nuisance_motion_amplitude",
+    "pi4": "target_driven_local_response_amplitude / reference_nuisance_motion_amplitude",
+    "pi5": "nuisance_spatial_correlation_length / target_spatial_support_width",
+    "pi6": "sampling_frequency * target_process_timescale"
+  },
+  "ontology": {
+    "baseline": "no deviation; no classification question is triggered",
+    "target_process_T": "positive focal actor/event process",
+    "exogenous_nuisance_N": "positive external process capable of mimicry, masking or attribution corruption",
+    "target_to_scene_coupling_C": "target-caused local scene response; C implies T",
+    "non_exclusivity": "T and N may be simultaneously true and must not be converted to an error state merely because both are supported",
+    "undetermined": "inference-side state caused by information absence, essential ambiguity or model uncertainty; it is not a third physical process"
+  },
+  "closed_world_states": ["baseline", "target_only", "nuisance_only", "target_coupled", "target_nuisance_superposed", "target_nuisance_coupled"],
+  "process_model": {
+    "time_unit": "target timescale = 1",
+    "space_unit": "target spatial support width = 1",
+    "target": "localized entry-dwell-exit/transit over normalized target timescale",
+    "nuisance_temporal_process": "stationary mean-reverting stochastic process with correlation timescale Pi2",
+    "nuisance_spatial_process": "focal nuisance is shared component; each reference region mixes shared and independent same-timescale components with shared weight exp(-distance/Pi5)",
+    "target_coupling": "target-triggered local damped response with amplitude Pi4 and target-scale spatial envelope",
+    "sampling": "sample spacing is 1/Pi6 in target-time units; Pi6 changes the actual number of samples rather than being a post-hoc feature"
+  },
+  "reference_geometry_target_width_units": {"focal": 0.0, "reference_regions": [1.0, 2.0, 4.0]},
+  "dimensionless_sufficient_statistics": [
+    "net_displacement_over_path_length",
+    "focal_reference_correlation",
+    "scale_sensitive_spatial_coherence",
+    "normalized_spatial_structure_function",
+    "restoration_score",
+    "normalized_spectral_concentration",
+    "entry_exit_completeness",
+    "local_excess_motion_fraction",
+    "direct_target_signal_fraction",
+    "target_sampling_support",
+    "nuisance_sampling_support",
+    "nuisance_window_support"
+  ],
+  "feature_constraints": {
+    "all_primary_features_dimensionless": true,
+    "pearson_correlation_not_sufficient_for_spatial_separation": true,
+    "scale_sensitive_spatial_feature_required": true,
+    "sampling_adequacy_must_be_explicit": true
+  },
+  "coarse_sweep": {
+    "pi1_values": [0.1, 0.31622776601683794, 1.0, 3.1622776601683795, 10.0],
+    "pi2_values": [0.01, 0.1, 0.31622776601683794, 1.0, 3.1622776601683795, 10.0, 100.0],
+    "pi3_values": [0.0, 0.1, 0.31622776601683794, 1.0, 3.1622776601683795],
+    "pi4_values": [0.0, 0.1, 0.31622776601683794, 1.0, 3.1622776601683795],
+    "pi5_values": [0.01, 0.1, 0.31622776601683794, 1.0, 3.1622776601683795, 10.0, 100.0],
+    "pi6_values": [2.0, 4.0, 8.0, 16.0, 32.0],
+    "latent_deviation_regimes": ["target_only", "nuisance_only", "target_coupled", "target_nuisance_superposed", "target_nuisance_coupled"],
+    "replicates_per_coordinate_regime": 4,
+    "expected_coordinate_count": 30625,
+    "expected_deviation_world_count": 612500
+  },
+  "focused_collision_sweep": {
+    "purpose": "resolve local geometry around simultaneous temporal and spatial scale collision after coarse sweep without changing the registered prediction",
+    "pi1_values": [1.0, 3.1622776601683795, 10.0],
+    "pi2_values": [0.31622776601683794, 0.5623413251903491, 1.0, 1.7782794100389228, 3.1622776601683795],
+    "pi3_values": [0.0, 0.1, 0.31622776601683794],
+    "pi4_values": [0.0, 0.1, 0.31622776601683794],
+    "pi5_values": [0.31622776601683794, 0.5623413251903491, 1.0, 1.7782794100389228, 3.1622776601683795],
+    "pi6_values": [8.0, 16.0, 32.0],
+    "latent_deviation_regimes": ["target_nuisance_superposed", "target_nuisance_coupled"],
+    "replicates_per_coordinate_regime": 8,
+    "expected_coordinate_count": 2025,
+    "expected_deviation_world_count": 32400
+  },
+  "primary_estimands": [
+    "continuous_identifiability_margin(pi1,...,pi6)",
+    "undetermined_rate(pi1,...,pi6)",
+    "information_absence_rate(pi1,...,pi6)",
+    "essential_ambiguity_rate(pi1,...,pi6)",
+    "target_and_nuisance_both_supported_rate(pi1,...,pi6)",
+    "indirect_target_rescue_rate(pi1,...,pi6)"
+  ],
+  "operational_thresholds_prefrozen": {
+    "minimum_observation_support": 0.20,
+    "essential_ambiguity_margin": 0.15,
+    "target_high": 0.55,
+    "target_low": 0.25,
+    "nuisance_high": 0.55,
+    "minimum_samples_per_process_timescale_for_resolved_slice": 8.0,
+    "minimum_process_timescales_per_window_for_resolved_slice": 1.0
+  },
+  "pre_sweep_predictions": {
+    "Q1_sampling": "At fixed Pi1-Pi5, decreasing Pi6 increases information absence once the target process is undersampled.",
+    "Q2_spatial": "At fixed temporal coordinates, decreasing spatial separability changes the spatial-coherence and structure-function signatures; the direction of final ambiguity is measured rather than assumed.",
+    "Q3_collision_interaction": "Among coordinates where both target and nuisance are temporally resolved and Pi3/Pi4 are weak, ambiguity is predicted to increase near Pi2=1 preferentially when Pi5 is also near 1. This is a new interaction prediction, not a rescue or rerun of V14a P3.",
+    "Q4_negative_boundary": "If the Pi2-by-Pi5 interaction is absent after explicit Pi6 control, the timescale-collision hypothesis is rejected more strongly.",
+    "Q5_superposition": "High target and high nuisance support may coexist as legitimate superposition and must not itself count as undetermined."
+  },
+  "anti_tuning_rules": {
+    "do_not_modify_v14a": true,
+    "do_not_change_axes_after_first_scientific_sweep": true,
+    "do_not_change_feature_family_after_first_scientific_sweep": true,
+    "do_not_change_operational_thresholds_after_first_scientific_sweep": true,
+    "prediction_checks_are_results_not_ci_gates": true,
+    "first_full_sweep_must_be_retained_if_unfavorable": true,
+    "new_generator_must_not_import_pollipi": true
+  },
+  "execution_gate": {
+    "current_state": "BLOCKED_BY_DESIGN_PREFREEZE",
+    "unlock_condition": "generator contract tests and ordinary CI green on the exact prefreeze commit, then record commit and protocol SHA-256 before first full sweep",
+    "scientific_sweep_must_not_run_in_this_prefreeze_pr": true
+  }
+}
