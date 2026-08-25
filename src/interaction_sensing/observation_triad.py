@@ -12,13 +12,17 @@ A scene may be noisy yet observable, or visually quiet yet unobservable because
 of occlusion, loss of field-of-view coverage, severe blur, saturation, or another
 measurement-channel failure.
 
-The policy below is a transparent reference synthesiser, not a calibrated field
-classifier. Its purpose is to make the inferential states and forbidden
-interpretations explicit before a future visitation-validation generation.
+``ObservationTriadPolicy`` is retained as the exact V14a development policy.
+``ProcessPreservingObservationTriadPolicy`` is the V14b policy that corrects one
+semantic mismatch exposed after the V14a sweep: high target evidence and high
+nuisance evidence in an otherwise observable window are legitimate
+superposition, not automatically an indeterminate conflict.
+
+Neither policy is a calibrated field classifier.
 """
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from enum import Enum
 
 
@@ -35,6 +39,7 @@ class TriadState(str, Enum):
 
     CLEAN_TARGET_CANDIDATE = "clean_target_candidate"
     TARGET_NUISANCE_CONFLICT = "target_nuisance_conflict"
+    TARGET_NUISANCE_SUPERPOSITION = "target_nuisance_superposition"
     TARGET_OBSERVABILITY_CONFLICT = "target_observability_conflict"
     NUISANCE_DOMINATED_OR_POSSIBLE_MISS = "nuisance_dominated_or_possible_miss"
     QUIET_OBSERVABLE = "quiet_observable"
@@ -159,11 +164,13 @@ class ObservationInterpretation:
 
 @dataclass(frozen=True, slots=True)
 class ObservationTriadPolicy:
-    """Reference policy for combining separate target/nuisance/support evidence.
+    """Historical V14a reference policy.
 
-    Thresholds are intentionally explicit development defaults. They are not
-    field-calibrated visitation probabilities and must be revalidated before any
-    biological accuracy claim.
+    This exact policy is retained so the already-completed V14a development
+    benchmark remains reproducible. In V14a a high-target/high-nuisance window
+    was routed to ``TARGET_NUISANCE_CONFLICT``. V14b must use
+    ``ProcessPreservingObservationTriadPolicy`` below instead of silently
+    rewriting the completed V14a generation.
     """
 
     target_high_threshold: float = 0.65
@@ -212,9 +219,6 @@ class ObservationTriadPolicy:
             reasons.append(f"nuisance:{nuisance.dominant_source}")
         reasons.append(f"support_limit:{support.limiting_component}")
 
-        # An unobservable window is censored regardless of whether either
-        # observer emitted a high/low score. A high target score is retained as a
-        # candidate for audit, but it is not upgraded to a defensible visit.
         if availability is ObservationAvailability.UNOBSERVABLE:
             reasons.append("measurement support below unobservable ceiling")
             return ObservationInterpretation(
@@ -269,9 +273,6 @@ class ObservationTriadPolicy:
             inferential_status = InferentialStatus.AMBIGUOUS
             audit_priority = nuisance_high or availability is ObservationAvailability.COMPROMISED
 
-        # Absence requires both sufficient observation support and no large
-        # missed-event warning. Other nuisance types may still affect attribution
-        # of a positive candidate without invalidating the opportunity denominator.
         absence_interpretable = (
             state is TriadState.QUIET_OBSERVABLE
             and nuisance.missed_event_risk < self.nuisance_high_threshold
@@ -295,3 +296,69 @@ class ObservationTriadPolicy:
             record_high_resolution_context=audit_priority,
             reasons=tuple(reasons),
         )
+
+
+@dataclass(frozen=True, slots=True)
+class ProcessPreservingObservationTriadPolicy(ObservationTriadPolicy):
+    """V14b policy that preserves legitimate target+nuisance superposition.
+
+    The two positive hypotheses are not complements. When target evidence and
+    nuisance evidence are both high *and the measurement channel is observable*,
+    the target inference remains a positive candidate while the nuisance channel
+    is retained as simultaneous diagnostic evidence. The window is still routed
+    to nuisance audit, but is not converted to ``UNDETERMINED`` merely because
+    both processes are supported.
+
+    Compromised support takes precedence: a high target score under compromised
+    support remains an observability conflict, regardless of nuisance level.
+    """
+
+    def decide(
+        self,
+        target: TargetEvidence,
+        nuisance: NuisanceEvidence,
+        support: ObservationSupport,
+    ) -> ObservationInterpretation:
+        historical = super().decide(target, nuisance, support)
+        target_high = target.score >= self.target_high_threshold
+        nuisance_high = nuisance.burden >= self.nuisance_high_threshold
+
+        if historical.availability is ObservationAvailability.COMPROMISED and target_high:
+            reasons = tuple(
+                reason
+                for reason in historical.reasons
+                if reason != "target evidence conflicts with elevated nuisance risk"
+            ) + (
+                "target evidence exceeds threshold but measurement support is compromised",
+            )
+            return replace(
+                historical,
+                state=TriadState.TARGET_OBSERVABILITY_CONFLICT,
+                inferential_status=InferentialStatus.AMBIGUOUS,
+                audit_priority=True,
+                record_high_resolution_context=True,
+                reasons=reasons,
+            )
+
+        if (
+            historical.availability is ObservationAvailability.OBSERVABLE
+            and target_high
+            and nuisance_high
+        ):
+            reasons = tuple(
+                reason
+                for reason in historical.reasons
+                if reason != "target evidence conflicts with elevated nuisance risk"
+            ) + (
+                "target and nuisance evidence are jointly supported; preserve superposition",
+            )
+            return replace(
+                historical,
+                state=TriadState.TARGET_NUISANCE_SUPERPOSITION,
+                inferential_status=InferentialStatus.POSITIVE_CANDIDATE,
+                audit_priority=True,
+                record_high_resolution_context=True,
+                reasons=reasons,
+            )
+
+        return historical
