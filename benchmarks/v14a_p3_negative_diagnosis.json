@@ -32,18 +32,29 @@
     "observable_slice_supports_prediction": false,
     "mixed_slice_supports_prediction": false,
     "spatial_separation_coordinate_present": false,
-    "fixed_neighbor_spatial_separator": true
+    "fixed_neighbor_spatial_separator": true,
+    "sampling_density_coordinate_present": false,
+    "samples_per_window": 256,
+    "fast_far_samples_per_nuisance_cycle_min": 0.0255,
+    "fast_far_samples_per_nuisance_cycle_max": 255.0,
+    "slow_far_observed_nuisance_cycles_min": 0.0001,
+    "slow_far_observed_nuisance_cycles_max": 1.0,
+    "far_comparator_contains_temporal_resolution_limits": true
   },
   "interpretation": {
     "v14a_result_remains": "P3 not supported",
-    "information_absence_is_not_the_whole_explanation": true,
-    "reason": "The negative pattern persists after restricting to coordinates with mean observation support >= 0.2 and within target+nuisance mixed regimes.",
-    "generator_limitation": "The canonical generator fixes a coherent nuisance reference in the neighbour channel and does not sweep a spatial-separation coordinate. Temporal-scale collision is therefore not isolated from a persistent spatial separator.",
-    "claim_boundary": "This diagnoses the test geometry; it does not convert the negative P3 result into a positive result and does not establish that spatial overlap will rescue the prediction."
+    "current_support_metric_does_not_include_sampling_resolution": true,
+    "reason": "The negative pattern persists under the emitted support filter and within target+nuisance mixed regimes, but the emitted support score itself does not encode temporal sampling adequacy.",
+    "spatial_generator_limitation": "The canonical generator fixes a coherent nuisance reference in the neighbour channel and does not sweep a spatial-separation coordinate.",
+    "sampling_generator_limitation": "The canonical sweep fixes 256 samples per window while Pi1 spans 0.01 to 100. At Pi2=0.01 the grid ranges from about 255 to 0.0255 samples per nuisance cycle; at Pi2=100 many windows contain far less than one nuisance cycle. The original far-Pi2 comparator therefore mixes timescale separation with temporal resolution limits.",
+    "claim_boundary": "This diagnoses the test geometry; it does not convert the negative P3 result into a positive result and does not establish that adding spatial or sampling axes will rescue the prediction."
   },
   "next_generation": {
     "required": true,
-    "new_axis": "Pi5 = nuisance spatial correlation length / target spatial support width",
-    "rule": "Do not modify V14a thresholds or labels. Test Pi2 x Pi5 interaction in a new generation with the old P3 result retained as negative evidence."
+    "new_axes": [
+      "Pi5 = nuisance spatial correlation length / target spatial support width",
+      "Pi6 = sampling frequency * target timescale (samples per target timescale)"
+    ],
+    "rule": "Do not modify V14a thresholds or labels. A new generation must separate temporal-scale ratio from spatial overlap and sampling adequacy before retesting any timescale-collision interaction."
   }
 }
