@@ -26,9 +26,9 @@
     "time_unit": "target timescale = 1",
     "space_unit": "target spatial support width = 1",
     "target": "localized entry-dwell-exit/transit over normalized target timescale",
-    "nuisance_temporal_process": "stationary mean-reverting stochastic process with correlation timescale Pi2",
-    "nuisance_spatial_process": "focal nuisance is shared component; each reference region mixes shared and independent same-timescale components with shared weight exp(-distance/Pi5)",
-    "target_coupling": "target-triggered local damped response with amplitude Pi4 and target-scale spatial envelope",
+    "exogenous_nuisance_temporal_process": "stationary mean-reverting stochastic process with correlation timescale Pi2",
+    "exogenous_nuisance_spatial_process": "focal nuisance is the shared component; each reference region mixes shared and independent same-timescale components with shared weight exp(-distance/Pi5)",
+    "target_coupling": "target-triggered local damped response with amplitude Pi4 confined to the focal target support; reference regions begin at one target-support width and receive no coupled response",
     "sampling": "sample spacing is 1/Pi6 in target-time units; Pi6 changes the actual number of samples rather than being a post-hoc feature"
   },
   "reference_geometry_target_width_units": {"focal": 0.0, "reference_regions": [1.0, 2.0, 4.0]},
@@ -50,6 +50,8 @@
     "all_primary_features_dimensionless": true,
     "pearson_correlation_not_sufficient_for_spatial_separation": true,
     "scale_sensitive_spatial_feature_required": true,
+    "spatial_features_must_use_observed_scene_channels_only": true,
+    "direct_actor_route_must_not_leak_into_coupled_scene_route": true,
     "sampling_adequacy_must_be_explicit": true
   },
   "coarse_sweep": {
@@ -96,7 +98,7 @@
   },
   "pre_sweep_predictions": {
     "Q1_sampling": "At fixed Pi1-Pi5, decreasing Pi6 increases information absence once the target process is undersampled.",
-    "Q2_spatial": "At fixed temporal coordinates, decreasing spatial separability changes the spatial-coherence and structure-function signatures; the direction of final ambiguity is measured rather than assumed.",
+    "Q2_spatial": "At fixed temporal coordinates, changing Pi5 changes observed spatial-coherence and structure-function signatures; the direction of final ambiguity is measured rather than assumed.",
     "Q3_collision_interaction": "Among coordinates where both target and nuisance are temporally resolved and Pi3/Pi4 are weak, ambiguity is predicted to increase near Pi2=1 preferentially when Pi5 is also near 1. This is a new interaction prediction, not a rescue or rerun of V14a P3.",
     "Q4_negative_boundary": "If the Pi2-by-Pi5 interaction is absent after explicit Pi6 control, the timescale-collision hypothesis is rejected more strongly.",
     "Q5_superposition": "High target and high nuisance support may coexist as legitimate superposition and must not itself count as undetermined."
