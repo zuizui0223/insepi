@@ -1,44 +1,56 @@
 {
-  "schema": "insepi-v14-dimensionless-world-protocol-v1",
+  "schema": "insepi-v14-dimensionless-world-protocol-v2",
   "generation": "V14a",
   "status": "development-world-frozen-before-phase-sweep",
   "scientific_scope": "closed-world dimensionless process geometry; not field calibration or visit-accuracy validation",
   "ontology": {
     "baseline": "no deviation; no classification question is triggered",
     "deviation_truth": {
-      "target_process": "positive latent process; may co-occur with nuisance",
-      "nuisance_process": "positive latent process that can mimic, hide, or corrupt target inference; harmless non-target context is not nuisance",
-      "coupling": "target-driven change in the nuisance/scene channel; coexistence is allowed and must not be forced into one exclusive class"
+      "target_process_T": "positive latent focal actor/event process",
+      "exogenous_nuisance_N": "positive latent external process that can mimic, hide, or corrupt target inference; harmless non-target context is not nuisance",
+      "target_to_scene_coupling_C": "target-caused local scene response; it may look nuisance-like statistically but its causal role is target-linked evidence"
     },
+    "non_exclusivity": "T and N may co-occur; C may co-occur with either. Do not define any one process as the negation of another.",
     "observation_layer": "observability is independent of nuisance burden and asks whether target presence/absence is inferable from the available measurement channel",
-    "output_layer": "visit inference is PRESENT / ABSENT / UNDETERMINED, with reason codes retained; internal target/nuisance support remains non-exclusive"
+    "output_layer": "visit inference is PRESENT / ABSENT / UNDETERMINED, with reason codes retained; internal target, nuisance, and coupling support remain separate"
   },
   "indeterminacy_reason_codes": [
     "information_absent",
     "essential_ambiguity",
     "model_uncertainty"
   ],
-  "non_indeterminacy_contradiction": "process_coupling: target and nuisance can both be true; do not resolve by forcing exclusivity",
+  "non_indeterminacy_contradictions": [
+    "T and N both true: legitimate superposition",
+    "T and C both true: legitimate target-driven scene response"
+  ],
   "dimensionless_coordinates": {
     "pi1": "observation_window_duration / target_process_timescale",
-    "pi2": "nuisance_or_flower_response_timescale / target_process_timescale",
-    "pi3": "direct_target_motion_amplitude / nuisance_motion_amplitude",
-    "pi4": "target_driven_local_response_amplitude / nuisance_motion_amplitude"
+    "pi2": "exogenous_nuisance_or_flower_response_timescale / target_process_timescale",
+    "pi3": "direct_target_motion_amplitude / reference_nuisance_motion_amplitude",
+    "pi4": "target_driven_local_response_amplitude / reference_nuisance_motion_amplitude"
   },
   "sweep": {
-    "log10_values": [-2.0, -1.0, -0.5, 0.0, 0.5, 1.0, 2.0],
-    "coordinate_rule": "pi = 10 ** log10_value",
-    "latent_deviation_regimes": ["target_only", "nuisance_only", "coupled"],
+    "pi1_values": [0.01, 0.1, 0.31622776601683794, 1.0, 3.1622776601683795, 10.0, 100.0],
+    "pi2_values": [0.01, 0.1, 0.31622776601683794, 1.0, 3.1622776601683795, 10.0, 100.0],
+    "pi3_values": [0.0, 0.01, 0.1, 0.31622776601683794, 1.0, 3.1622776601683795, 10.0, 100.0],
+    "pi4_values": [0.0, 0.01, 0.1, 0.31622776601683794, 1.0, 3.1622776601683795, 10.0, 100.0],
+    "latent_deviation_regimes": ["target_only", "nuisance_only", "target_coupled", "superposed"],
     "replicates_per_coordinate_regime": 8,
     "samples_per_window": 256,
-    "expected_coordinate_count": 2401,
-    "expected_deviation_world_count": 57624
+    "expected_coordinate_count": 3136,
+    "expected_deviation_world_count": 100352
+  },
+  "latent_regime_semantics": {
+    "target_only": "T=1, N=0, C=0",
+    "nuisance_only": "T=0, N=1, C=0",
+    "target_coupled": "T=1, N=0, C=1; captures the quiet-neighbour / focal-flower-response rescue case",
+    "superposed": "T=1, N=1, C is expressed according to pi4; target and exogenous nuisance genuinely overlap"
   },
   "process_model": {
     "target": "localized non-stationary transit with entry/exit over normalized target timescale 1",
-    "nuisance": "restorative spatially coherent oscillatory scene process with normalized timescale pi2",
+    "exogenous_nuisance": "restorative spatially coherent oscillatory scene process with normalized timescale pi2",
     "coupling": "target-triggered local damped flower/scene response added only at the focal location, with amplitude pi4",
-    "neighbor_channel": "receives coherent nuisance but not target-triggered local coupling",
+    "neighbor_channel": "receives coherent exogenous nuisance but not target-triggered local coupling",
     "direct_target_channel": "scaled by pi3 and may become weak independently of the local coupling channel"
   },
   "dimensionless_sufficient_statistics": [
@@ -53,21 +65,23 @@
     "undetermined_rate(pi1,pi2,pi3,pi4)",
     "information_absence_rate(pi1,pi2,pi3,pi4)",
     "essential_ambiguity_rate(pi1,pi2,pi3,pi4)",
-    "both_target_and_nuisance_supported_rate(pi1,pi2,pi3,pi4)",
+    "target_and_exogenous_nuisance_both_supported_rate(pi1,pi2,pi3,pi4)",
+    "target_coupling_supported_rate(pi1,pi2,pi3,pi4)",
     "indirect_target_rescue_rate(pi1,pi2,pi3,pi4)"
   ],
   "pre_sweep_predictions": [
     "smaller pi1 should increase information-absence because the observation window captures a smaller fraction of target-process structure",
     "smaller pi3 should weaken direct target evidence",
     "pi2 near 1 should thicken the essential-ambiguity band only where other separating evidence is weak; temporal overlap alone is not defined as ambiguity truth",
-    "larger pi4 should create a region where indirect local response can rescue target inference when direct target evidence is weak",
-    "larger pi4 should also increase legitimate both-supported target+nuisance/coupled states; these must not be counted as classifier errors solely because both channels are high"
+    "larger pi4 should create a target_coupled region where indirect local response can rescue target inference when direct target evidence is weak",
+    "superposed T+N worlds must remain representable and must not be scored as errors merely because target and nuisance channels are both high"
   ],
   "development_rules": {
     "no_field_constants": true,
     "no_absolute_pixel_or_second_thresholds_in_primary_sweep": true,
     "target_and_nuisance_must_not_be_defined_as_negations_of_each_other": true,
-    "coupled_truth_must_be_representable": true,
+    "target_driven_coupling_must_not_be_automatically_relabelled_as_exogenous_nuisance": true,
+    "superposed_truth_must_be_representable": true,
     "unobservable_must_not_equal_high_nuisance": true,
     "low_nuisance_must_not_equal_observable": true,
     "classifier_uncertainty_must_not_be_relabelled_as_structural_unobservability": true,
