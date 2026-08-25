@@ -40,7 +40,7 @@ jobs:
           freeze=json.loads(Path('benchmarks/v13_execution_freeze.json').read_text())
           assert freeze['schema']=='interaction-sensing-v13-execution-freeze-v1'
           assert freeze['status']=='pre-field-scientific-execution-frozen'
-          assert freeze['critical_path_count']==21
+          assert freeze['critical_path_count']==22
           assert freeze['runtime']['python']=='3.11.16'
           assert freeze['runtime']['numpy']=='2.4.6'
           assert platform.python_version()=='3.11.16'
