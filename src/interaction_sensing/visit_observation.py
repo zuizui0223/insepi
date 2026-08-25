@@ -84,13 +84,28 @@ class VisitObservationRecord:
 
 @dataclass(frozen=True, slots=True)
 class VisitObservationSummary:
-    """Design-aware summary that never treats censored effort as observed absence."""
+    """Design-aware summary retaining all recorded observation effort.
+
+    The three effort classes are disjoint and exhaustive:
+
+    - eligible: can enter the conservative ecological opportunity denominator;
+    - censored: structurally unobservable and explicitly censored;
+    - uncertain_noneligible: not structurally censored, but still excluded from
+      the denominator because nuisance/missed-event risk or compromised support
+      prevents a defensible negative interpretation.
+
+    This prevents compromised or ambiguous time from disappearing between the
+    "observable" and "unobservable" buckets.
+    """
 
     n_windows: int
+    total_seconds: float
     eligible_windows: int
     eligible_seconds: float
     censored_windows: int
     censored_seconds: float
+    uncertain_noneligible_windows: int
+    uncertain_noneligible_seconds: float
     visit_candidate_windows: int
     observable_nondetection_windows: int
     audit_or_ambiguous_windows: int
@@ -98,8 +113,19 @@ class VisitObservationSummary:
 
     @property
     def observable_fraction(self) -> float:
-        total = self.eligible_seconds + self.censored_seconds
-        return 0.0 if total <= 0 else self.eligible_seconds / total
+        return 0.0 if self.total_seconds <= 0 else self.eligible_seconds / self.total_seconds
+
+    @property
+    def censored_fraction(self) -> float:
+        return 0.0 if self.total_seconds <= 0 else self.censored_seconds / self.total_seconds
+
+    @property
+    def uncertain_noneligible_fraction(self) -> float:
+        return (
+            0.0
+            if self.total_seconds <= 0
+            else self.uncertain_noneligible_seconds / self.total_seconds
+        )
 
 
 def diagnostic_actions(interpretation: ObservationInterpretation) -> tuple[DiagnosticAction, ...]:
@@ -170,11 +196,17 @@ def visit_record_from_interpretation(
 
 
 def summarise_visit_observations(records: Iterable[VisitObservationRecord]) -> VisitObservationSummary:
-    """Summarise observation effort without turning censored effort into zeros."""
+    """Summarise effort without turning censored or unresolved effort into zeros."""
 
     rows = tuple(records)
     eligible = tuple(row for row in rows if row.denominator_eligible)
     censored = tuple(row for row in rows if row.status is VisitObservationStatus.CENSORED_UNOBSERVABLE)
+    uncertain_noneligible = tuple(
+        row
+        for row in rows
+        if not row.denominator_eligible
+        and row.status is not VisitObservationStatus.CENSORED_UNOBSERVABLE
+    )
     candidates = sum(row.status is VisitObservationStatus.VISIT_CANDIDATE for row in rows)
     negative = sum(row.status is VisitObservationStatus.OBSERVABLE_NONDETECTION for row in rows)
     uncertain = sum(
@@ -184,10 +216,13 @@ def summarise_visit_observations(records: Iterable[VisitObservationRecord]) -> V
     limiting_counts = Counter(row.observability_limiting_component for row in censored)
     return VisitObservationSummary(
         n_windows=len(rows),
+        total_seconds=sum(row.opportunity_seconds for row in rows),
         eligible_windows=len(eligible),
         eligible_seconds=sum(row.opportunity_seconds for row in eligible),
         censored_windows=len(censored),
         censored_seconds=sum(row.opportunity_seconds for row in censored),
+        uncertain_noneligible_windows=len(uncertain_noneligible),
+        uncertain_noneligible_seconds=sum(row.opportunity_seconds for row in uncertain_noneligible),
         visit_candidate_windows=candidates,
         observable_nondetection_windows=negative,
         audit_or_ambiguous_windows=uncertain,
