@@ -1,5 +1,5 @@
 {
-  "schema": "insepi-v14-dimensionless-world-protocol-v2",
+  "schema": "insepi-v14-dimensionless-world-protocol-v3",
   "generation": "V14a",
   "status": "development-world-frozen-before-phase-sweep",
   "scientific_scope": "closed-world dimensionless process geometry; not field calibration or visit-accuracy validation",
@@ -10,10 +10,18 @@
       "exogenous_nuisance_N": "positive latent external process that can mimic, hide, or corrupt target inference; harmless non-target context is not nuisance",
       "target_to_scene_coupling_C": "target-caused local scene response; it may look nuisance-like statistically but its causal role is target-linked evidence"
     },
-    "non_exclusivity": "T and N may co-occur; C may co-occur with either. Do not define any one process as the negation of another.",
+    "valid_truth_constraint": "C implies T; T and N are otherwise non-exclusive",
     "observation_layer": "observability is independent of nuisance burden and asks whether target presence/absence is inferable from the available measurement channel",
     "output_layer": "visit inference is PRESENT / ABSENT / UNDETERMINED, with reason codes retained; internal target, nuisance, and coupling support remain separate"
   },
+  "closed_world_states": [
+    "baseline: T=0,N=0,C=0",
+    "target_only: T=1,N=0,C=0",
+    "nuisance_only: T=0,N=1,C=0",
+    "target_coupled: T=1,N=0,C=1",
+    "target_nuisance_superposed: T=1,N=1,C=0",
+    "target_nuisance_coupled: T=1,N=1,C=1"
+  ],
   "indeterminacy_reason_codes": [
     "information_absent",
     "essential_ambiguity",
@@ -34,17 +42,17 @@
     "pi2_values": [0.01, 0.1, 0.31622776601683794, 1.0, 3.1622776601683795, 10.0, 100.0],
     "pi3_values": [0.0, 0.01, 0.1, 0.31622776601683794, 1.0, 3.1622776601683795, 10.0, 100.0],
     "pi4_values": [0.0, 0.01, 0.1, 0.31622776601683794, 1.0, 3.1622776601683795, 10.0, 100.0],
-    "latent_deviation_regimes": ["target_only", "nuisance_only", "target_coupled", "superposed"],
+    "latent_deviation_regimes": [
+      "target_only",
+      "nuisance_only",
+      "target_coupled",
+      "target_nuisance_superposed",
+      "target_nuisance_coupled"
+    ],
     "replicates_per_coordinate_regime": 8,
     "samples_per_window": 256,
     "expected_coordinate_count": 3136,
-    "expected_deviation_world_count": 100352
-  },
-  "latent_regime_semantics": {
-    "target_only": "T=1, N=0, C=0",
-    "nuisance_only": "T=0, N=1, C=0",
-    "target_coupled": "T=1, N=0, C=1; captures the quiet-neighbour / focal-flower-response rescue case",
-    "superposed": "T=1, N=1, C is expressed according to pi4; target and exogenous nuisance genuinely overlap"
+    "expected_deviation_world_count": 125440
   },
   "process_model": {
     "target": "localized non-stationary transit with entry/exit over normalized target timescale 1",
@@ -74,14 +82,14 @@
     "smaller pi3 should weaken direct target evidence",
     "pi2 near 1 should thicken the essential-ambiguity band only where other separating evidence is weak; temporal overlap alone is not defined as ambiguity truth",
     "larger pi4 should create a target_coupled region where indirect local response can rescue target inference when direct target evidence is weak",
-    "superposed T+N worlds must remain representable and must not be scored as errors merely because target and nuisance channels are both high"
+    "T+N and T+N+C worlds must remain representable and must not be scored as errors merely because target and nuisance channels are both high"
   ],
   "development_rules": {
     "no_field_constants": true,
     "no_absolute_pixel_or_second_thresholds_in_primary_sweep": true,
     "target_and_nuisance_must_not_be_defined_as_negations_of_each_other": true,
     "target_driven_coupling_must_not_be_automatically_relabelled_as_exogenous_nuisance": true,
-    "superposed_truth_must_be_representable": true,
+    "all_valid_T_N_C_combinations_must_be_representable": true,
     "unobservable_must_not_equal_high_nuisance": true,
     "low_nuisance_must_not_equal_observable": true,
     "classifier_uncertainty_must_not_be_relabelled_as_structural_unobservability": true,
