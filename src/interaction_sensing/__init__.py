@@ -41,7 +41,6 @@ __all__ = [
     "NoiseSource",
     "NuisanceEvidence",
     "ObservationAvailability",
-    "ObservationDecision",
     "ObservationInterpretation",
     "ObservationSupport",
     "ObservationTriadPolicy",
@@ -53,6 +52,4 @@ __all__ = [
     "TriadState",
 ]
 
-# Backwards-compatible typo guard intentionally omitted: public API must expose
-# the actual V14 names above and fail loudly on misspellings.
 __version__ = "0.1.0"
