@@ -1,0 +1,49 @@
+{
+  "schema": "insepi-v14a-p3-negative-diagnosis-v1",
+  "status": "post-result-diagnostic-does-not-alter-v14a",
+  "source": {
+    "workflow_run": 32846060073,
+    "head_sha": "00810b4ae7ca59a07ed66c4d18ba2ebc4e7296e7",
+    "artifact_id": 9562384098,
+    "artifact_digest": "sha256:6a3f9f08df1229257e8e426f217d1c255e0370485c72e19129fdcad632158a0c",
+    "protocol_sha256": "b284e4eceac4e51bc3dce554f02b795fa1f5132c7da75ef53ce16b3cd63a40f8",
+    "surface_sha256": "eaefa4d3a03c4af6dd9ed5ec9fc59f3d4479bfa73feafc348ca054ae8d378cc8",
+    "summary_sha256": "f559cf6eb4f4c27181141fa000d761952b997106af10de4749da20203133fb1a"
+  },
+  "registered_prediction": "Pi2 near 1 should thicken essential ambiguity only where other separating evidence is weak",
+  "diagnosis": {
+    "weak_separation_max": 0.31622776601683794,
+    "support_minimum": 0.2,
+    "near_pi2": 1.0,
+    "far_pi2": [0.01, 100.0],
+    "registered_near_ambiguity": 0.02142857142857143,
+    "registered_far_ambiguity": 0.032589285714285716,
+    "near_information_absence": 0.7928571428571428,
+    "far_information_absence": 0.7848214285714286,
+    "observable_coordinate_near_ambiguity": 0.10344827586206896,
+    "observable_coordinate_far_ambiguity": 0.15145228215767634,
+    "mixed_near_ambiguity": 0.05357142857142857,
+    "mixed_far_ambiguity": 0.08147321428571429,
+    "observable_mixed_near_ambiguity": 0.2727272727272727,
+    "observable_mixed_far_ambiguity": 0.4010989010989011,
+    "mixed_near_identifiability_margin": 0.3589369678573959,
+    "mixed_far_identifiability_margin": 0.340833287181124,
+    "registered_prediction_supported": false,
+    "observable_slice_supports_prediction": false,
+    "mixed_slice_supports_prediction": false,
+    "spatial_separation_coordinate_present": false,
+    "fixed_neighbor_spatial_separator": true
+  },
+  "interpretation": {
+    "v14a_result_remains": "P3 not supported",
+    "information_absence_is_not_the_whole_explanation": true,
+    "reason": "The negative pattern persists after restricting to coordinates with mean observation support >= 0.2 and within target+nuisance mixed regimes.",
+    "generator_limitation": "The canonical generator fixes a coherent nuisance reference in the neighbour channel and does not sweep a spatial-separation coordinate. Temporal-scale collision is therefore not isolated from a persistent spatial separator.",
+    "claim_boundary": "This diagnoses the test geometry; it does not convert the negative P3 result into a positive result and does not establish that spatial overlap will rescue the prediction."
+  },
+  "next_generation": {
+    "required": true,
+    "new_axis": "Pi5 = nuisance spatial correlation length / target spatial support width",
+    "rule": "Do not modify V14a thresholds or labels. Test Pi2 x Pi5 interaction in a new generation with the old P3 result retained as negative evidence."
+  }
+}
