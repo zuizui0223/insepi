@@ -2,8 +2,8 @@
 
 This module does not change, tune, or reinterpret the completed V14a phase sweep.
 It asks a narrower question: did the registered ``Pi2 ~= 1`` comparison actually
-isolate temporal-scale collision from the other separators embedded in the
-closed-world generator?
+isolate temporal-scale collision from the other separators and sampling limits
+embedded in the closed-world generator?
 
 The diagnosis is intentionally based on the emitted phase-surface table and the
 frozen protocol only. It never changes observer thresholds or phase labels.
@@ -38,23 +38,41 @@ def _eq(a: float, b: float) -> bool:
     return math.isclose(a, b, rel_tol=1e-12, abs_tol=1e-12)
 
 
-def _spatial_axis_present(protocol: Mapping[str, Any]) -> bool:
+def _coordinate_contains(protocol: Mapping[str, Any], tokens: tuple[str, ...]) -> bool:
     coordinates = protocol.get("dimensionless_coordinates", {})
     for name, definition in coordinates.items():
         text = f"{name} {definition}".lower()
-        if any(
-            token in text
-            for token in (
-                "spatial correlation",
-                "correlation length",
-                "spatial support",
-                "spatial scale",
-                "localization scale",
-                "localisation scale",
-            )
-        ):
+        if any(token in text for token in tokens):
             return True
     return False
+
+
+def _spatial_axis_present(protocol: Mapping[str, Any]) -> bool:
+    return _coordinate_contains(
+        protocol,
+        (
+            "spatial correlation",
+            "correlation length",
+            "spatial support",
+            "spatial scale",
+            "localization scale",
+            "localisation scale",
+        ),
+    )
+
+
+def _sampling_axis_present(protocol: Mapping[str, Any]) -> bool:
+    return _coordinate_contains(
+        protocol,
+        (
+            "sampling frequency",
+            "sampling rate",
+            "sample interval",
+            "samples per",
+            "frame rate",
+            "fps",
+        ),
+    )
 
 
 def _fixed_neighbor_separator(protocol: Mapping[str, Any]) -> bool:
@@ -87,9 +105,17 @@ class Pi2NegativeDiagnosis:
     mixed_slice_supports_prediction: bool
     spatial_separation_coordinate_present: bool
     fixed_neighbor_spatial_separator: bool
+    sampling_density_coordinate_present: bool
+    samples_per_window: int
+    fast_far_samples_per_nuisance_cycle_min: float
+    fast_far_samples_per_nuisance_cycle_max: float
+    slow_far_observed_nuisance_cycles_min: float
+    slow_far_observed_nuisance_cycles_max: float
+    far_comparator_contains_temporal_resolution_limits: bool
     diagnosis: str
     next_generation_required: bool
-    recommended_dimensionless_axis: str
+    recommended_spatial_axis: str
+    recommended_sampling_axis: str
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -107,6 +133,15 @@ def diagnose_pi2_negative(
     sweep. The "observable coordinate" slices use the emitted mean observation
     support as a coordinate-level filter; they are a diagnostic, not a new
     claim-bearing analysis.
+
+    Sampling geometry is diagnosed analytically from the frozen grid. With
+    ``N`` uniformly spaced samples across a dimensionless observation window
+    ``Pi1``, the approximate samples per nuisance cycle are
+
+    ``(N - 1) * Pi2 / Pi1``.
+
+    This matters because the V14a support score does not include a temporal
+    sampling-resolution term.
     """
 
     rows = tuple(rows)
@@ -116,6 +151,7 @@ def diagnose_pi2_negative(
         raise ValueError("support_minimum must lie in [0, 1]")
 
     sweep = protocol["sweep"]
+    pi1_values = tuple(float(v) for v in sweep["pi1_values"])
     pi2_values = tuple(float(v) for v in sweep["pi2_values"])
     if not any(_eq(v, 1.0) for v in pi2_values):
         raise ValueError("registered P3 diagnosis requires pi2=1 in the protocol")
@@ -197,14 +233,35 @@ def diagnose_pi2_negative(
 
     spatial_axis = _spatial_axis_present(protocol)
     fixed_separator = _fixed_neighbor_separator(protocol)
+    sampling_axis = _sampling_axis_present(protocol)
+
+    samples = int(sweep.get("samples_per_window", 0))
+    if samples < 2:
+        raise ValueError("V14a diagnosis requires samples_per_window >= 2")
+    fast_pi2, slow_pi2 = far_pi2
+    fast_samples_per_cycle = tuple(
+        (samples - 1) * fast_pi2 / pi1 for pi1 in pi1_values
+    )
+    slow_observed_cycles = tuple(pi1 / slow_pi2 for pi1 in pi1_values)
+
+    # This flag is intentionally conservative. Fewer than two samples per cycle
+    # is below the Nyquist requirement for a sinusoid, while observing less than
+    # one cycle cannot establish a complete oscillatory period from that window.
+    far_resolution_limits = (
+        min(fast_samples_per_cycle) < 2.0
+        or min(slow_observed_cycles) < 1.0
+    )
 
     if registered_supported:
         diagnosis = "registered_P3_supported_no_negative_diagnosis_needed"
         next_generation_required = False
-    elif not spatial_axis and fixed_separator:
+    elif (
+        (not spatial_axis and fixed_separator)
+        or (not sampling_axis and far_resolution_limits)
+    ):
         diagnosis = (
-            "registered_P3_not_supported_and_current_generator_does_not_sweep_"
-            "spatial_separation_so_temporal_collision_is_not_isolated"
+            "registered_P3_not_supported_and_current_generator_does_not_isolate_"
+            "timescale_collision_from_spatial_and_sampling_resolution_structure"
         )
         next_generation_required = True
     else:
@@ -236,9 +293,19 @@ def diagnose_pi2_negative(
         mixed_slice_supports_prediction=mixed_supported,
         spatial_separation_coordinate_present=spatial_axis,
         fixed_neighbor_spatial_separator=fixed_separator,
+        sampling_density_coordinate_present=sampling_axis,
+        samples_per_window=samples,
+        fast_far_samples_per_nuisance_cycle_min=min(fast_samples_per_cycle),
+        fast_far_samples_per_nuisance_cycle_max=max(fast_samples_per_cycle),
+        slow_far_observed_nuisance_cycles_min=min(slow_observed_cycles),
+        slow_far_observed_nuisance_cycles_max=max(slow_observed_cycles),
+        far_comparator_contains_temporal_resolution_limits=far_resolution_limits,
         diagnosis=diagnosis,
         next_generation_required=next_generation_required,
-        recommended_dimensionless_axis=(
+        recommended_spatial_axis=(
             "Pi5 = nuisance spatial correlation length / target spatial support width"
+        ),
+        recommended_sampling_axis=(
+            "Pi6 = sampling frequency * target timescale (samples per target timescale)"
         ),
     )
