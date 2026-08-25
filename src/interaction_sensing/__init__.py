@@ -17,6 +17,7 @@ from .noise import (
     ObservabilityDecision,
     ObservabilityState,
 )
+from .nuisance_effects import NuisanceEffect, NuisanceProfile, profile_for
 from .observation_triad import (
     InferentialStatus,
     NuisanceEvidence,
@@ -39,7 +40,9 @@ __all__ = [
     "NoiseFirstPolicy",
     "NoiseObservation",
     "NoiseSource",
+    "NuisanceEffect",
     "NuisanceEvidence",
+    "NuisanceProfile",
     "ObservationAvailability",
     "ObservationInterpretation",
     "ObservationSupport",
@@ -50,6 +53,7 @@ __all__ = [
     "TargetEvidence",
     "TargetSpec",
     "TriadState",
+    "profile_for",
 ]
 
 __version__ = "0.1.0"
