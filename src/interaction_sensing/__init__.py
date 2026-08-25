@@ -28,11 +28,21 @@ from .observation_triad import (
     TargetEvidence,
     TriadState,
 )
+from .visit_observation import (
+    DiagnosticAction,
+    VisitObservationRecord,
+    VisitObservationStatus,
+    VisitObservationSummary,
+    diagnostic_actions,
+    summarise_visit_observations,
+    visit_record_from_interpretation,
+)
 
 __all__ = [
     "AuditRecord",
     "BBox",
     "Candidate",
+    "DiagnosticAction",
     "ErrorClass",
     "InferentialStatus",
     "InteractionEvent",
@@ -53,7 +63,13 @@ __all__ = [
     "TargetEvidence",
     "TargetSpec",
     "TriadState",
+    "VisitObservationRecord",
+    "VisitObservationStatus",
+    "VisitObservationSummary",
+    "diagnostic_actions",
     "profile_for",
+    "summarise_visit_observations",
+    "visit_record_from_interpretation",
 ]
 
 __version__ = "0.1.0"
