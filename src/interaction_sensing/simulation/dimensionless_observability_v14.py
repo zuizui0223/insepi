@@ -1,9 +1,15 @@
 """Dimensionless closed-world phase model for V14.
 
-This is a development-world analyser, not a field classifier.  It keeps latent
-`target` and `nuisance` processes non-exclusive, models a target-driven local
-coupling response, and reports observability / identifiability separately from
-nuisance burden.
+This is a development-world analyser, not a field classifier. It keeps three
+latent causes separate:
+
+- T: focal target/event process;
+- N: exogenous nuisance process;
+- C: target-driven local scene response (C implies T).
+
+The model reports target support, exogenous nuisance support, counterfactual
+observability, and model-relative identifiability separately. It never defines
+nuisance as "not target" and never defines unobservability as "high nuisance".
 """
 from __future__ import annotations
 
@@ -18,10 +24,12 @@ _EPS = 1e-12
 
 
 class LatentRegime(str, Enum):
-    BASELINE = "baseline"
-    TARGET_ONLY = "target_only"
-    NUISANCE_ONLY = "nuisance_only"
-    COUPLED = "coupled"
+    BASELINE = "baseline"  # T=0,N=0,C=0
+    TARGET_ONLY = "target_only"  # T=1,N=0,C=0
+    NUISANCE_ONLY = "nuisance_only"  # T=0,N=1,C=0
+    TARGET_COUPLED = "target_coupled"  # T=1,N=0,C=1
+    TARGET_NUISANCE_SUPERPOSED = "target_nuisance_superposed"  # T=1,N=1,C=0
+    TARGET_NUISANCE_COUPLED = "target_nuisance_coupled"  # T=1,N=1,C=1
 
 
 class IndeterminacyReason(str, Enum):
@@ -44,8 +52,8 @@ class DimensionlessPoint:
 
     pi1 = observation window / target timescale
     pi2 = nuisance-or-flower-response timescale / target timescale
-    pi3 = direct target amplitude / nuisance amplitude
-    pi4 = target-driven local response amplitude / nuisance amplitude
+    pi3 = direct target amplitude / reference nuisance amplitude
+    pi4 = target-driven local response amplitude / reference nuisance amplitude
     """
 
     pi1: float
@@ -93,18 +101,27 @@ class PhaseInterpretation:
     direct_target_route: float
     indirect_target_route: float
     target_support: float
-    nuisance_support: float
+    exogenous_nuisance_support: float
     observation_support: float
     closest_regime: LatentRegime | None
     identifiability_margin: float
     inference: VisitInference
     indeterminacy_reason: IndeterminacyReason
+    target_truth: bool
+    exogenous_nuisance_truth: bool
+    coupling_truth: bool
     both_target_and_nuisance_supported: bool
     indirect_target_rescue: bool
 
 
 @dataclass(frozen=True, slots=True)
 class PhaseDecisionThresholds:
+    """Operational thresholds for the reference phase analyser.
+
+    These are dimensionless development defaults. They are not physical field
+    thresholds or calibrated visit probabilities.
+    """
+
     support_minimum: float = 0.20
     ambiguity_margin: float = 0.15
     target_high: float = 0.55
@@ -123,6 +140,22 @@ class PhaseDecisionThresholds:
                 raise ValueError(f"{name} must lie in [0, 1]")
         if self.target_low >= self.target_high:
             raise ValueError("target_low must be below target_high")
+
+
+def _truth(regime: LatentRegime) -> tuple[bool, bool, bool]:
+    if regime is LatentRegime.BASELINE:
+        return False, False, False
+    if regime is LatentRegime.TARGET_ONLY:
+        return True, False, False
+    if regime is LatentRegime.NUISANCE_ONLY:
+        return False, True, False
+    if regime is LatentRegime.TARGET_COUPLED:
+        return True, False, True
+    if regime is LatentRegime.TARGET_NUISANCE_SUPERPOSED:
+        return True, True, False
+    if regime is LatentRegime.TARGET_NUISANCE_COUPLED:
+        return True, True, True
+    raise ValueError(f"unsupported latent regime: {regime}")
 
 
 def _rms(values: np.ndarray) -> float:
@@ -158,42 +191,34 @@ def _spectral_concentration(values: np.ndarray) -> float:
     return min(1.0, float(np.max(power) / total))
 
 
-def _target_present(regime: LatentRegime) -> bool:
-    return regime in {LatentRegime.TARGET_ONLY, LatentRegime.COUPLED}
-
-
-def _nuisance_present(regime: LatentRegime) -> bool:
-    return regime in {LatentRegime.NUISANCE_ONLY, LatentRegime.COUPLED}
-
-
 def _signals(
     point: DimensionlessPoint,
     regime: LatentRegime,
     *,
     phase: float,
     samples: int,
-) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, float]:
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, float, float]:
     if samples < 16:
         raise ValueError("samples must be at least 16")
 
+    target_present, nuisance_present, coupling_present = _truth(regime)
     half_window = point.pi1 / 2.0
     t = np.linspace(-half_window, half_window, samples, dtype=float)
 
-    # Target process timescale is one.  The target enters at -0.5 and leaves at
-    # +0.5.  A centered window shorter than one cannot contain both boundaries.
+    # Target timescale is one. Entry and exit occur at -0.5 and +0.5.
     active = (t >= -0.5) & (t <= 0.5)
-    actor_position = np.zeros_like(t)
-    actor_position[active] = t[active] + 0.5  # monotone 0 -> 1 transit
+    actor_position = np.full_like(t, np.nan)
     actor_signal = np.zeros_like(t)
-    if _target_present(regime):
+    if target_present:
+        actor_position[active] = t[active] + 0.5
         actor_signal[active] = point.pi3 * np.sin(pi * (t[active] + 0.5))
 
-    global_nuisance = np.zeros_like(t)
-    if _nuisance_present(regime):
-        global_nuisance = np.sin((2.0 * pi / point.pi2) * t + phase)
+    exogenous_nuisance = np.zeros_like(t)
+    if nuisance_present:
+        exogenous_nuisance = np.sin((2.0 * pi / point.pi2) * t + phase)
 
     coupling = np.zeros_like(t)
-    if _target_present(regime) and point.pi4 > 0:
+    if coupling_present and point.pi4 > 0:
         post = np.maximum(t, 0.0)
         triggered = t >= 0.0
         coupling[triggered] = (
@@ -202,15 +227,25 @@ def _signals(
             * np.sin((2.0 * pi / point.pi2) * post[triggered])
         )
 
-    focal_motion = global_nuisance + coupling
-    neighbor_motion = global_nuisance.copy()
+    focal_motion = exogenous_nuisance + coupling
+    neighbor_motion = exogenous_nuisance.copy()
     observed_local = actor_signal + focal_motion
 
     event_left = max(-half_window, -0.5)
     event_right = min(half_window, 0.5)
-    coverage = max(0.0, event_right - event_left)  # target duration is exactly 1
-    entry_exit_completeness = min(1.0, coverage)
-    return actor_position, observed_local, focal_motion, neighbor_motion, entry_exit_completeness
+    coverage = max(0.0, event_right - event_left)  # target duration = 1
+    entry_exit_completeness = min(1.0, coverage) if target_present else 0.0
+
+    finite_actor = actor_position[np.isfinite(actor_position)]
+    if finite_actor.size < 2 or point.pi3 <= 0:
+        transit_ratio = 0.0
+    else:
+        scaled = point.pi3 * finite_actor
+        path = float(np.sum(np.abs(np.diff(scaled))))
+        net = abs(float(scaled[-1] - scaled[0]))
+        transit_ratio = 0.0 if path <= _EPS else min(1.0, net / path)
+
+    return observed_local, focal_motion, neighbor_motion, actor_signal, entry_exit_completeness, transit_ratio
 
 
 def _signature(
@@ -220,26 +255,16 @@ def _signature(
     phase: float,
     samples: int,
 ) -> ProcessSignature:
-    actor_position, observed_local, focal, neighbor, completeness = _signals(
+    observed_local, focal, neighbor, actor_signal, completeness, transit_ratio = _signals(
         point, regime, phase=phase, samples=samples
     )
-
-    actor_path = float(np.sum(np.abs(np.diff(actor_position))))
-    if actor_path <= _EPS or not _target_present(regime):
-        transit_ratio = 0.0
-    else:
-        transit_ratio = min(1.0, abs(float(actor_position[-1] - actor_position[0])) / actor_path)
 
     focal_neighbor_corr = _safe_abs_corr(focal, neighbor)
     local_excess = _rms(focal - neighbor)
     scene_scale = _rms(focal) + _rms(neighbor) + _EPS
     local_excess_fraction = min(1.0, local_excess / scene_scale)
 
-    # Direct target evidence competes with all local scene movement; this makes
-    # pi3 an effective direct-route SNR coordinate without defining nuisance as
-    # simply "not target".
-    direct_component = observed_local - focal
-    direct_rms = _rms(direct_component)
+    direct_rms = _rms(actor_signal)
     scene_rms = _rms(focal)
     direct_fraction = min(1.0, direct_rms / (direct_rms + scene_rms + _EPS))
 
@@ -248,7 +273,7 @@ def _signature(
         focal_neighbor_correlation=focal_neighbor_corr,
         spectral_concentration=_spectral_concentration(focal),
         restoration_score=_restoration(focal),
-        entry_exit_completeness=completeness if _target_present(regime) else 0.0,
+        entry_exit_completeness=completeness,
         local_excess_motion_fraction=local_excess_fraction,
         direct_target_signal_fraction=direct_fraction,
     )
@@ -258,32 +283,37 @@ def _route_scores(signature: ProcessSignature) -> tuple[float, float, float]:
     direct = signature.direct_target_signal_fraction * (
         0.35 + 0.65 * signature.entry_exit_completeness
     )
+    # Local target-driven flower motion is allowed to be restorative: its causal
+    # locality, not its "noise-like" oscillation alone, makes it a candidate
+    # indirect target route.
     indirect = signature.local_excess_motion_fraction * (
         0.5 + 0.5 * signature.restoration_score
     )
-    nuisance = signature.focal_neighbor_correlation * max(
+    exogenous_nuisance = signature.focal_neighbor_correlation * max(
         signature.restoration_score, signature.spectral_concentration
     )
-    return (
-        min(1.0, max(0.0, direct)),
-        min(1.0, max(0.0, indirect)),
-        min(1.0, max(0.0, nuisance)),
-    )
+    return tuple(min(1.0, max(0.0, value)) for value in (direct, indirect, exogenous_nuisance))
 
 
-def counterfactual_observation_support(point: DimensionlessPoint) -> float:
+def counterfactual_observation_support(
+    point: DimensionlessPoint,
+    *,
+    coupling_available: bool = True,
+) -> float:
     """Support for observing a target *if one occurred* at this coordinate.
 
-    This is deliberately independent of the realised nuisance classification.
-    Direct spatial support can be weak while a target-driven local response still
-    supplies an indirect route.
+    The direct route depends on pi1 and pi3. A second indirect route is available
+    only when the physical target-to-scene coupling mechanism is part of the
+    world under consideration. Neither route is defined as one minus nuisance.
     """
 
     temporal_direct = min(1.0, point.pi1)
     direct = (point.pi3 / (1.0 + point.pi3)) * temporal_direct
 
-    temporal_indirect = min(1.0, point.pi1 / max(point.pi2, _EPS))
-    indirect = (point.pi4 / (1.0 + point.pi4)) * temporal_indirect
+    indirect = 0.0
+    if coupling_available:
+        temporal_indirect = min(1.0, point.pi1 / max(point.pi2, _EPS))
+        indirect = (point.pi4 / (1.0 + point.pi4)) * temporal_indirect
     return min(1.0, max(direct, indirect))
 
 
@@ -299,19 +329,25 @@ def model_relative_identifiability(
     *,
     samples: int = 256,
 ) -> tuple[LatentRegime, float]:
-    """Return nearest closed-world process prototype and a continuous margin.
+    """Nearest closed-world process prototype and continuous separation margin.
 
-    The margin is model-relative, not a claim that nature has a sharp ambiguity
-    boundary.  A margin near zero means the first and second closest process
-    prototypes are similarly compatible with the sufficient-statistic vector.
+    The margin is explicitly model-relative. It quantifies how distinct the best
+    and second-best truth-known process prototypes are under the chosen sufficient
+    statistics; it is not a claim that nature contains a sharp ambiguity class.
     """
 
-    regimes = (LatentRegime.TARGET_ONLY, LatentRegime.NUISANCE_ONLY, LatentRegime.COUPLED)
-    distances = []
+    regimes = (
+        LatentRegime.TARGET_ONLY,
+        LatentRegime.NUISANCE_ONLY,
+        LatentRegime.TARGET_COUPLED,
+        LatentRegime.TARGET_NUISANCE_SUPERPOSED,
+        LatentRegime.TARGET_NUISANCE_COUPLED,
+    )
     vector = signature.vector()
-    for regime in regimes:
-        prototype = _prototype_vector(point, regime, samples)
-        distances.append((float(np.linalg.norm(vector - prototype)), regime))
+    distances = [
+        (float(np.linalg.norm(vector - _prototype_vector(point, regime, samples))), regime)
+        for regime in regimes
+    ]
     distances.sort(key=lambda item: (item[0], item[1].value))
     d1, best = distances[0]
     d2 = distances[1][0]
@@ -328,6 +364,8 @@ def analyse_phase_point(
     thresholds: PhaseDecisionThresholds | None = None,
 ) -> PhaseInterpretation:
     thresholds = thresholds or PhaseDecisionThresholds()
+    target_truth, nuisance_truth, coupling_truth = _truth(regime)
+
     if regime is LatentRegime.BASELINE:
         zero = ProcessSignature(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
         return PhaseInterpretation(
@@ -337,12 +375,15 @@ def analyse_phase_point(
             direct_target_route=0.0,
             indirect_target_route=0.0,
             target_support=0.0,
-            nuisance_support=0.0,
-            observation_support=counterfactual_observation_support(point),
+            exogenous_nuisance_support=0.0,
+            observation_support=counterfactual_observation_support(point, coupling_available=True),
             closest_regime=None,
             identifiability_margin=1.0,
             inference=VisitInference.NO_QUERY,
             indeterminacy_reason=IndeterminacyReason.NONE,
+            target_truth=False,
+            exogenous_nuisance_truth=False,
+            coupling_truth=False,
             both_target_and_nuisance_supported=False,
             indirect_target_rescue=False,
         )
@@ -352,7 +393,14 @@ def analyse_phase_point(
     signature = _signature(point, regime, phase=phase, samples=samples)
     direct, indirect, nuisance = _route_scores(signature)
     target = max(direct, indirect)
-    support = counterfactual_observation_support(point)
+
+    # For an observed target world, only realised coupling is a valid indirect
+    # route. For target-absent nuisance-only worlds, pi4 describes the
+    # counterfactual response that would occur if a target event happened.
+    coupling_available_for_support = coupling_truth or not target_truth
+    support = counterfactual_observation_support(
+        point, coupling_available=coupling_available_for_support
+    )
     closest, margin = model_relative_identifiability(point, signature, samples=samples)
 
     if support < thresholds.support_minimum:
@@ -362,6 +410,8 @@ def analyse_phase_point(
         inference = VisitInference.UNDETERMINED
         reason = IndeterminacyReason.ESSENTIAL_AMBIGUITY
     elif target >= thresholds.target_high:
+        # A target can be defensibly present even while exogenous nuisance is
+        # also supported. Superposition is not itself an indeterminate outcome.
         inference = VisitInference.PRESENT
         reason = IndeterminacyReason.NONE
     elif target <= thresholds.target_low and nuisance < thresholds.nuisance_high:
@@ -384,12 +434,15 @@ def analyse_phase_point(
         direct_target_route=direct,
         indirect_target_route=indirect,
         target_support=target,
-        nuisance_support=nuisance,
+        exogenous_nuisance_support=nuisance,
         observation_support=support,
         closest_regime=closest,
         identifiability_margin=margin,
         inference=inference,
         indeterminacy_reason=reason,
+        target_truth=target_truth,
+        exogenous_nuisance_truth=nuisance_truth,
+        coupling_truth=coupling_truth,
         both_target_and_nuisance_supported=both,
         indirect_target_rescue=rescue,
     )
