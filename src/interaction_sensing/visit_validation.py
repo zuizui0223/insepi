@@ -1,10 +1,11 @@
 """Pre-data evaluator contracts for V15 real visit-observation validation.
 
-Biological truth, nuisance truth, and primary-stream observation support remain
-separate. Biological truth may be unresolved when even the independent reference
-truth channel cannot determine whether a visit occurred. Such windows remain
-available for primary-stream observability/QC evaluation but are excluded from
-biological-accuracy denominators rather than being silently labelled no-insect.
+Biological truth, target-coupled response truth, exogenous nuisance truth, and
+primary-stream observation support remain separate. Biological truth may be
+unresolved when even the independent reference truth channel cannot determine
+whether a visit occurred. Such windows remain available for primary-stream
+observability/QC evaluation but are excluded from biological-accuracy
+denominators rather than being silently labelled no-insect.
 
 Window-level classification is also kept distinct from event-rate inference. A
 single biological visit can span multiple analysis windows; resolved visit windows
@@ -21,6 +22,7 @@ from .observation_triad import (
     ObservationAvailability,
     ObservationInterpretation,
 )
+from .target_routes import TargetRouteEvidence
 
 
 class VisitTruthState(str, Enum):
@@ -39,6 +41,11 @@ class VisitTruthResolution(str, Enum):
     UNRESOLVED = "unresolved"
 
 
+class CoupledResponseResolution(str, Enum):
+    RESOLVED = "resolved"
+    UNRESOLVED = "unresolved"
+
+
 @dataclass(frozen=True, slots=True)
 class VisitTruthRecord:
     window_id: str
@@ -49,6 +56,8 @@ class VisitTruthRecord:
     biological_truth_resolution: VisitTruthResolution = VisitTruthResolution.RESOLVED
     reference_truth_source: str | None = None
     event_id: str | None = None
+    target_coupled_response_present: bool | None = False
+    target_coupled_response_resolution: CoupledResponseResolution = CoupledResponseResolution.RESOLVED
 
     def __post_init__(self) -> None:
         if not self.window_id:
@@ -66,9 +75,28 @@ class VisitTruthRecord:
         if self.biological_state is not VisitTruthState.VISIT_EVENT and self.event_id is not None:
             raise ValueError("event_id is reserved for visit_event truth")
 
+        if self.target_coupled_response_resolution is CoupledResponseResolution.RESOLVED:
+            if self.target_coupled_response_present is None:
+                raise ValueError("resolved coupled-response truth requires a boolean state")
+        elif self.target_coupled_response_present is not None:
+            raise ValueError("unresolved coupled-response truth must not carry a present/absent state")
+
+        # A positively identified target-driven local response is causal evidence
+        # of target contact in the V14/V15 definition. If reference evidence cannot
+        # support that implication, the coupling label must remain unresolved.
+        if self.target_coupled_response_present is True:
+            if self.biological_truth_resolution is not VisitTruthResolution.RESOLVED:
+                raise ValueError("resolved target-coupled response requires resolved biological truth")
+            if self.biological_state not in {VisitTruthState.TARGET_CONTACT, VisitTruthState.VISIT_EVENT}:
+                raise ValueError("target-coupled response requires target_contact or visit_event truth")
+
     @property
     def biological_truth_resolved(self) -> bool:
         return self.biological_truth_resolution is VisitTruthResolution.RESOLVED
+
+    @property
+    def coupled_response_truth_resolved(self) -> bool:
+        return self.target_coupled_response_resolution is CoupledResponseResolution.RESOLVED
 
     @property
     def is_visit(self) -> bool:
@@ -88,6 +116,8 @@ class VisitPredictionRecord:
     protected_random_audit: bool = False
     target_score: float | None = None
     nuisance_burden: float | None = None
+    direct_target_score: float | None = None
+    coupled_target_score: float | None = None
 
     def __post_init__(self) -> None:
         if not self.window_id:
@@ -96,7 +126,12 @@ class VisitPredictionRecord:
             raise ValueError("a window cannot be both positive and negative evidence")
         if self.censored and (self.positive_evidence or self.negative_evidence):
             raise ValueError("a censored window cannot be used as interpretable positive/negative evidence")
-        for name, value in (("target_score", self.target_score), ("nuisance_burden", self.nuisance_burden)):
+        for name, value in (
+            ("target_score", self.target_score),
+            ("nuisance_burden", self.nuisance_burden),
+            ("direct_target_score", self.direct_target_score),
+            ("coupled_target_score", self.coupled_target_score),
+        ):
             if value is not None and not 0.0 <= value <= 1.0:
                 raise ValueError(f"{name} must lie in [0, 1]")
 
@@ -125,10 +160,29 @@ class VisitValidationSummary:
     shared_blind_spot_truth_windows: int
     shared_blind_spot_audited: int
     shared_blind_spot_discovery_rate: float
+    resolved_coupled_response_windows: int
+    unresolved_coupled_response_windows: int
+    weak_direct_coupled_visit_windows: int
+    indirect_target_rescue_count: int
+    indirect_target_rescue_rate: float
+    observable_no_insect_windows: int
+    spurious_coupled_candidate_count: int
+    spurious_coupled_candidate_rate: float
 
 
-def prediction_from_triad(window_id: str, result: ObservationInterpretation, *, protected_random_audit: bool = False) -> VisitPredictionRecord:
-    """Convert a V14 triad interpretation to the V15 evaluator contract."""
+def prediction_from_triad(
+    window_id: str,
+    result: ObservationInterpretation,
+    *,
+    protected_random_audit: bool = False,
+    target_routes: TargetRouteEvidence | None = None,
+) -> VisitPredictionRecord:
+    """Convert a V14 triad interpretation to the V15 evaluator contract.
+
+    Route-specific target scores are optional so historical aggregate-only
+    predictions remain evaluable. Indirect-rescue metrics are calculated only for
+    predictions that carry those route-specific scores.
+    """
 
     return VisitPredictionRecord(
         window_id=window_id,
@@ -140,6 +194,8 @@ def prediction_from_triad(window_id: str, result: ObservationInterpretation, *, 
         protected_random_audit=protected_random_audit,
         target_score=result.target_score,
         nuisance_burden=result.nuisance_burden,
+        direct_target_score=None if target_routes is None else target_routes.direct_insect_score,
+        coupled_target_score=None if target_routes is None else target_routes.coupled_target_score,
     )
 
 
@@ -152,15 +208,17 @@ def evaluate_visit_predictions(
     predictions: list[VisitPredictionRecord],
     *,
     target_low_threshold: float = 0.25,
+    target_high_threshold: float = 0.65,
     nuisance_low_threshold: float = 0.60,
 ) -> VisitValidationSummary:
-    """Evaluate visit inference and primary-stream censoring.
+    """Evaluate visit inference, indirect target rescue and censoring.
 
     Biological metrics use resolved reference truth only. Observation-support
     metrics use every window because primary-stream observability can be annotated
-    even when biological truth is unresolved. Confidence intervals and event-rate
-    estimators remain outside this pre-data evaluator until the V15 cluster /
-    exposure-time design is frozen.
+    even when biological truth is unresolved. Target-coupling metrics additionally
+    require resolved coupling truth and route-specific prediction scores.
+    Confidence intervals and event-rate estimators remain outside this pre-data
+    evaluator until the V15 cluster/exposure-time design is frozen.
     """
 
     truth_by_id = {row.window_id: row for row in truth}
@@ -210,6 +268,34 @@ def evaluate_visit_predictions(
     ]
     shared_blind_spot_audited = sum(p.protected_random_audit for _, p in shared_blind_spots)
 
+    resolved_coupling = [(t, p) for t, p in rows if t.coupled_response_truth_resolved]
+    unresolved_coupling = [(t, p) for t, p in rows if not t.coupled_response_truth_resolved]
+    weak_direct_coupled_visits = [
+        (t, p)
+        for t, p in resolved_rows
+        if t.is_visit
+        and t.support_truth is ObservationAvailability.OBSERVABLE
+        and t.target_coupled_response_present is True
+        and p.direct_target_score is not None
+        and p.direct_target_score <= target_low_threshold
+        and p.coupled_target_score is not None
+    ]
+    indirect_rescues = sum(
+        p.retain_candidate and p.coupled_target_score is not None and p.coupled_target_score >= target_high_threshold
+        for _, p in weak_direct_coupled_visits
+    )
+
+    observable_no_insect = [
+        (t, p)
+        for t, p in resolved_rows
+        if t.biological_state is VisitTruthState.NO_INSECT
+        and t.support_truth is ObservationAvailability.OBSERVABLE
+    ]
+    spurious_coupled = sum(
+        p.retain_candidate and p.coupled_target_score is not None and p.coupled_target_score >= target_high_threshold
+        for _, p in observable_no_insect
+    )
+
     return VisitValidationSummary(
         n_windows=len(rows),
         resolved_biological_truth_windows=len(resolved_rows),
@@ -233,4 +319,12 @@ def evaluate_visit_predictions(
         shared_blind_spot_truth_windows=len(shared_blind_spots),
         shared_blind_spot_audited=shared_blind_spot_audited,
         shared_blind_spot_discovery_rate=_ratio(shared_blind_spot_audited, len(shared_blind_spots)),
+        resolved_coupled_response_windows=len(resolved_coupling),
+        unresolved_coupled_response_windows=len(unresolved_coupling),
+        weak_direct_coupled_visit_windows=len(weak_direct_coupled_visits),
+        indirect_target_rescue_count=indirect_rescues,
+        indirect_target_rescue_rate=_ratio(indirect_rescues, len(weak_direct_coupled_visits)),
+        observable_no_insect_windows=len(observable_no_insect),
+        spurious_coupled_candidate_count=spurious_coupled,
+        spurious_coupled_candidate_rate=_ratio(spurious_coupled, len(observable_no_insect)),
     )
