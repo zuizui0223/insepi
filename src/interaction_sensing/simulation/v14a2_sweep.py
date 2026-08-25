@@ -1,9 +1,4 @@
-"""Frozen execution helpers for the V14a2 spatiotemporal phase sweep.
-
-The helpers separate construction from execution so prototype centroids are
-cached once per coordinate. They contain no PolliPi dependency and no adaptive
-parameter search.
-"""
+"""Frozen execution helpers for the V14a2 spatiotemporal phase sweep."""
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -83,8 +78,11 @@ def margin_from_prototypes(
     vector = signature.vector()
     distances = sorted(float(np.linalg.norm(vector - prototypes[regime])) for regime in DEVIATION_REGIME_ORDER)
     d1, d2 = distances[:2]
+    # Exact best/second-best ties are maximal ambiguity, not maximal certainty.
+    # V14a inherited the opposite edge-case convention; V14a2 fixes it before
+    # any scientific result is generated.
     if d2 <= _EPS:
-        return 1.0 if d1 <= _EPS else 0.0
+        return 0.0
     return float(np.clip((d2 - d1) / (d2 + _EPS), 0.0, 1.0))
 
 

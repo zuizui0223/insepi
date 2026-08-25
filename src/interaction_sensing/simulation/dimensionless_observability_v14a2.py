@@ -153,11 +153,7 @@ def _ou_process(rng: np.random.Generator, n: int, dt: float, timescale: float) -
     return out
 
 
-def nuisance_field(
-    point: SpatiotemporalPoint,
-    *,
-    seed: int,
-) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+def nuisance_field(point: SpatiotemporalPoint, *, seed: int) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     times = _time_grid(point)
     dt = float(times[1] - times[0])
     rng = np.random.default_rng(seed)
@@ -170,16 +166,16 @@ def nuisance_field(
     return times, shared, np.stack(refs, axis=0)
 
 
+def _rms(a: np.ndarray) -> float:
+    return float(np.sqrt(np.mean(np.square(a)))) if len(a) else 0.0
+
+
 def normalized_spatial_structure(focal: np.ndarray, reference: np.ndarray) -> float:
     """Amplitude-sensitive normalized structure function in [0,1]."""
     if focal.shape != reference.shape:
         raise ValueError("focal and reference must share shape")
-    numerator = float(np.sqrt(np.mean(np.square(focal - reference))))
-    denominator = (
-        float(np.sqrt(np.mean(np.square(focal))))
-        + float(np.sqrt(np.mean(np.square(reference))))
-        + _EPS
-    )
+    numerator = _rms(focal - reference)
+    denominator = _rms(focal) + _rms(reference) + _EPS
     return float(np.clip(numerator / denominator, 0.0, 1.0))
 
 
@@ -187,13 +183,7 @@ def normalized_local_power_excess(focal: np.ndarray, reference: np.ndarray) -> f
     """Positive focal amplitude excess over the reference, normalized to [0,1]."""
     focal_rms = _rms(focal)
     reference_rms = _rms(reference)
-    return float(
-        np.clip(
-            max(0.0, focal_rms - reference_rms) / (focal_rms + reference_rms + _EPS),
-            0.0,
-            1.0,
-        )
-    )
+    return float(np.clip(max(0.0, focal_rms - reference_rms) / (focal_rms + reference_rms + _EPS), 0.0, 1.0))
 
 
 def _abs_corr(a: np.ndarray, b: np.ndarray) -> float:
@@ -201,10 +191,6 @@ def _abs_corr(a: np.ndarray, b: np.ndarray) -> float:
         return 0.0
     value = float(np.corrcoef(a, b)[0, 1])
     return 0.0 if not np.isfinite(value) else float(np.clip(abs(value), 0.0, 1.0))
-
-
-def _rms(a: np.ndarray) -> float:
-    return float(np.sqrt(np.mean(np.square(a)))) if len(a) else 0.0
 
 
 def _restoration_score(a: np.ndarray) -> float:
@@ -241,10 +227,8 @@ def _target_components(
     if coupling_present and point.pi4 > 0:
         post = np.maximum(times, 0.0)
         triggered = times >= 0.0
-        coupling[triggered] = (
-            point.pi4
-            * np.exp(-post[triggered] / max(2.0 * point.pi2, _EPS))
-            * np.sin((2.0 * pi / max(point.pi2, _EPS)) * post[triggered])
+        coupling[triggered] = point.pi4 * np.exp(-post[triggered] / max(2.0 * point.pi2, _EPS)) * np.sin(
+            (2.0 * pi / max(point.pi2, _EPS)) * post[triggered]
         )
 
     half = point.pi1 / 2.0
@@ -267,10 +251,11 @@ def _target_components(
 def sampling_support(point: SpatiotemporalPoint, minimum_samples: float = 8.0) -> tuple[float, float, float]:
     if minimum_samples <= 0:
         raise ValueError("minimum_samples must be positive")
-    target = min(1.0, point.pi6 / minimum_samples)
-    nuisance = min(1.0, point.samples_per_nuisance_timescale / minimum_samples)
-    nuisance_window = min(1.0, point.nuisance_timescales_per_window)
-    return target, nuisance, nuisance_window
+    return (
+        min(1.0, point.pi6 / minimum_samples),
+        min(1.0, point.samples_per_nuisance_timescale / minimum_samples),
+        min(1.0, point.nuisance_timescales_per_window),
+    )
 
 
 def temporally_resolved(
@@ -287,15 +272,9 @@ def temporally_resolved(
     )
 
 
-def signature_for(
-    point: SpatiotemporalPoint,
-    regime: LatentRegime,
-    *,
-    seed: int,
-) -> SpatiotemporalSignature:
+def signature_for(point: SpatiotemporalPoint, regime: LatentRegime, *, seed: int) -> SpatiotemporalSignature:
     target_present, nuisance_present, coupling_present = truth(regime)
     times = _time_grid(point)
-
     if nuisance_present:
         times, focal_nuisance, references = nuisance_field(point, seed=seed)
     else:
@@ -303,23 +282,18 @@ def signature_for(
         references = np.zeros((len(_REFERENCE_DISTANCES), len(times)), dtype=float)
 
     actor, coupling, completeness, transit = _target_components(
-        point,
-        times,
-        target_present=target_present,
-        coupling_present=coupling_present,
+        point, times, target_present=target_present, coupling_present=coupling_present
     )
     scene_focal = focal_nuisance + coupling
     reference = np.median(references, axis=0)
 
-    # Observation-only spatial statistics: coupling is NOT removed with latent
-    # truth before feature extraction. It must compete with nuisance empirically.
+    # Observation-only scene statistics: no latent nuisance/coupling subtraction.
     corr = _abs_corr(scene_focal, reference)
     structure = normalized_spatial_structure(scene_focal, reference)
     coherence = 1.0 - structure
     local_excess = normalized_local_power_excess(scene_focal, reference)
 
-    # Direct actor evidence is a separate observed route and must not leak into
-    # the target-coupled scene-response route.
+    # Direct actor evidence is a separate observed route and does not enter local scene response.
     direct_rms = _rms(actor)
     scene_rms = _rms(scene_focal)
     direct_fraction = direct_rms / (direct_rms + scene_rms + _EPS)
@@ -342,35 +316,20 @@ def signature_for(
 
 
 def route_scores(signature: SpatiotemporalSignature) -> tuple[float, float, float]:
-    direct = (
-        signature.direct_target_signal_fraction
-        * (0.35 + 0.65 * signature.entry_exit_completeness)
-        * signature.target_sampling_support
-    )
-    indirect = (
-        signature.local_excess_motion_fraction
-        * (0.5 + 0.5 * signature.restoration_score)
-        * signature.target_sampling_support
-    )
-    nuisance = (
-        signature.spatial_coherence
-        * max(signature.restoration_score, signature.spectral_concentration)
-        * min(signature.nuisance_sampling_support, signature.nuisance_window_support)
+    direct = signature.direct_target_signal_fraction * (0.35 + 0.65 * signature.entry_exit_completeness) * signature.target_sampling_support
+    indirect = signature.local_excess_motion_fraction * (0.5 + 0.5 * signature.restoration_score) * signature.target_sampling_support
+    nuisance = signature.spatial_coherence * max(signature.restoration_score, signature.spectral_concentration) * min(
+        signature.nuisance_sampling_support, signature.nuisance_window_support
     )
     return tuple(float(np.clip(v, 0.0, 1.0)) for v in (direct, indirect, nuisance))
 
 
-def observation_support(
-    point: SpatiotemporalPoint,
-    *,
-    coupling_available: bool,
-) -> float:
+def observation_support(point: SpatiotemporalPoint, *, coupling_available: bool) -> float:
     target_sampling, _, _ = sampling_support(point)
     window_support = min(1.0, point.pi1)
     direct_support = point.pi3 / (1.0 + point.pi3)
     coupled_support = point.pi4 / (1.0 + point.pi4) if coupling_available else 0.0
-    amplitude_support = max(direct_support, coupled_support)
-    return float(np.clip(min(window_support, target_sampling, amplitude_support), 0.0, 1.0))
+    return float(np.clip(min(window_support, target_sampling, max(direct_support, coupled_support)), 0.0, 1.0))
 
 
 def _prototype_vector(point: SpatiotemporalPoint, regime: LatentRegime) -> np.ndarray:
@@ -387,13 +346,11 @@ def identifiability_margin(point: SpatiotemporalPoint, signature: Spatiotemporal
         LatentRegime.TARGET_NUISANCE_COUPLED,
     )
     vector = signature.vector()
-    distances = sorted(
-        float(np.linalg.norm(vector - _prototype_vector(point, regime)))
-        for regime in regimes
-    )
+    distances = sorted(float(np.linalg.norm(vector - _prototype_vector(point, regime))) for regime in regimes)
     d1, d2 = distances[:2]
+    # An exact best/second-best tie is zero identifiability margin.
     if d2 <= _EPS:
-        return 1.0 if d1 <= _EPS else 0.0
+        return 0.0
     return float(np.clip((d2 - d1) / (d2 + _EPS), 0.0, 1.0))
 
 
@@ -409,9 +366,7 @@ def analyse_point(
     nuisance_high: float = 0.55,
 ) -> SpatiotemporalInterpretation:
     target_truth, nuisance_truth, coupling_truth = truth(regime)
-    coupling_available_for_support = coupling_truth or not target_truth
-    support = observation_support(point, coupling_available=coupling_available_for_support)
-
+    support = observation_support(point, coupling_available=(coupling_truth or not target_truth))
     if regime is LatentRegime.BASELINE:
         zero = SpatiotemporalSignature(*(0.0 for _ in range(12)))
         return SpatiotemporalInterpretation(
@@ -424,22 +379,16 @@ def analyse_point(
     direct, indirect, nuisance = route_scores(signature)
     target = max(direct, indirect)
     margin = identifiability_margin(point, signature)
-
     if support < support_minimum:
-        inference = VisitInferenceA2.UNDETERMINED
-        reason = IndeterminacyReasonA2.INFORMATION_ABSENT
+        inference, reason = VisitInferenceA2.UNDETERMINED, IndeterminacyReasonA2.INFORMATION_ABSENT
     elif margin < ambiguity_margin:
-        inference = VisitInferenceA2.UNDETERMINED
-        reason = IndeterminacyReasonA2.ESSENTIAL_AMBIGUITY
+        inference, reason = VisitInferenceA2.UNDETERMINED, IndeterminacyReasonA2.ESSENTIAL_AMBIGUITY
     elif target >= target_high:
-        inference = VisitInferenceA2.PRESENT
-        reason = IndeterminacyReasonA2.NONE
+        inference, reason = VisitInferenceA2.PRESENT, IndeterminacyReasonA2.NONE
     elif target <= target_low and nuisance < nuisance_high:
-        inference = VisitInferenceA2.ABSENT
-        reason = IndeterminacyReasonA2.NONE
+        inference, reason = VisitInferenceA2.ABSENT, IndeterminacyReasonA2.NONE
     else:
-        inference = VisitInferenceA2.UNDETERMINED
-        reason = IndeterminacyReasonA2.MODEL_UNCERTAINTY
+        inference, reason = VisitInferenceA2.UNDETERMINED, IndeterminacyReasonA2.MODEL_UNCERTAINTY
 
     both = target >= target_high and nuisance >= nuisance_high
     rescue = inference is VisitInferenceA2.PRESENT and direct < target_high and indirect >= target_high
