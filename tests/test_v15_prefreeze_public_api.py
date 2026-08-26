@@ -34,6 +34,15 @@ def test_v15_facade_exposes_fail_closed_coupled_field_baseline() -> None:
     assert callable(v15.measure_field_coupled_response)
 
 
+def test_v15_facade_exposes_ordinal_operational_calibration_schema() -> None:
+    assert v15.STRUCTURAL_TARGET_LOW == 0.0
+    assert v15.STRUCTURAL_TARGET_HIGH == 1.0
+    assert v15.STRUCTURAL_NUISANCE_HIGH == 1.0
+    assert v15.NuisanceCalibrationFeature.PROCESS_INDEX.value == "nuisance_process_index"
+    assert v15.OrdinalBoundary.__name__ == "OrdinalBoundary"
+    assert callable(v15.build_v15_operational_evidence)
+
+
 def test_v15_facade_exposes_parameterized_cluster_power_planner() -> None:
     assert v15.EffectDirection.HIGHER_IS_BETTER.value == "higher_is_better"
     assert v15.ClusterPlanningAssumptions.__name__ == "ClusterPlanningAssumptions"
