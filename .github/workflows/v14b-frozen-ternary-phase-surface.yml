@@ -19,11 +19,11 @@ jobs:
       - name: Install frozen runtime
         run: |
           python -m pip install --upgrade pip
-          python -m pip install -e .
+          python -m pip install -e '.[dev]'
           python -m pip install 'numpy==2.4.6'
       - name: Verify one-shot marker and frozen contracts
         run: |
-          test "$(cat .github/v14b_frozen_ternary_phase_surface_once)" = "RUN_ONCE_V14B_FROZEN_TERNARY_PHASE_SURFACE"
+          test "$(cat .github/v14b_frozen_ternary_phase_surface_once)" = "RUN_ONCE_V14B_FROZEN_TERNARY_PHASE_SURFACE_V2"
           pytest -q tests/test_ternary_decision_v14b.py tests/test_target_observer_v14b.py tests/test_nuisance_observer_v14b.py
           python - <<'PY'
           import json
@@ -53,7 +53,7 @@ jobs:
             'v14b_ternary_output/phase_surface.json',
           ]
           def h(path):
-            x=hashlib.sha256();
+            x=hashlib.sha256()
             with open(path,'rb') as f:
               for b in iter(lambda:f.read(1024*1024),b''): x.update(b)
             return x.hexdigest()
@@ -65,7 +65,7 @@ jobs:
             'numpy':np.__version__,
             'sha256':{p:h(p) for p in files},
           }
-          json.dump(r,open('v14b_ternary_output/receipt.json','w'),indent=2,sort_keys=True); print()
+          json.dump(r,open('v14b_ternary_output/receipt.json','w'),indent=2,sort_keys=True)
           PY
       - uses: actions/upload-artifact@v4
         with:
