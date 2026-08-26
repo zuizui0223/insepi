@@ -57,11 +57,25 @@
       "note": "PolliPi main ordinal 0/0.5/1 target-evidence mapping is frozen as a positive-only direct target route with cross-repository provenance; low evidence cannot be inverted into absence and no coupled evidence is invented."
     },
     {
+      "name": "coupled_field_adapter",
+      "status": "development_defined",
+      "evidence_path": "benchmarks/v15_coupled_field_adapter_v1_contract.json",
+      "sha256": null,
+      "note": "The separate coupled-response and target-link outputs and independence rules are defined, but no final field measurement/calibration is yet frozen."
+    },
+    {
       "name": "nuisance_field_adapter",
       "status": "development_defined",
       "evidence_path": "src/interaction_sensing/nuisance_field_measurement_v15.py",
       "sha256": null,
       "note": "Primary-stream continuous process measurement baseline exists. It is uncalibrated and must not be treated as nuisance probability or held-out-frozen risk mapping."
+    },
+    {
+      "name": "target_nuisance_decision_calibration",
+      "status": "development_defined",
+      "evidence_path": "benchmarks/v15_target_nuisance_decision_calibration_v1_contract.json",
+      "sha256": null,
+      "note": "Operational target high/low, nuisance high and the mapping from field nuisance measurements to false-event/missed-event/attribution risks must be frozen from development-only data before held-out decisions."
     },
     {
       "name": "forced_vs_certified_absence_metrics",
