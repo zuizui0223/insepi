@@ -37,7 +37,7 @@ def test_current_v15_prefreeze_registry_is_blocked_safe_with_explicit_missing_wo
     assert readiness.safe_target_presence_upper_bound == 1.0
     assert "absence_strategy" in readiness.blockers
     assert "nuisance_field_adapter" in readiness.development_defined_items
-    assert "sampling_power_plan" in readiness.unset_items
+    assert "sampling_power_plan" in readiness.development_defined_items
     assert "claim_thresholds" in readiness.unset_items
     assert set(readiness.frozen_items) == set()
 

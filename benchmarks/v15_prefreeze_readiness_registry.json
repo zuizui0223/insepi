@@ -77,10 +77,10 @@
     },
     {
       "name": "sampling_power_plan",
-      "status": "unset",
-      "evidence_path": null,
+      "status": "development_defined",
+      "evidence_path": "benchmarks/v15_cluster_power_plan_v1_contract.json",
       "sha256": null,
-      "note": "No final MESI-linked cluster/sample-size plan has been frozen."
+      "note": "A parameterized cluster-aware precision/power calculation method now exists. Final MESI, endpoint assumptions, ICC, cluster count, split rule and hashes remain to be frozen before held-out scoring."
     },
     {
       "name": "claim_thresholds",

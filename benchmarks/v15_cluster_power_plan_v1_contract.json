@@ -1,0 +1,49 @@
+{
+  "schema": "insepi-v15-v2-cluster-power-plan-v1-contract",
+  "generation": "V15-v2",
+  "status": "development-planning-contract-not-yet-frozen",
+  "purpose": "Define how V15-v2 converts an explicitly chosen MESI and cluster assumptions into a pre-held-out sample requirement without inventing the scientific inputs.",
+  "replication_rule": {
+    "frames_are_replicates": false,
+    "windows_are_independent_replicates": false,
+    "cluster_unit_must_be_named": true,
+    "expected_field_default_concept": "recording day x focal scene/flower or another predeclared independent capture block"
+  },
+  "required_freeze_inputs": [
+    "primary endpoint(s)",
+    "effect direction for comparison endpoints",
+    "minimum effect of scientific interest (MESI)",
+    "development-only baseline and alternative rate assumptions or an explicit precision target",
+    "mean evaluable windows per independent cluster",
+    "intracluster correlation or a justified conservative bound",
+    "two-sided alpha",
+    "target power",
+    "final cluster unit and held-out split rule"
+  ],
+  "implemented_methods": {
+    "single_binary_metric_precision": {
+      "calculation": "normal binomial confidence-half-width approximation followed by equal-cluster design effect",
+      "unknown_rate_rule": "explicit p=0.5 worst-case Bernoulli variance; never infer p from held-out data",
+      "role": "precision planning for rates such as visit recall, unobservable recall, or false-censor fraction"
+    },
+    "binary_system_comparison": {
+      "calculation": "two-sided independent-proportions normal power approximation followed by equal-cluster design effect",
+      "pairing_gain": "not assumed",
+      "role": "conservative planning baseline when the same windows will later compare two systems"
+    }
+  },
+  "equal_cluster_design_effect": "1 + (mean_windows_per_cluster - 1) * ICC",
+  "hard_rules": [
+    "planned comparison effect must be at least the declared MESI",
+    "effect direction must match the scientific endpoint",
+    "no final sample size exists until all planning inputs are explicitly supplied",
+    "held-out outputs may not be used to choose MESI, baseline rate, ICC, alpha, target power, or final N",
+    "positive within-window pairing efficiency is not assumed without development-only evidence committed before held-out scoring",
+    "the current normal/design-effect calculations are planning approximations, not the final cluster-level uncertainty model"
+  ],
+  "freeze_boundary": {
+    "development_defined_when": "the calculation method is implemented and tested",
+    "frozen_only_when": "endpoint, MESI, assumptions, resulting cluster count, split rule, evidence files, and SHA-256 values are committed before held-out scoring"
+  },
+  "claim_boundary": "No numerical power result or final field sample size is asserted by this development contract."
+}
