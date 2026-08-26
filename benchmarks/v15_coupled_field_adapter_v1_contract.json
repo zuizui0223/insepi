@@ -1,0 +1,31 @@
+{
+  "schema": "insepi-v15-v2-coupled-field-adapter-v1-contract",
+  "generation": "V15-v2",
+  "status": "development-defined-not-frozen",
+  "purpose": "Define the missing field bridge for C without inventing coupled evidence from the direct target or nuisance channels.",
+  "required_outputs": {
+    "coupled_response_score": "positive evidence that the focal biological target/flower exhibited the predeclared local response pattern",
+    "target_link_confidence": "independent evidence that the response is attributable to the focal actor/interaction rather than arbitrary local motion"
+  },
+  "hard_independence_rules": [
+    "coupled_response_score cannot be copied from PolliPi direct target evidence",
+    "target_link_confidence cannot be copied from PolliPi direct target evidence",
+    "neither coupled field quantity may be defined as 1 - nuisance",
+    "nuisance truth cannot be used as a runtime input to create positive coupled evidence",
+    "known biological truth is annotation/calibration-only and cannot be consumed at held-out runtime"
+  ],
+  "runtime_combination": "usable coupled target route = coupled_response_score * target_link_confidence",
+  "current_state": {
+    "field_measurement_implementation": null,
+    "field_calibration": null,
+    "frozen_threshold_or_mapping": null
+  },
+  "freeze_requirements": [
+    "predeclare the primary-stream measurement used for local target response",
+    "predeclare the independent attribution/link measurement",
+    "freeze any parameters or thresholds from development-only data",
+    "verify no target/nuisance/truth leakage in runtime inputs",
+    "register the final artifact SHA-256 before held-out scoring"
+  ],
+  "claim_boundary": "Until frozen, C may remain absent from a field implementation or be treated as development-only; no indirect-rescue field claim is authorized."
+}

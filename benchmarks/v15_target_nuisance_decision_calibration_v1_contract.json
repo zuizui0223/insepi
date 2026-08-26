@@ -1,0 +1,54 @@
+{
+  "schema": "insepi-v15-v2-target-nuisance-decision-calibration-v1-contract",
+  "generation": "V15-v2",
+  "status": "development-defined-not-frozen",
+  "purpose": "Prevent held-out tuning of operational target/nuisance decision boundaries and explicitly calibrate the field nuisance measurement into effect-specific nuisance evidence.",
+  "current_development_defaults_not_frozen": {
+    "target_high": 0.65,
+    "target_low": 0.25,
+    "nuisance_high": 0.60,
+    "source": "VisitSystemThresholds / ObservationTriadPolicy development defaults"
+  },
+  "field_nuisance_mapping_required": {
+    "input": "FieldNuisanceProcessMeasurement plus development-only nuisance truth/effect labels",
+    "outputs": [
+      "false_event_risk",
+      "missed_event_risk",
+      "attribution_risk"
+    ],
+    "rule": "The three positive nuisance-effect risks must be calibrated or otherwise frozen independently enough that one uncalibrated scalar is not silently reused as all three effects."
+  },
+  "target_boundary_required": {
+    "direct_input_scale": "PolliPi ordinal-v14-reference frozen by the target field adapter",
+    "aggregate_target_rule": "max(direct_insect_score, coupled_response_score * target_link_confidence)",
+    "target_high": null,
+    "target_low": null
+  },
+  "nuisance_boundary_required": {
+    "nuisance_high": null,
+    "effect_risk_mapping": null
+  },
+  "hard_rules": [
+    "final target_high, target_low and nuisance_high must be frozen before held-out scoring",
+    "target_low must remain below target_high",
+    "no threshold may be chosen from held-out outcomes",
+    "field nuisance process index is not a calibrated probability by itself",
+    "claim thresholds are separate from observer decision thresholds",
+    "O thresholds/calibration remain a separate readiness item"
+  ],
+  "development_inputs_allowed": [
+    "development-only layered truth ledgers",
+    "development-only PolliPi target evidence",
+    "development-only coupled field measurements once implemented",
+    "development-only nuisance field measurements",
+    "predeclared false-certainty/error costs"
+  ],
+  "freeze_output_required": [
+    "final operational threshold values",
+    "final nuisance effect-risk mapping or frozen deterministic equivalent",
+    "calibration dataset/split provenance",
+    "calibration method and uncertainty diagnostics",
+    "SHA-256 of the final calibration artifact"
+  ],
+  "claim_boundary": "Until frozen, V15-v2 may develop adapters and calibration procedures but must not run held-out operational T/C/N decisions using the development defaults as if they were field-validated thresholds."
+}
