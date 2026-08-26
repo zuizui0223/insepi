@@ -1,0 +1,97 @@
+{
+  "schema": "insepi-v15a-cross-state-observability-protocol-v1",
+  "generation": "V15a",
+  "status": "prefrozen-before-first-expansion",
+  "scientific_question": "When the frozen physical target/nuisance states are held fixed, does an independently varied primary-stream observation-support factor make rejection and censorship functions of observation condition rather than silent evidence of target absence?",
+  "parent_identity": {
+    "v14b_locked_summary_canonical_sha256": "14af819a27e78c4175e076d2ad27499c4cc35d7763babb615c26eef1327c1b45",
+    "v14b_phase_surface_sha256": "1d2c7c1f8f7370aad3cdde4d9d9d47bf318b2a057b6f788d3a48df9ea8d16c34",
+    "v14b_prefield_closeout_canonical_sha256": "ad5b3a60b2f82d1f079076a73acc7aa55a53dc33b9703a5a3625762c5e3646f6",
+    "v15_observability_contract_canonical_sha256": "1c20e595af1ffc22ac2558d080e38390572cc32ca9ed91798b13624bd7d87248"
+  },
+  "physical_regimes": [
+    "baseline",
+    "target_only",
+    "nuisance_only",
+    "target_coupled",
+    "target_nuisance_superposed",
+    "target_nuisance_coupled"
+  ],
+  "support_factor": {
+    "estimator": "PrimaryStreamSupportEstimator minimum-component rule",
+    "observable_threshold": 0.7,
+    "unobservable_threshold": 0.3,
+    "components": [
+      "target_zone_coverage",
+      "target_zone_visibility",
+      "spatial_resolution",
+      "photometric_sufficiency",
+      "temporal_continuity"
+    ],
+    "profiles": [
+      {"name":"observable_all_adequate","limiting_component":null,"limiting_score":0.9,"other_component_score":0.9,"expected_availability":"observable"},
+      {"name":"compromised_target_zone_coverage","limiting_component":"target_zone_coverage","limiting_score":0.5,"other_component_score":0.9,"expected_availability":"compromised"},
+      {"name":"compromised_target_zone_visibility","limiting_component":"target_zone_visibility","limiting_score":0.5,"other_component_score":0.9,"expected_availability":"compromised"},
+      {"name":"compromised_spatial_resolution","limiting_component":"spatial_resolution","limiting_score":0.5,"other_component_score":0.9,"expected_availability":"compromised"},
+      {"name":"compromised_photometric_sufficiency","limiting_component":"photometric_sufficiency","limiting_score":0.5,"other_component_score":0.9,"expected_availability":"compromised"},
+      {"name":"compromised_temporal_continuity","limiting_component":"temporal_continuity","limiting_score":0.5,"other_component_score":0.9,"expected_availability":"compromised"},
+      {"name":"unobservable_target_zone_coverage","limiting_component":"target_zone_coverage","limiting_score":0.1,"other_component_score":0.9,"expected_availability":"unobservable"},
+      {"name":"unobservable_target_zone_visibility","limiting_component":"target_zone_visibility","limiting_score":0.1,"other_component_score":0.9,"expected_availability":"unobservable"},
+      {"name":"unobservable_spatial_resolution","limiting_component":"spatial_resolution","limiting_score":0.1,"other_component_score":0.9,"expected_availability":"unobservable"},
+      {"name":"unobservable_photometric_sufficiency","limiting_component":"photometric_sufficiency","limiting_score":0.1,"other_component_score":0.9,"expected_availability":"unobservable"},
+      {"name":"unobservable_temporal_continuity","limiting_component":"temporal_continuity","limiting_score":0.1,"other_component_score":0.9,"expected_availability":"unobservable"}
+    ]
+  },
+  "decision_layer": {
+    "observable": "retain_exact_v14b_state_and_reason",
+    "compromised": "undetermined_with_observation_compromised_reason",
+    "unobservable": "censored_with_observation_unavailable_reason",
+    "unobservable_is_target_absence": false,
+    "unobservable_is_a_physical_process": false
+  },
+  "estimands": {
+    "primary": "Pr(final epistemic state | frozen physical regime, synthetic observation-support profile)",
+    "reason_decomposition": [
+      "information_absent",
+      "overlap_or_attribution",
+      "observation_compromised",
+      "observation_unavailable"
+    ],
+    "partial_identification_width": "Pr(baseline or undetermined or censored | designed profile lattice)",
+    "forced_binary_comparator": "target maps to present; all other final states map to absent"
+  },
+  "retained_parent_freeze": {
+    "familywise_alpha": 0.05,
+    "nuisance_threshold": 4.33898869355123e-06,
+    "observer_retuning": false,
+    "parent_world_regeneration": false
+  },
+  "execution_contract": {
+    "mode": "deterministic full-factorial expansion of locked V14b counts",
+    "base_world_count": 5880000,
+    "support_profile_count": 11,
+    "expected_expanded_world_count": 64680000,
+    "prefreeze_commit_required": true,
+    "first_result_path": "benchmarks/v15a_cross_state_observability_result.json",
+    "first_result_is_retained_without_post_result_tuning": true
+  },
+  "freeze_rules": {
+    "profile_lattice_changes_forbidden": true,
+    "decision_mapping_changes_forbidden": true,
+    "parent_observer_changes_forbidden": true,
+    "parent_threshold_changes_forbidden": true,
+    "measurement_results_cannot_trigger_retuning": true,
+    "first_result_must_be_retained": true
+  },
+  "claim_ceiling": {
+    "supported_if_contract_executes": "software-semantic evidence that observation compromise and unavailability change the inferential state across the same physical universe",
+    "forbidden": [
+      "field prevalence",
+      "field-calibrated observability",
+      "animal intention recognition",
+      "universal support thresholds",
+      "claim that every rejection is desirable",
+      "superiority over every possible binary classifier"
+    ]
+  }
+}

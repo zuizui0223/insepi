@@ -1,0 +1,32 @@
+name: V15a cross-state observability
+
+on:
+  pull_request:
+    paths:
+      - "src/interaction_sensing/cross_state_observability_v15a.py"
+      - "scripts/run_v15a_cross_state_observability.py"
+      - "benchmarks/v15a_cross_state_observability_protocol.json"
+      - "benchmarks/v15a_cross_state_observability_result.json"
+      - "tests/test_v15a_cross_state_observability_prefreeze.py"
+      - "tests/test_v15a_cross_state_observability_result.py"
+      - "docs/V15A_CROSS_STATE_OBSERVABILITY_CLOSEOUT.md"
+      - ".github/workflows/v15a-cross-state-observability.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  prefreeze-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install package and test tools
+        run: python -m pip install -e ".[dev]"
+      - name: Verify the prefrozen independent-O contract
+        run: |
+          pytest -q tests/test_v15a_cross_state_observability_prefreeze.py
+          python scripts/run_v15a_cross_state_observability.py --validate-only
