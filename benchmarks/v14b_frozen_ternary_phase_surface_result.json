@@ -1,0 +1,54 @@
+{
+  "schema": "insepi-v14b-frozen-ternary-phase-surface-locked-summary-v1",
+  "provenance": {
+    "workflow_run_id": 32932634622,
+    "execution_commit": "5f3456e543b32713745b06404290489d9239f373",
+    "artifact_id": 9593775550,
+    "artifact_digest": "sha256:66122ad367fc4f5334b4f4fa8756c9512f205ba4a1e18df3d1ac87a6176135fa",
+    "phase_surface_sha256": "1d2c7c1f8f7370aad3cdde4d9d9d47bf318b2a057b6f788d3a48df9ea8d16c34",
+    "python": "3.11.16",
+    "numpy": "2.4.6",
+    "scientific_contract_unchanged": true,
+    "canonical_equivalence_test_required": true
+  },
+  "global_summary": {
+    "coordinate_count": 30625,
+    "row_count": 183750,
+    "world_count": 5880000,
+    "baseline_rate": 0.2302328231292517,
+    "target_rate": 0.42873333333333336,
+    "nuisance_rate": 0.08769761904761905,
+    "undetermined_total_rate": 0.2533362244897959,
+    "undetermined_information_absent_rate": 0.026752891156462583,
+    "undetermined_overlap_or_attribution_rate": 0.22658333333333333,
+    "forced_binary_false_positive_rate": 0.0,
+    "forced_binary_false_negative_rate": 0.3569,
+    "mean_partial_identification_width": 0.4835690476190476,
+    "observer_retuned": false
+  },
+  "regime_means": {
+    "baseline": {"baseline_rate":1.0,"target_rate":0.0,"nuisance_rate":0.0,"undetermined_total_rate":0.0,"undetermined_information_absent_rate":0.0,"undetermined_overlap_or_attribution_rate":0.0,"forced_binary_false_positive_rate":0.0,"forced_binary_false_negative_rate":0.0,"visit_presence_partial_identification_width":1.0},
+    "target_only": {"baseline_rate":0.2,"target_rate":0.8,"nuisance_rate":0.0,"undetermined_total_rate":0.0,"undetermined_information_absent_rate":0.0,"undetermined_overlap_or_attribution_rate":0.0,"forced_binary_false_positive_rate":0.0,"forced_binary_false_negative_rate":0.2,"visit_presence_partial_identification_width":0.2},
+    "nuisance_only": {"baseline_rate":0.10127551020408163,"target_rate":0.0,"nuisance_rate":0.3692857142857143,"undetermined_total_rate":0.5294387755102041,"undetermined_information_absent_rate":0.11528061224489796,"undetermined_overlap_or_attribution_rate":0.41415816326530613,"forced_binary_false_positive_rate":0.0,"forced_binary_false_negative_rate":0.0,"visit_presence_partial_identification_width":0.6307142857142857},
+    "target_coupled": {"baseline_rate":0.04,"target_rate":0.7616,"nuisance_rate":0.0096,"undetermined_total_rate":0.1888,"undetermined_information_absent_rate":0.0,"undetermined_overlap_or_attribution_rate":0.1888,"forced_binary_false_positive_rate":0.0,"forced_binary_false_negative_rate":0.2384,"visit_presence_partial_identification_width":0.2288},
+    "target_nuisance_superposed": {"baseline_rate":0.020255102040816327,"target_rate":0.5045714285714286,"nuisance_rate":0.07385714285714286,"undetermined_total_rate":0.4013163265306122,"undetermined_information_absent_rate":0.02305612244897959,"undetermined_overlap_or_attribution_rate":0.3782602040816327,"forced_binary_false_positive_rate":0.0,"forced_binary_false_negative_rate":0.49542857142857144,"visit_presence_partial_identification_width":0.42157142857142854},
+    "target_nuisance_coupled": {"baseline_rate":0.019865816326530612,"target_rate":0.5062285714285714,"nuisance_rate":0.07344285714285714,"undetermined_total_rate":0.4004622448979592,"undetermined_information_absent_rate":0.02218061224489796,"undetermined_overlap_or_attribution_rate":0.3782816326530612,"forced_binary_false_positive_rate":0.0,"forced_binary_false_negative_rate":0.4937714285714286,"visit_presence_partial_identification_width":0.4203280612244898}
+  },
+  "key_dimensionless_descriptives": {
+    "pi3_zero_deviation_worlds": {"baseline_rate":0.3003765306122449,"target_rate":0.0,"nuisance_rate":0.23075714285714286,"undetermined_total_rate":0.4688663265306122,"undetermined_information_absent_rate":0.06829285714285714,"undetermined_overlap_or_attribution_rate":0.4005734693877551,"forced_binary_false_negative_rate":0.8,"visit_presence_partial_identification_width":0.7692428571428571},
+    "pi3_positive_each_level_deviation_worlds": {"baseline_rate":0.020255102040816327,"target_rate":0.6431,"nuisance_rate":0.07385714285714286,"undetermined_total_rate":0.26278775510204083,"undetermined_information_absent_rate":0.02305612244897959,"undetermined_overlap_or_attribution_rate":0.23973163265306122,"forced_binary_false_negative_rate":0.1569,"visit_presence_partial_identification_width":0.28304285714285715},
+    "pi2_total_U_deviation_worlds": {"0.01":0.2847,"0.1":0.31020285714285717,"0.31622776601683794":0.3113457142857143,"1.0":0.3199714285714286,"3.1622776601683795":0.3130957142857143,"10.0":0.3075085714285714,"100.0":0.2812},
+    "pi1_total_U_deviation_worlds": {"0.1":0.22676326530612245,"0.31622776601683794":0.27463163265306123,"1.0":0.3290224489795918,"3.1622776601683795":0.34582857142857143,"10.0":0.34377142857142856},
+    "pi1_information_absent_U_deviation_worlds": {"0.1":0.02048469387755102,"0.31622776601683794":0.039146938775510204,"1.0":0.05391938775510204,"3.1622776601683795":0.026828571428571427,"10.0":0.020137755102040817},
+    "pi1_overlap_U_deviation_worlds": {"0.1":0.20627857142857142,"0.31622776601683794":0.23548469387755103,"1.0":0.2751030612244898,"3.1622776601683795":0.319,"10.0":0.32363367346938776},
+    "pi6_total_U_deviation_worlds": {"2.0":0.2737673469387755,"4.0":0.28148979591836734,"8.0":0.3038448979591837,"16.0":0.3182673469387755,"32.0":0.34257857142857145}
+  },
+  "locked_interpretation": {
+    "dominant_boundary": "The structural presence/absence of the direct target channel (Pi3=0 versus Pi3>0) is much stronger than the magnitude among positive Pi3 levels.",
+    "timescale_result": "Pi2 shows only a shallow nonmonotonic U maximum near 1; it is not the dominant narrow critical ridge originally hypothesized.",
+    "uncertainty_composition": "Across the full prefrozen grid, most U is overlap/attribution rather than information absence.",
+    "observation_length_result": "Longer Pi1 does not monotonically reduce total U because additional observation converts hidden or unsupported cases into recognized overlap/attribution; evidence scarcity and evidence coexistence move differently.",
+    "binary_result": "The prefrozen forced-binary rule creates no false target positives in this closed generator but misses 35.69% of latent target-present worlds under the uniform frozen grid/regime weighting.",
+    "claim_boundary": "Closed-world frozen-observer result only; no field prevalence, field accuracy, or empirical threshold claim."
+  }
+}
