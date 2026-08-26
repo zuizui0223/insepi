@@ -1,0 +1,37 @@
+{
+  "schema": "insepi-v14b-nuisance-familywise-risk-result-v1",
+  "alpha": 0.05,
+  "family_calibration_thresholds": {
+    "target_nuisance_coupled": 4.33898869355123e-06,
+    "target_only": 5e-324
+  },
+  "operational_threshold": 4.33898869355123e-06,
+  "heldout_family_fpr": {
+    "target_nuisance_coupled": 0.044444444444444446,
+    "target_only": 0.0
+  },
+  "heldout_nuisance_coverage": 1.0,
+  "nuisance_coverage_by_pi5": {
+    "pi5=0.316227766017": 1.0,
+    "pi5=0.56234132519": 1.0,
+    "pi5=1": 1.0,
+    "pi5=1.77827941004": 1.0,
+    "pi5=3.16227766017": 1.0
+  },
+  "checks": {
+    "target_nuisance_coupled": true,
+    "target_only": true
+  },
+  "contradiction_types_observed": {},
+  "new_contradiction_type_count": 0,
+  "nuisance_decision_contract_freezable": true,
+  "target_observer_modified": false,
+  "nuisance_feature_representation_modified": false,
+  "workflow_run_id": 32931223272,
+  "execution_commit": "42e6d58bea37f024f35a2aea21ef10b49070fa91",
+  "artifact_id": 9593286927,
+  "artifact_digest": "sha256:46777528229e45d01bea5195bdb271e7e764c87a16f378e25f2c4517cc928044",
+  "result_sha256": "e5f0fac6f0b5790192be46f923572e5f3f57b1913325d435a2f9f6320fb57617",
+  "runtime": {"python":"3.11.16","numpy":"2.4.6"},
+  "claim_boundary": "closed-world family-wise decision-risk calibration only; no field threshold or field nuisance accuracy claim"
+}
