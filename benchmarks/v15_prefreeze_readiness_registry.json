@@ -2,7 +2,9 @@
   "schema": "insepi-v15-v2-prefreeze-readiness-registry-v1",
   "generation": "V15-v2",
   "status": "development-state-not-a-scientific-result",
-  "absence_strategy": "undecided",
+  "absence_strategy": "retain_upper_bound_1_without_A_minus",
+  "absence_strategy_evidence_path": "benchmarks/v15_absence_strategy_v1.json",
+  "absence_strategy_sha256": "5fd40b6b09753b11c62d4f20b8dedc061414d733c3fe1fc179089c98f468aaff",
   "safe_target_presence_upper_bound": 1.0,
   "items": [
     {
