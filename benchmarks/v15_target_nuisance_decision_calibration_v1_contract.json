@@ -1,13 +1,36 @@
 {
   "schema": "insepi-v15-v2-target-nuisance-decision-calibration-v1-contract",
   "generation": "V15-v2",
-  "status": "development-defined-not-frozen",
-  "purpose": "Prevent held-out tuning of operational target/nuisance decision boundaries and explicitly calibrate the field nuisance measurement into effect-specific nuisance evidence.",
-  "current_development_defaults_not_frozen": {
+  "status": "development-runtime-schema-not-yet-frozen",
+  "purpose": "Prevent held-out tuning while respecting PolliPi's frozen ordinal direct-target scale and keeping C/N calibrations effect-specific.",
+  "historical_development_defaults_retired_from_field_runtime": {
     "target_high": 0.65,
     "target_low": 0.25,
     "nuisance_high": 0.60,
-    "source": "VisitSystemThresholds / ObservationTriadPolicy development defaults"
+    "source": "VisitSystemThresholds / ObservationTriadPolicy development defaults",
+    "field_status": "not carried forward as V15-v2 field boundaries"
+  },
+  "operational_scale": {
+    "values": [0.0, 0.5, 1.0],
+    "semantics": {
+      "0.0": "no positive support retained",
+      "0.5": "intermediate/unresolved support",
+      "1.0": "strong positive support"
+    },
+    "structural_target_high": 1.0,
+    "structural_target_low": 0.0,
+    "structural_nuisance_high": 1.0
+  },
+  "direct_target_route": {
+    "input": "PolliPi ordinal-v14-reference",
+    "rule": "retain frozen 0/0.5/1 exactly; do not rethreshold as a continuous probability"
+  },
+  "coupled_route_calibration": {
+    "input": "usable coupled score = coupled_response_score * target_link_confidence",
+    "mapping": "development-frozen low/high boundary -> 0/0.5/1 ordinal support",
+    "low": null,
+    "high": null,
+    "calibration_sha256": null
   },
   "field_nuisance_mapping_required": {
     "input": "FieldNuisanceProcessMeasurement plus development-only nuisance truth/effect labels",
@@ -16,39 +39,38 @@
       "missed_event_risk",
       "attribution_risk"
     ],
-    "rule": "The three positive nuisance-effect risks must be calibrated or otherwise frozen independently enough that one uncalibrated scalar is not silently reused as all three effects."
+    "runtime_representation": "each output is independently mapped to ordinal 0/0.5/1 support",
+    "allowed_measurement_features": [
+      "reference_motion_fraction",
+      "scale_sensitive_spatial_coherence",
+      "reference_stationarity",
+      "reference_spectral_concentration",
+      "temporal_process_support",
+      "nuisance_process_index"
+    ],
+    "rule": "Each nuisance effect must retain its own predeclared feature, low/high boundary and calibration SHA. One scalar cannot silently be copied into all three effects."
   },
-  "target_boundary_required": {
-    "direct_input_scale": "PolliPi ordinal-v14-reference frozen by the target field adapter",
-    "aggregate_target_rule": "max(direct_insect_score, coupled_response_score * target_link_confidence)",
-    "target_high": null,
-    "target_low": null
-  },
-  "nuisance_boundary_required": {
-    "nuisance_high": null,
-    "effect_risk_mapping": null
-  },
+  "implementation": "src/interaction_sensing/v15_operational_calibration.py",
   "hard_rules": [
-    "final target_high, target_low and nuisance_high must be frozen before held-out scoring",
-    "target_low must remain below target_high",
-    "no threshold may be chosen from held-out outcomes",
+    "all continuous C/N boundaries and selected nuisance features are frozen from development-only data",
+    "no threshold or feature choice may use held-out outcomes",
+    "PolliPi direct evidence remains ordinal and is never converted to biological absence",
     "field nuisance process index is not a calibrated probability by itself",
-    "claim thresholds are separate from observer decision thresholds",
+    "claim thresholds are separate from observer operational calibration",
     "O thresholds/calibration remain a separate readiness item"
   ],
   "development_inputs_allowed": [
     "development-only layered truth ledgers",
-    "development-only PolliPi target evidence",
-    "development-only coupled field measurements once implemented",
+    "development-only coupled field measurements",
     "development-only nuisance field measurements",
     "predeclared false-certainty/error costs"
   ],
   "freeze_output_required": [
-    "final operational threshold values",
-    "final nuisance effect-risk mapping or frozen deterministic equivalent",
-    "calibration dataset/split provenance",
-    "calibration method and uncertainty diagnostics",
-    "SHA-256 of the final calibration artifact"
+    "coupled low/high ordinal boundary and calibration SHA",
+    "separate nuisance feature + low/high boundary + calibration SHA for false-event, missed-event and attribution effects",
+    "calibration dataset/split provenance SHA",
+    "uncertainty/diagnostic summary",
+    "SHA-256 of the final operational calibration artifact"
   ],
-  "claim_boundary": "Until frozen, V15-v2 may develop adapters and calibration procedures but must not run held-out operational T/C/N decisions using the development defaults as if they were field-validated thresholds."
+  "claim_boundary": "Runtime calibration schema exists, but no C/N field boundary is frozen yet. Held-out T/C/N operation remains blocked until development-only calibration is committed and SHA-registered."
 }
