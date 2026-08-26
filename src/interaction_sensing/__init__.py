@@ -28,6 +28,20 @@ from .observation_triad import (
     TargetEvidence,
     TriadState,
 )
+from .support_estimation import (
+    PrimaryStreamSupportEstimate,
+    PrimaryStreamSupportEstimator,
+    PrimaryStreamSupportMeasurements,
+    SupportComponentMeasurement,
+    SupportEstimatorValidationSummary,
+    SupportMeasurementProvenance,
+    evaluate_support_estimates,
+)
+from .support_truth import (
+    PrimaryStreamSupportTruth,
+    SupportComponentState,
+    SupportTruthResolution,
+)
 from .target_routes import TargetEvidenceRoute, TargetRouteEvidence
 from .visit_annotation import (
     AnnotationBatchSummary,
@@ -78,8 +92,17 @@ __all__ = [
     "ObservationTriadPolicy",
     "ObservabilityDecision",
     "ObservabilityState",
+    "PrimaryStreamSupportEstimate",
+    "PrimaryStreamSupportEstimator",
+    "PrimaryStreamSupportMeasurements",
+    "PrimaryStreamSupportTruth",
     "RawVisitAnnotation",
     "SceneState",
+    "SupportComponentMeasurement",
+    "SupportComponentState",
+    "SupportEstimatorValidationSummary",
+    "SupportMeasurementProvenance",
+    "SupportTruthResolution",
     "TargetEvidence",
     "TargetEvidenceRoute",
     "TargetRouteEvidence",
@@ -95,6 +118,7 @@ __all__ = [
     "VisitValidationSummary",
     "assert_algorithm_fields_absent",
     "diagnostic_actions",
+    "evaluate_support_estimates",
     "evaluate_visit_predictions",
     "prediction_from_triad",
     "profile_for",
