@@ -61,7 +61,7 @@
       "status": "development_defined",
       "evidence_path": "benchmarks/v15_coupled_field_adapter_v1_contract.json",
       "sha256": null,
-      "note": "The separate coupled-response and target-link outputs and independence rules are defined, but no final field measurement/calibration is yet frozen."
+      "note": "A local-response field measurement baseline now exists and fails closed to usable C=0 without an independently calibrated attribution cue. The concrete field attribution source/calibration and final manifest binding remain unfrozen."
     },
     {
       "name": "nuisance_field_adapter",
