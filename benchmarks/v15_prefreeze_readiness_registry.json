@@ -51,10 +51,10 @@
     },
     {
       "name": "target_field_adapter",
-      "status": "development_defined",
-      "evidence_path": "docs/V15_EMPIRICAL_BRIDGE_V2.md",
-      "sha256": null,
-      "note": "Positive-only target semantics are fixed conceptually; final field adapter/calibration provenance remains to be frozen."
+      "status": "frozen",
+      "evidence_path": "benchmarks/v15_target_field_adapter_freeze_v1.json",
+      "sha256": "952dc29ac2ade4b5490ff1a151d713c8326e4aa5ed16d07072f53ec884a33e16",
+      "note": "PolliPi main ordinal 0/0.5/1 target-evidence mapping is frozen as a positive-only direct target route with cross-repository provenance; low evidence cannot be inverted into absence and no coupled evidence is invented."
     },
     {
       "name": "nuisance_field_adapter",
