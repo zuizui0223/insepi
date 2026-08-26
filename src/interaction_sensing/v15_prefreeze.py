@@ -81,10 +81,23 @@ class PrefreezeReadiness:
     unset_items: tuple[str, ...]
     absence_strategy: AbsenceStrategy
     safe_target_presence_upper_bound: float
+    absence_strategy_evidence_path: str | None
+    absence_strategy_sha256: str | None
 
     @property
     def ready(self) -> bool:
         return self.state is PrefreezeGateState.READY
+
+    @property
+    def design_complete(self) -> bool:
+        """All core design slots exist and the absence strategy is predeclared.
+
+        This is weaker than held-out readiness. Development-defined items still
+        block held-out execution until their final values/protocols are frozen and
+        hashed.
+        """
+
+        return not self.unset_items and self.absence_strategy is not AbsenceStrategy.UNDECIDED
 
 
 def _item_from_mapping(raw: Mapping[str, Any]) -> FreezeItem:
@@ -103,6 +116,8 @@ def evaluate_prefreeze_registry(payload: Mapping[str, Any]) -> PrefreezeReadines
     The registry must enumerate every core item exactly once. Unknown items are
     rejected except for the conditional A-minus validation item. Merely naming an
     artifact does not count as frozen: every frozen item must carry its SHA-256.
+    A decided absence strategy must likewise point to a pre-data strategy artifact
+    and carry that artifact's SHA-256.
     """
 
     if str(payload.get("generation")) != "V15-v2":
@@ -131,6 +146,16 @@ def evaluate_prefreeze_registry(payload: Mapping[str, Any]) -> PrefreezeReadines
     upper_bound = float(payload.get("safe_target_presence_upper_bound", 1.0))
     if not 0.0 <= upper_bound <= 1.0:
         raise ValueError("safe_target_presence_upper_bound must lie in [0, 1]")
+
+    strategy_path_raw = payload.get("absence_strategy_evidence_path")
+    strategy_sha_raw = payload.get("absence_strategy_sha256")
+    strategy_path = None if strategy_path_raw is None else str(strategy_path_raw)
+    strategy_sha = None if strategy_sha_raw is None else str(strategy_sha_raw)
+    if strategy is not AbsenceStrategy.UNDECIDED:
+        if not strategy_path or not strategy_path.strip():
+            raise ValueError("decided absence strategy requires absence_strategy_evidence_path")
+        if strategy_sha is None or _SHA256_RE.fullmatch(strategy_sha) is None:
+            raise ValueError("decided absence strategy requires lowercase 64-hex absence_strategy_sha256")
 
     blockers: list[str] = []
     frozen: list[str] = []
@@ -167,6 +192,8 @@ def evaluate_prefreeze_registry(payload: Mapping[str, Any]) -> PrefreezeReadines
         unset_items=tuple(unset),
         absence_strategy=strategy,
         safe_target_presence_upper_bound=upper_bound,
+        absence_strategy_evidence_path=strategy_path,
+        absence_strategy_sha256=strategy_sha,
     )
 
 
