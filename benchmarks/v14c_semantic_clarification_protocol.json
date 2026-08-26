@@ -1,0 +1,29 @@
+{
+  "schema": "insepi-v14c-semantic-clarification-protocol-v1",
+  "status": "semantic-clarification-only-no-scientific-rerun",
+  "source_locked_surface": {
+    "pr": 47,
+    "head_commit": "eefe7d529a1a9615ddaaa19e42c00a21647eced7",
+    "workflow_run_id": 32932634622,
+    "artifact_id": 9593775550,
+    "phase_surface_sha256": "1d2c7c1f8f7370aad3cdde4d9d9d47bf318b2a057b6f788d3a48df9ea8d16c34"
+  },
+  "frozen_components": {
+    "target_observer_changed": false,
+    "nuisance_observer_changed": false,
+    "nuisance_threshold_changed": false,
+    "alpha_changed": false,
+    "world_grid_changed": false,
+    "seeds_changed": false,
+    "ternary_state_assignment_changed": false,
+    "scientific_surface_recomputed": false
+  },
+  "semantic_corrections": {
+    "historical_information_absent_label": "reinterpret only as no_supported_evidence unless an independent identifiability test proves information absence",
+    "historical_partial_identification_metric": "baseline_rate + undetermined_rate is retained as legacy_non_target_decision_width and must not be called target-presence partial-identification width",
+    "strict_visit_presence_bounds_without_absence_channel": "[target_supported_rate, 1.0]",
+    "strict_visit_presence_width_without_absence_channel": "1.0 - target_supported_rate",
+    "pi3_boundary": "Pi3=0 versus Pi3>0 is a structural direct-channel-availability result under the frozen target rule direct_signal>0, not a universal positive-amplitude invariance claim"
+  },
+  "claim_boundary": "semantic correction of locked closed-world outputs only; no observer retuning, no empirical calibration, no new field claim"
+}
