@@ -18,14 +18,19 @@ from dataclasses import dataclass
 from enum import Enum
 
 from .observation_triad import (
-    InferentialStatus,
     NuisanceEvidence,
     ObservationAvailability,
     ObservationTriadPolicy,
 )
 from .support_estimation import PrimaryStreamSupportEstimate
 from .target_routes import TargetRouteEvidence
-from .visit_validation import VisitPredictionRecord, prediction_from_triad
+from .visit_validation import (
+    VisitPredictionRecord,
+    VisitTruthRecord,
+    VisitValidationSummary,
+    evaluate_visit_predictions,
+    prediction_from_triad,
+)
 
 
 class VisitSystemVariant(str, Enum):
@@ -217,3 +222,27 @@ def predict_all_visit_variants(
         variant: predict_visit_variant(inputs, variant, thresholds=thresholds)
         for variant in VisitSystemVariant
     }
+
+
+def evaluate_visit_system_variants(
+    truth: list[VisitTruthRecord],
+    inputs: list[VisitSystemInputs],
+    *,
+    thresholds: VisitSystemThresholds | None = None,
+) -> dict[VisitSystemVariant, VisitValidationSummary]:
+    """Evaluate every V15 information architecture on exactly the same windows.
+
+    This function is intentionally downstream of all component estimation.  It
+    never recomputes T, C, N or O from truth.  Truth is supplied only to the
+    existing evaluator after predictions for each architecture are emitted.
+    """
+
+    input_ids = [row.window_id for row in inputs]
+    if len(set(input_ids)) != len(input_ids):
+        raise ValueError("visit-system input window_id values must be unique")
+
+    summaries: dict[VisitSystemVariant, VisitValidationSummary] = {}
+    for variant in VisitSystemVariant:
+        predictions = [predict_visit_variant(row, variant, thresholds=thresholds) for row in inputs]
+        summaries[variant] = evaluate_visit_predictions(truth, predictions)
+    return summaries
