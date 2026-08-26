@@ -51,14 +51,14 @@ def test_calibration_requires_both_reference_extremes() -> None:
         )
 
 
-def test_calibration_fails_if_budget_cannot_leave_compromised_interval() -> None:
-    overlapping = [
-        SupportCalibrationRow(0.4, ObservationAvailability.UNOBSERVABLE),
-        SupportCalibrationRow(0.4, ObservationAvailability.OBSERVABLE),
+def test_calibration_fails_when_declared_budget_is_infeasible() -> None:
+    reversed_extremes = [
+        SupportCalibrationRow(1.0, ObservationAvailability.UNOBSERVABLE),
+        SupportCalibrationRow(0.0, ObservationAvailability.OBSERVABLE),
     ]
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="false-censor budget"):
         calibrate_support_thresholds(
-            overlapping,
+            reversed_extremes,
             budget=SupportCalibrationBudget(0.0, 0.0),
         )
 
