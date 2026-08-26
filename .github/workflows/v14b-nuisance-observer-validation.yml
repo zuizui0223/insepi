@@ -1,0 +1,59 @@
+name: V14b nuisance observer locked validation
+
+on:
+  push:
+    branches:
+      - feature/v14b-nuisance-observer-process-scale
+    paths:
+      - ".github/v14b_nuisance_validation_once"
+
+jobs:
+  validate-nuisance:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11.16"
+      - name: Install frozen validation runtime
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install "numpy==2.4.6" -e ".[dev]"
+      - name: Verify marker and contracts
+        run: |
+          test "$(cat .github/v14b_nuisance_validation_once)" = "RUN_ONCE_V14B_NUISANCE_PROCESS_SCALE"
+          pytest -q tests/test_nuisance_observer_v14b.py tests/test_v14b_nuisance_validation_contract.py tests/test_v14b_nuisance_target_freeze.py
+          python - <<'PY'
+          import json
+          p=json.load(open('benchmarks/v14b_nuisance_observer_process_scale_protocol.json'))
+          assert p['schema']=='insepi-v14b-nuisance-observer-process-scale-protocol-v1'
+          assert p['alternating_freeze']['frozen_observer']=='target'
+          PY
+      - name: Run fresh fixed 32-seed nuisance validation exactly once
+        run: |
+          python scripts/run_v14b_nuisance_observer_process_scale_validation.py --output v14b_nuisance_output/process_scale_validation.json
+      - name: Build immutable nuisance validation receipt
+        run: |
+          python - <<'PY'
+          import hashlib, json, os, platform
+          from pathlib import Path
+          import numpy as np
+          out=Path('v14b_nuisance_output/process_scale_validation.json')
+          payload=json.loads(out.read_text())
+          receipt={
+            'schema':'insepi-v14b-nuisance-observer-process-scale-validation-receipt-v1',
+            'execution_commit':os.environ['GITHUB_SHA'],
+            'runtime':{'python':platform.python_version(),'numpy':np.__version__},
+            'validation_sha256':hashlib.sha256(out.read_bytes()).hexdigest(),
+            'all_invariants_hold':payload['all_invariants_hold'],
+            'nuisance_side_type_saturated':payload['nuisance_side_type_saturated'],
+            'new_contradiction_type_count':payload['new_contradiction_type_count'],
+            'target_observer_modified':payload['target_observer_modified'],
+          }
+          Path('v14b_nuisance_output/process_scale_validation_receipt.json').write_text(json.dumps(receipt,indent=2,sort_keys=True)+'\n')
+          PY
+      - name: Upload immutable nuisance validation
+        uses: actions/upload-artifact@v4
+        with:
+          name: v14b-nuisance-observer-process-scale-validation
+          path: v14b_nuisance_output/
