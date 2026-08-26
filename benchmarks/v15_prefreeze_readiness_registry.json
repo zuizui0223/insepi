@@ -56,10 +56,10 @@
     },
     {
       "name": "nuisance_field_adapter",
-      "status": "unset",
-      "evidence_path": null,
+      "status": "development_defined",
+      "evidence_path": "src/interaction_sensing/nuisance_field_measurement_v15.py",
       "sha256": null,
-      "note": "A field-facing nuisance adapter with frozen measurement provenance has not yet been registered for V15-v2."
+      "note": "Primary-stream continuous process measurement baseline now exists. It is uncalibrated and must not be treated as nuisance probability or held-out-frozen risk mapping."
     },
     {
       "name": "forced_vs_certified_absence_metrics",
