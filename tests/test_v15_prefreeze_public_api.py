@@ -9,10 +9,12 @@ def test_v15_facade_exposes_prefreeze_gate_without_polluting_root_api() -> None:
     assert callable(v15.assert_ready_for_heldout)
 
 
-def test_v15_facade_exposes_uncalibrated_nuisance_field_measurement() -> None:
+def test_v15_facade_exposes_frozen_nuisance_field_measurement_and_manifest() -> None:
     assert v15.NuisanceReferenceLayout.__name__ == "NuisanceReferenceLayout"
     assert v15.FieldNuisanceProcessMeasurement.__name__ == "FieldNuisanceProcessMeasurement"
+    assert v15.NuisanceReferenceManifestEntry.__name__ == "NuisanceReferenceManifestEntry"
     assert callable(v15.measure_field_nuisance_process)
+    assert callable(v15.validate_nuisance_reference_manifest)
 
 
 def test_v15_facade_exposes_frozen_positive_only_pollipi_target_adapter() -> None:
