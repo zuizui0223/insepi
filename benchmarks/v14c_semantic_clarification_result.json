@@ -1,0 +1,30 @@
+{
+  "schema": "insepi-v14c-semantic-clarification-result-v1",
+  "source_locked_surface": {
+    "global_target_rate": 0.42873333333333336,
+    "historical_mean_partial_identification_width": 0.4835690476190476,
+    "phase_surface_sha256": "1d2c7c1f8f7370aad3cdde4d9d9d47bf318b2a057b6f788d3a48df9ea8d16c34"
+  },
+  "reason_semantics": {
+    "historical_information_absent": "no_supported_evidence",
+    "information_absence_claim_requires_independent_identifiability_test": true,
+    "historical_overlap_or_attribution": "overlap_or_attribution"
+  },
+  "visit_presence_identification": {
+    "absence_certifying_channel_available_in_v14b": false,
+    "safe_global_lower_bound_from_target_support": 0.42873333333333336,
+    "safe_global_upper_bound_without_absence_channel": 1.0,
+    "safe_global_width": 0.5712666666666667,
+    "historical_baseline_plus_u_value": 0.4835690476190476,
+    "historical_value_new_name": "legacy_non_target_decision_width",
+    "why_historical_value_is_not_partial_identification": "NUISANCE and BASELINE do not certify target absence under the frozen positive-only target observer"
+  },
+  "pi3_interpretation": {
+    "pi3_zero_deviation_target_rate": 0.0,
+    "pi3_positive_each_level_deviation_target_rate": 0.6431,
+    "claim": "The strong zero-versus-positive Pi3 boundary is a structural consequence of direct-channel availability under the frozen direct_signal>0 rule. It does not establish that positive direct-signal amplitude is generally irrelevant."
+  },
+  "scientific_surface_recomputed": false,
+  "observer_retuned": false,
+  "claim_boundary": "semantic clarification of an immutable closed-world result; no field prevalence, field accuracy or universal amplitude claim"
+}
