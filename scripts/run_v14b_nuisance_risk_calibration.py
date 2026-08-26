@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Any
 import numpy as np
 
+from interaction_sensing.evaluation.risk_calibration import upper_negative_quantile_threshold
 from interaction_sensing.nuisance_observer_v14b import observe_nuisance_v14b
 from interaction_sensing.simulation.dimensionless_observability_v14 import LatentRegime
 from interaction_sensing.simulation.dimensionless_observability_v14a2 import SpatiotemporalPoint, signature_for, temporally_resolved
@@ -19,11 +20,6 @@ def _coordinates(world: dict[str, Any]) -> list[SpatiotemporalPoint]:
     sweep = world['focused_collision_sweep']
     values = [sweep['pi1_values'], sweep['pi2_values'], sweep['pi3_values'], sweep['pi4_values'], sweep['pi5_values'], sweep['pi6_values']]
     return [SpatiotemporalPoint(*(float(v) for v in c)) for c in itertools.product(*values)]
-
-
-def _threshold(scores: np.ndarray, alpha: float) -> float:
-    q = float(np.quantile(scores, 1.0-alpha, method='higher'))
-    return float(np.nextafter(q, np.inf))
 
 
 def run(protocol_path: Path, output_path: Path) -> dict[str, Any]:
@@ -44,7 +40,7 @@ def run(protocol_path: Path, output_path: Path) -> dict[str, Any]:
         for seed in cal:
             for regime in (LatentRegime.TARGET_ONLY, LatentRegime.TARGET_COUPLED):
                 neg_cal.append(observe_nuisance_v14b(signature_for(point, regime, seed=seed)).nuisance_process_support)
-    threshold = _threshold(np.asarray(neg_cal,float), alpha)
+    threshold = upper_negative_quantile_threshold(np.asarray(neg_cal,float), alpha)
 
     target_only=[]; target_coupled=[]; nuisance=[]; coverage={}
     for point in points:
