@@ -7,6 +7,10 @@ from interaction_sensing.observation_triad import (
     ObservationTriadPolicy,
     TargetEvidence,
 )
+from interaction_sensing.support_truth import (
+    PrimaryStreamSupportTruth,
+    SupportComponentState,
+)
 from interaction_sensing.target_routes import TargetRouteEvidence
 from interaction_sensing.visit_validation import (
     CoupledResponseResolution,
@@ -23,12 +27,43 @@ def support(value: float) -> ObservationSupport:
     return ObservationSupport(value, value, value, value, value)
 
 
-def visit_truth(window_id: str, support_truth: ObservationAvailability, event_id: str) -> VisitTruthRecord:
+def truth_support(availability: ObservationAvailability) -> PrimaryStreamSupportTruth:
+    """Explicit synthetic support fixture without inferring support from nuisance.
+
+    The fixture names one support component when a non-observable state is needed
+    for a unit test. Production truth never reconstructs component causes from an
+    overall availability label.
+    """
+
+    if availability is ObservationAvailability.OBSERVABLE:
+        return PrimaryStreamSupportTruth.fully_observable(annotation_method="synthetic_test_fixture")
+    if availability is ObservationAvailability.COMPROMISED:
+        return PrimaryStreamSupportTruth(
+            SupportComponentState.ADEQUATE,
+            SupportComponentState.COMPROMISED,
+            SupportComponentState.ADEQUATE,
+            SupportComponentState.ADEQUATE,
+            SupportComponentState.ADEQUATE,
+            "synthetic_test_fixture",
+        )
+    if availability is ObservationAvailability.UNOBSERVABLE:
+        return PrimaryStreamSupportTruth(
+            SupportComponentState.ADEQUATE,
+            SupportComponentState.FAILED,
+            SupportComponentState.ADEQUATE,
+            SupportComponentState.ADEQUATE,
+            SupportComponentState.ADEQUATE,
+            "synthetic_test_fixture",
+        )
+    raise AssertionError(f"unsupported availability fixture: {availability}")
+
+
+def visit_truth(window_id: str, availability: ObservationAvailability, event_id: str) -> VisitTruthRecord:
     return VisitTruthRecord(
         window_id,
         "b1",
         VisitTruthState.VISIT_EVENT,
-        support_truth,
+        truth_support(availability),
         event_id=event_id,
     )
 
@@ -74,8 +109,8 @@ def test_evaluator_counts_false_absence_separately_from_censoring() -> None:
     truth = [
         visit_truth("v1", ObservationAvailability.OBSERVABLE, "event-1"),
         visit_truth("v2", ObservationAvailability.UNOBSERVABLE, "event-2"),
-        VisitTruthRecord("n1", "b1", VisitTruthState.NO_INSECT, ObservationAvailability.OBSERVABLE),
-        VisitTruthRecord("n2", "b1", VisitTruthState.NO_INSECT, ObservationAvailability.UNOBSERVABLE),
+        VisitTruthRecord("n1", "b1", VisitTruthState.NO_INSECT, truth_support(ObservationAvailability.OBSERVABLE)),
+        VisitTruthRecord("n2", "b1", VisitTruthState.NO_INSECT, truth_support(ObservationAvailability.UNOBSERVABLE)),
     ]
     predictions = [
         VisitPredictionRecord("v1", True, True, False, False, False, target_score=0.9, nuisance_burden=0.1),
@@ -98,11 +133,11 @@ def test_evaluator_detects_naive_false_absence_when_reference_truth_resolves_vis
             "v1",
             "b1",
             VisitTruthState.VISIT_EVENT,
-            ObservationAvailability.UNOBSERVABLE,
+            truth_support(ObservationAvailability.UNOBSERVABLE),
             reference_truth_source="reference_camera",
             event_id="event-1",
         ),
-        VisitTruthRecord("n1", "b1", VisitTruthState.NO_INSECT, ObservationAvailability.OBSERVABLE),
+        VisitTruthRecord("n1", "b1", VisitTruthState.NO_INSECT, truth_support(ObservationAvailability.OBSERVABLE)),
     ]
     predictions = [
         VisitPredictionRecord("v1", False, False, True, False, False),
@@ -121,13 +156,13 @@ def test_unresolved_reference_truth_is_excluded_from_biological_metrics_but_kept
             "u1",
             "b1",
             None,
-            ObservationAvailability.UNOBSERVABLE,
+            truth_support(ObservationAvailability.UNOBSERVABLE),
             biological_truth_resolution=VisitTruthResolution.UNRESOLVED,
             reference_truth_source="reference_camera_occluded",
             target_coupled_response_present=None,
             target_coupled_response_resolution=CoupledResponseResolution.UNRESOLVED,
         ),
-        VisitTruthRecord("n1", "b1", VisitTruthState.NO_INSECT, ObservationAvailability.OBSERVABLE),
+        VisitTruthRecord("n1", "b1", VisitTruthState.NO_INSECT, truth_support(ObservationAvailability.OBSERVABLE)),
     ]
     predictions = [
         VisitPredictionRecord("u1", False, False, False, True, True),
@@ -150,14 +185,14 @@ def test_unresolved_truth_cannot_smuggle_no_insect_label() -> None:
             "u1",
             "b1",
             VisitTruthState.NO_INSECT,
-            ObservationAvailability.UNOBSERVABLE,
+            truth_support(ObservationAvailability.UNOBSERVABLE),
             biological_truth_resolution=VisitTruthResolution.UNRESOLVED,
         )
 
 
 def test_resolved_truth_requires_a_state() -> None:
     with pytest.raises(ValueError, match="requires biological_state"):
-        VisitTruthRecord("u1", "b1", None, ObservationAvailability.OBSERVABLE)
+        VisitTruthRecord("u1", "b1", None, truth_support(ObservationAvailability.OBSERVABLE))
 
 
 def test_positive_coupling_truth_requires_contact_or_visit() -> None:
@@ -166,7 +201,7 @@ def test_positive_coupling_truth_requires_contact_or_visit() -> None:
             "x",
             "b1",
             VisitTruthState.NO_INSECT,
-            ObservationAvailability.OBSERVABLE,
+            truth_support(ObservationAvailability.OBSERVABLE),
             target_coupled_response_present=True,
         )
 
@@ -177,7 +212,7 @@ def test_indirect_target_rescue_is_measured_only_when_direct_route_is_weak() -> 
             "coupled-visit",
             "b1",
             VisitTruthState.VISIT_EVENT,
-            ObservationAvailability.OBSERVABLE,
+            truth_support(ObservationAvailability.OBSERVABLE),
             event_id="event-c",
             target_coupled_response_present=True,
         ),
@@ -185,7 +220,7 @@ def test_indirect_target_rescue_is_measured_only_when_direct_route_is_weak() -> 
             "direct-visit",
             "b1",
             VisitTruthState.VISIT_EVENT,
-            ObservationAvailability.OBSERVABLE,
+            truth_support(ObservationAvailability.OBSERVABLE),
             event_id="event-d",
             target_coupled_response_present=False,
         ),
@@ -224,8 +259,8 @@ def test_indirect_target_rescue_is_measured_only_when_direct_route_is_weak() -> 
 
 def test_spurious_coupled_candidate_is_measured_on_no_insect_truth() -> None:
     truth = [
-        VisitTruthRecord("n1", "b1", VisitTruthState.NO_INSECT, ObservationAvailability.OBSERVABLE),
-        VisitTruthRecord("n2", "b1", VisitTruthState.NO_INSECT, ObservationAvailability.OBSERVABLE),
+        VisitTruthRecord("n1", "b1", VisitTruthState.NO_INSECT, truth_support(ObservationAvailability.OBSERVABLE)),
+        VisitTruthRecord("n2", "b1", VisitTruthState.NO_INSECT, truth_support(ObservationAvailability.OBSERVABLE)),
     ]
     predictions = [
         VisitPredictionRecord(
@@ -250,12 +285,12 @@ def test_shared_blind_spot_requires_random_audit_to_count_as_discovered() -> Non
             "u1",
             "b1",
             None,
-            ObservationAvailability.UNOBSERVABLE,
+            truth_support(ObservationAvailability.UNOBSERVABLE),
             biological_truth_resolution=VisitTruthResolution.UNRESOLVED,
             target_coupled_response_present=None,
             target_coupled_response_resolution=CoupledResponseResolution.UNRESOLVED,
         ),
-        VisitTruthRecord("n1", "b1", VisitTruthState.NO_INSECT, ObservationAvailability.OBSERVABLE),
+        VisitTruthRecord("n1", "b1", VisitTruthState.NO_INSECT, truth_support(ObservationAvailability.OBSERVABLE)),
     ]
     predictions = [
         VisitPredictionRecord(
@@ -280,7 +315,9 @@ def test_prediction_contract_rejects_censored_negative() -> None:
 
 
 def test_truth_prediction_window_mismatch_fails_closed() -> None:
-    truth = [VisitTruthRecord("a", "b", VisitTruthState.NO_INSECT, ObservationAvailability.OBSERVABLE)]
+    truth = [
+        VisitTruthRecord("a", "b", VisitTruthState.NO_INSECT, truth_support(ObservationAvailability.OBSERVABLE))
+    ]
     predictions = [VisitPredictionRecord("x", False, False, True, False, False)]
     with pytest.raises(ValueError, match="window mismatch"):
         evaluate_visit_predictions(truth, predictions)
