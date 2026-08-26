@@ -1,0 +1,90 @@
+{
+  "schema": "insepi-v15-empirical-bridge-v2-contract",
+  "generation": "V15-v2",
+  "status": "pre-data-semantic-contract-not-yet-scientifically-frozen",
+  "base": {
+    "repository_main": "V14b/V14c integrated main",
+    "historical_v15_source": "PR37",
+    "historical_contract": "benchmarks/v15_visit_observation_validation_contract.json"
+  },
+  "purpose": "Carry the V15 real visit-validation programme onto V14c without reintroducing the invalid implication low target evidence + good observation support => biological target absence.",
+  "state_semantics": {
+    "T": "positive evidence for focal insect/visit process",
+    "C": "positive target-coupled local response evidence",
+    "N": "positive exogenous nuisance-process evidence",
+    "O": "primary-stream measurement support for attempting interpretation",
+    "A_minus": "independently validated target-absence evidence; optional and not yet field validated",
+    "U": "unresolved inference retained when positive/negative evidence or attribution is insufficient"
+  },
+  "hard_rules": [
+    "O is independent of N and is not 1-N",
+    "O is not target-absence evidence",
+    "a low or zero score from the positive target observer cannot be inverted into absence evidence",
+    "O=observable plus low target evidence remains unresolved unless A_minus supports absence",
+    "A_minus must name a source and validation reference independent of the positive target path",
+    "unobservable O censors biological positive/negative inference even when A_minus exists",
+    "the full system uses the V14b process-preserving target+nuisance policy rather than the historical V14a conflict policy",
+    "simultaneous high T and N is legitimate superposition and remains target-positive with nuisance audit when O is adequate",
+    "forced negative calls from intentionally naive comparison architectures are recorded separately from certified absence evidence"
+  ],
+  "comparison_interpretation": {
+    "direct_target_only_naive": "may emit forced_absence_call from low target score; never counts this as certified negative evidence",
+    "direct_plus_coupled_target_without_nuisance_or_support": "may emit forced_absence_call; no safe absence inference because O/A_minus are unavailable",
+    "target_plus_nuisance_without_support_gate": "may emit forced_absence_call when nuisance does not warn; no safe absence inference because O is unavailable",
+    "target_plus_support_without_nuisance": "can certify absence only when O is observable and A_minus is independently supported; otherwise low target evidence remains U",
+    "full_direct_coupled_target_nuisance_observability_triad": "can certify absence only when the triad reaches a quiet-observable historical negative condition and A_minus independently supports absence; otherwise the window remains U"
+  },
+  "validation_metrics": {
+    "positive_side": [
+      "visit_recall_on_observable_truth",
+      "candidate_false_positive_rate",
+      "indirect_target_rescue_rate",
+      "spurious_coupled_candidate_rate"
+    ],
+    "certified_absence_side": [
+      "certified_absence_calls_on_resolved_truth",
+      "false_certified_absence_count",
+      "false_certified_absence_rate",
+      "missed_visit_as_certified_absence_rate"
+    ],
+    "forced_binary_cost": [
+      "forced_absence_calls_on_resolved_truth",
+      "forced_false_absence_count",
+      "forced_false_absence_rate",
+      "forced_missed_visit_as_absence_rate"
+    ],
+    "measurement_and_U": [
+      "unobservable_recall",
+      "observable_false_censor_rate",
+      "fraction_censored",
+      "unresolved_fraction",
+      "shared_blind_spot_discovery_rate"
+    ]
+  },
+  "current_absence_channel_status": {
+    "field_validated": false,
+    "default": "TargetAbsenceEvidence.unavailable()",
+    "safe_target_presence_upper_bound_without_A_minus": 1.0,
+    "interpretation": "Until a genuinely independent absence channel is validated, V15 may validate presence detection and observation support but must not claim calibrated biological absence from non-detection."
+  },
+  "freeze_before_heldout": [
+    "biological/coupling/nuisance/support truth annotation rules",
+    "O measurement and calibration procedure",
+    "target and nuisance field adapters",
+    "whether A_minus exists; if yes, its independent measurement and held-out validation protocol",
+    "forced-versus-certified absence metric formulas",
+    "cluster/exposure-time estimand",
+    "sampling/power plan",
+    "claim thresholds"
+  ],
+  "claim_boundary": {
+    "allowed_now": "software and semantic readiness on current main only",
+    "forbidden_now": [
+      "field visit accuracy",
+      "field-calibrated absence",
+      "calibrated detection probability",
+      "calibrated O",
+      "universal superiority of the full system"
+    ]
+  }
+}
