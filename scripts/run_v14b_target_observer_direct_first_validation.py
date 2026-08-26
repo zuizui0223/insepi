@@ -40,7 +40,7 @@ def _stratum(point: SpatiotemporalPoint) -> str:
 
 def run(protocol_path: Path, output_path: Path) -> dict[str, Any]:
     protocol = json.loads(protocol_path.read_text(encoding="utf-8"))
-    if protocol.get("schema") != "insepi-v14b-target-observer-direct-first-protocol-v1":
+    if protocol.get("schema") != "insepi-v14b-target-observer-direct-first-protocol-v2":
         raise ValueError("unexpected target observer protocol schema")
     world = json.loads(WORLD_PROTOCOL.read_text(encoding="utf-8"))
     frozen = world["operational_thresholds_prefrozen"]
@@ -93,7 +93,7 @@ def run(protocol_path: Path, output_path: Path) -> dict[str, Any]:
                 else:
                     counts["coupled_indirect_only_n"] += 1
                     counts["coupled_indirect_only_supported"] += int(obs.target_supported)
-                    counts["coupled_indirect_only_unresolved"] += int(obs.unresolved_indirect_only)
+                    counts["coupled_indirect_only_inference_undetermined"] += int(not obs.target_supported)
                     if obs.target_supported:
                         contradictions["indirect_only_forced_positive"].add(stratum)
 
@@ -105,14 +105,16 @@ def run(protocol_path: Path, output_path: Path) -> dict[str, Any]:
         "direct_visible_superposed_target_support_rate": rate("superposed_supported", "superposed_n"),
         "direct_visible_coupled_target_support_rate": rate("coupled_direct_supported", "coupled_direct_n"),
         "indirect_only_coupled_target_support_rate": rate("coupled_indirect_only_supported", "coupled_indirect_only_n"),
-        "indirect_only_coupled_unresolved_rate": rate("coupled_indirect_only_unresolved", "coupled_indirect_only_n"),
+        "indirect_only_coupled_inference_undetermined_rate": rate(
+            "coupled_indirect_only_inference_undetermined", "coupled_indirect_only_n"
+        ),
     }
     expected = {k: float(v) for k, v in protocol["prefrozen_expected_invariants"].items()}
     invariant_checks = {key: metrics[key] == value for key, value in expected.items()}
     contradiction_summary = {key: sorted(value) for key, value in contradictions.items() if value}
 
     result = {
-        "schema": "insepi-v14b-target-observer-direct-first-validation-v1",
+        "schema": "insepi-v14b-target-observer-direct-first-validation-v2",
         "metrics": metrics,
         "expected_invariants": expected,
         "invariant_checks": invariant_checks,
@@ -120,7 +122,7 @@ def run(protocol_path: Path, output_path: Path) -> dict[str, Any]:
         "contradiction_types_observed": contradiction_summary,
         "new_contradiction_type_count": len(contradiction_summary),
         "strata_seen": sorted(strata_seen),
-        "target_side_type_saturated": len(contradiction_summary) == 0,
+        "target_side_type_saturated": all(invariant_checks.values()) and len(contradiction_summary) == 0,
         "nuisance_observer_modified": False,
         "claim_boundary": protocol["claim_boundary"],
     }
@@ -132,7 +134,7 @@ def run(protocol_path: Path, output_path: Path) -> dict[str, Any]:
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--protocol", default=str(DEFAULT_PROTOCOL))
-    parser.add_argument("--output", default=".v14b/target_direct_first_validation.json")
+    parser.add_argument("--output", default="v14b_output/target_direct_first_validation_v2.json")
     args = parser.parse_args()
     print(json.dumps(run(Path(args.protocol), Path(args.output)), indent=2, sort_keys=True))
 
