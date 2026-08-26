@@ -1,0 +1,36 @@
+{
+  "schema": "insepi-v14b-nuisance-familywise-risk-protocol-v1",
+  "status": "prefrozen-before-familywise-risk-calibration-run",
+  "source_failed_risk_v1": {
+    "workflow_run_id": 32930855374,
+    "execution_commit": "1bd9595940a740843bdaa3bd207c282fca3cd45f",
+    "artifact_digest": "sha256:5fb01ef0a7d0952d8686f08b73f5aed8ac71673ff509098afb67720989e03d2b",
+    "result_sha256": "56b95a8f2ff819a73fca96e9c1268e6bfb26666dc24897e73a25c82a6fc02367",
+    "failure": "pooled negative calibration allowed target-coupled held-out FPR 0.08888888888888889 > alpha"
+  },
+  "definition_correction": {
+    "alpha": 0.05,
+    "negative_families": ["target_only", "target_nuisance_coupled"],
+    "familywise_contract": "each predeclared negative family must independently satisfy held-out false nuisance attribution <= alpha",
+    "single_threshold_rule": "compute a strict upper (1-alpha) boundary within each negative family using fresh calibration seeds, then use the maximum family boundary as the single nuisance threshold",
+    "observer_features_changed": false,
+    "observer_aggregation_changed": false,
+    "target_observer_changed": false,
+    "no_positive_worlds_in_calibration": true,
+    "no_threshold_search": true
+  },
+  "calibration": {
+    "calibration_seeds": [121001,121002,121003,121004,121005,121006,121007,121008,121009,121010,121011,121012,121013,121014,121015,121016,121017,121018,121019,121020,121021,121022,121023,121024,121025,121026,121027,121028,121029,121030,121031,121032]
+  },
+  "validation": {
+    "validation_seeds": [131001,131002,131003,131004,131005,131006,131007,131008,131009,131010,131011,131012,131013,131014,131015,131016,131017,131018,131019,131020,131021,131022,131023,131024,131025,131026,131027,131028,131029,131030,131031,131032],
+    "temporally_resolved_required": true,
+    "minimum_observation_support": 0.20,
+    "heldout_target_only_fpr_max": 0.05,
+    "heldout_target_coupled_fpr_max": 0.05,
+    "nuisance_recall_is_not_a_freeze_gate": true,
+    "nuisance_coverage_reported_by_pi5": true
+  },
+  "stop_rule": "freeze nuisance decision contract if both held-out family-wise false-attribution budgets hold and no new nuisance-side contradiction type appears; nuisance coverage is measured, not optimized",
+  "claim_boundary": "closed-world family-wise decision-risk calibration only; no field threshold or field nuisance accuracy claim"
+}
