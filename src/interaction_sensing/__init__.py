@@ -63,6 +63,14 @@ from .visit_observation import (
     summarise_visit_observations,
     visit_record_from_interpretation,
 )
+from .visit_systems import (
+    VisitSystemInputs,
+    VisitSystemThresholds,
+    VisitSystemVariant,
+    evaluate_visit_system_variants,
+    predict_all_visit_variants,
+    predict_visit_variant,
+)
 from .visit_validation import (
     CoupledResponseResolution,
     VisitPredictionRecord,
@@ -119,6 +127,9 @@ __all__ = [
     "VisitObservationStatus",
     "VisitObservationSummary",
     "VisitPredictionRecord",
+    "VisitSystemInputs",
+    "VisitSystemThresholds",
+    "VisitSystemVariant",
     "VisitTruthRecord",
     "VisitTruthResolution",
     "VisitTruthState",
@@ -127,7 +138,10 @@ __all__ = [
     "diagnostic_actions",
     "evaluate_support_estimates",
     "evaluate_visit_predictions",
+    "evaluate_visit_system_variants",
     "measure_primary_stream_support",
+    "predict_all_visit_variants",
+    "predict_visit_variant",
     "prediction_from_triad",
     "profile_for",
     "summarise_visit_observations",
