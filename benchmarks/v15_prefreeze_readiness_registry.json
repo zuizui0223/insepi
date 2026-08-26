@@ -1,0 +1,93 @@
+{
+  "schema": "insepi-v15-v2-prefreeze-readiness-registry-v1",
+  "generation": "V15-v2",
+  "status": "development-state-not-a-scientific-result",
+  "absence_strategy": "undecided",
+  "safe_target_presence_upper_bound": 1.0,
+  "items": [
+    {
+      "name": "biological_truth_annotation",
+      "status": "development_defined",
+      "evidence_path": "docs/V15_LAYERED_TRUTH_COLLECTION.md",
+      "sha256": null,
+      "note": "Layered reference-truth rules exist but are not yet scientifically frozen for held-out scoring."
+    },
+    {
+      "name": "coupling_truth_annotation",
+      "status": "development_defined",
+      "evidence_path": "docs/V15_LAYERED_TRUTH_COLLECTION.md",
+      "sha256": null,
+      "note": "Causal-attribution pass is defined but not yet held-out frozen."
+    },
+    {
+      "name": "nuisance_truth_annotation",
+      "status": "development_defined",
+      "evidence_path": "benchmarks/v15_visit_observation_validation_contract.json",
+      "sha256": null,
+      "note": "Exogenous nuisance truth is separated from biological/coupled truth but final field annotation rules are not frozen."
+    },
+    {
+      "name": "support_truth_annotation",
+      "status": "development_defined",
+      "evidence_path": "benchmarks/v15_observability_estimator_contract.json",
+      "sha256": null,
+      "note": "Component-level support truth exists as a development contract; held-out freeze remains pending."
+    },
+    {
+      "name": "split_blinding_protocol",
+      "status": "development_defined",
+      "evidence_path": "benchmarks/v15_visit_observation_validation_contract.json",
+      "sha256": null,
+      "note": "New-day/new-scene and blinded-layer rules exist but are not yet frozen with the final sampling design."
+    },
+    {
+      "name": "o_measurement_calibration",
+      "status": "development_defined",
+      "evidence_path": "src/interaction_sensing/support_estimation.py",
+      "sha256": null,
+      "note": "Five-component O estimator exists; 0.30/0.70 remain development defaults, not field-calibrated thresholds."
+    },
+    {
+      "name": "target_field_adapter",
+      "status": "development_defined",
+      "evidence_path": "docs/V15_EMPIRICAL_BRIDGE_V2.md",
+      "sha256": null,
+      "note": "Positive-only target semantics are fixed conceptually; final field adapter/calibration provenance remains to be frozen."
+    },
+    {
+      "name": "nuisance_field_adapter",
+      "status": "unset",
+      "evidence_path": null,
+      "sha256": null,
+      "note": "A field-facing nuisance adapter with frozen measurement provenance has not yet been registered for V15-v2."
+    },
+    {
+      "name": "forced_vs_certified_absence_metrics",
+      "status": "development_defined",
+      "evidence_path": "src/interaction_sensing/visit_validation.py",
+      "sha256": null,
+      "note": "Evaluator separates forced and certified absence cost; final held-out formulas/claim use are not frozen."
+    },
+    {
+      "name": "cluster_exposure_estimand",
+      "status": "development_defined",
+      "evidence_path": "src/interaction_sensing/visit_rate.py",
+      "sha256": null,
+      "note": "Detected events per interpretable exposure is implemented; total-time extrapolation and final cluster estimator remain unfrozen."
+    },
+    {
+      "name": "sampling_power_plan",
+      "status": "unset",
+      "evidence_path": null,
+      "sha256": null,
+      "note": "No final MESI-linked cluster/sample-size plan has been frozen."
+    },
+    {
+      "name": "claim_thresholds",
+      "status": "unset",
+      "evidence_path": null,
+      "sha256": null,
+      "note": "No numerical held-out claim thresholds have been frozen."
+    }
+  ]
+}
