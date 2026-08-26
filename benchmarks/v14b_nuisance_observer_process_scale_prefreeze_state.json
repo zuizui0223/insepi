@@ -1,0 +1,9 @@
+{
+  "schema": "insepi-v14b-nuisance-observer-process-scale-prefreeze-state-v1",
+  "status": "prefrozen-before-validation",
+  "target_observer_frozen": true,
+  "nuisance_observer_modifiable": true,
+  "validation_has_run": false,
+  "validation_seed_range": [91001, 91032],
+  "training_performed": false
+}
