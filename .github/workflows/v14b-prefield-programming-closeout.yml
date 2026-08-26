@@ -1,0 +1,71 @@
+name: V14b pre-field programming closeout
+
+on:
+  pull_request:
+    paths:
+      - "src/interaction_sensing/prefield_programming_closeout.py"
+      - "scripts/build_v14b_prefield_programming_closeout.py"
+      - "benchmarks/v14a2_spatiotemporal_world_protocol.json"
+      - "benchmarks/v14b_frozen_ternary_phase_surface_protocol.json"
+      - "benchmarks/v14b_frozen_ternary_phase_surface_result.json"
+      - "benchmarks/v14b_frozen_ternary_phase_figure_data.json"
+      - "benchmarks/v14b_prefield_programming_closeout.json"
+      - "docs/V14B_PREFIELD_PROGRAMMING_CLOSEOUT.md"
+      - "tests/test_v14b_prefield_programming_closeout.py"
+      - ".github/workflows/v14b-prefield-programming-closeout.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  closeout:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install package and test tools
+        run: python -m pip install -e ".[dev]"
+      - name: Verify frozen world and closeout semantics
+        run: |
+          pytest -q \
+            tests/test_ternary_decision_v14b.py \
+            tests/test_target_observer_v14b.py \
+            tests/test_nuisance_observer_v14b.py \
+            tests/test_v14b_prefield_programming_closeout.py
+      - name: Rebuild committed closeout without scientific execution
+        run: |
+          python scripts/build_v14b_prefield_programming_closeout.py \
+            --output /tmp/v14b_prefield_programming_closeout.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          committed = json.loads(
+              Path("benchmarks/v14b_prefield_programming_closeout.json").read_text()
+          )
+          rebuilt = json.loads(
+              Path("/tmp/v14b_prefield_programming_closeout.json").read_text()
+          )
+          assert committed == rebuilt
+          print("V14B_PREFIELD_PROGRAMMING_CLOSEOUT REBUILT")
+          PY
+      - name: Assert claim ceiling
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          closeout = json.loads(
+              Path("benchmarks/v14b_prefield_programming_closeout.json").read_text()
+          )
+          assert closeout["status"] == "closed-pre-field-programming-result"
+          assert closeout["one_universe"]["animal_intention_inferred"] is False
+          assert closeout["synthesis_boundary"]["scientific_simulation_rerun"] is False
+          assert closeout["synthesis_boundary"]["new_acceptance_threshold_added"] is False
+          assert closeout["synthesis_boundary"]["explicit_cross_state_observation_factor_measured"] is False
+          assert closeout["source_identity"]["observer_retuned"] is False
+          print("V14B_PREFIELD_PROGRAMMING_CLOSEOUT PASS")
+          PY

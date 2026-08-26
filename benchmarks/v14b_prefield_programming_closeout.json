@@ -1,0 +1,122 @@
+{
+  "claim_ceiling": "Closed-world simulation evidence for observation-conditioned rejection geometry; no animal-intention recognition, field prevalence, field accuracy, universal threshold, or superiority over every possible binary classifier; V14b also does not provide a fully crossed baseline-by-observation-availability experiment.",
+  "estimand": {
+    "forced_binary_comparator": "the prefrozen coercion mapping U and baseline to target-absent",
+    "frozen_marginal": "R_U(pi) under the prefrozen equal weighting of regimes and seeds",
+    "partial_identification_width": "baseline rate + total U rate",
+    "primary": "R_U(pi,z) = Pr(decision is U | Pi1..Pi6, latent regime z)",
+    "reason_decomposition": [
+      "U_information_absent",
+      "U_overlap_or_attribution"
+    ]
+  },
+  "frozen_measurement": {
+    "forced_binary_false_negative_rate": 0.3569,
+    "forced_binary_false_positive_rate": 0.0,
+    "global_information_absent_rate": 0.026752891156462583,
+    "global_overlap_or_attribution_rate": 0.22658333333333333,
+    "global_undetermined_rate": 0.2533362244897959,
+    "information_absent_share_of_undetermined": 0.10560231254074033,
+    "mean_partial_identification_width": 0.4835690476190476,
+    "overlap_share_of_undetermined": 0.8943976874592596
+  },
+  "locked_interpretation": {
+    "dominant_boundary": "structural direct actor-channel absence (Pi3=0 versus Pi3>0)",
+    "not_supported": "that every rejection is desirable or that no rejection can be caused by model inadequacy",
+    "retained_negative_result": "Pi2 has only a shallow nonmonotonic U maximum near one, not the predicted dominant narrow critical ridge",
+    "supported": "U is a reason-tagged, observation-condition-dependent estimand in this frozen closed-world generator and must not be silently recoded as target absence"
+  },
+  "observation_condition_dependence": {
+    "direct_actor_channel_boundary_on_target_truth": {
+      "pi3_positive_mean": {
+        "forced_binary_false_negative_rate": 0.1961,
+        "partial_identification_width": 0.1961,
+        "undetermined_rate": 0.1961
+      },
+      "pi3_zero": {
+        "forced_binary_false_negative_rate": 1.0,
+        "partial_identification_width": 0.803875,
+        "undetermined_rate": 0.4537232142857143
+      },
+      "zero_minus_positive": {
+        "forced_binary_false_negative_rate": 0.8039,
+        "partial_identification_width": 0.607775,
+        "undetermined_rate": 0.257623214285714
+      }
+    },
+    "pi1_observation_window": {
+      "maximum": 0.34582857142857143,
+      "maximum_coordinate": 3.1622776601683795,
+      "minimum": 0.22676326530612245,
+      "range": 0.11906530612244898,
+      "values_by_coordinate": {
+        "0.1": 0.22676326530612245,
+        "0.31622776601683794": 0.27463163265306123,
+        "1.0": 0.3290224489795918,
+        "10.0": 0.34377142857142856,
+        "3.1622776601683795": 0.34582857142857143
+      }
+    },
+    "pi2_nuisance_to_target_timescale": {
+      "maximum": 0.3199714285714286,
+      "maximum_coordinate": 1.0,
+      "minimum": 0.2812,
+      "range": 0.03877142857142857,
+      "values_by_coordinate": {
+        "0.01": 0.2847,
+        "0.1": 0.31020285714285717,
+        "0.31622776601683794": 0.3113457142857143,
+        "1.0": 0.3199714285714286,
+        "10.0": 0.3075085714285714,
+        "100.0": 0.2812,
+        "3.1622776601683795": 0.3130957142857143
+      }
+    },
+    "pi6_samples_per_target_timescale": {
+      "maximum": 0.34257857142857145,
+      "maximum_coordinate": 32.0,
+      "minimum": 0.2737673469387755,
+      "range": 0.06881122448979593,
+      "values_by_coordinate": {
+        "16.0": 0.3182673469387755,
+        "2.0": 0.2737673469387755,
+        "32.0": 0.34257857142857145,
+        "4.0": 0.2814897959183673,
+        "8.0": 0.3038448979591837
+      }
+    }
+  },
+  "one_universe": {
+    "animal_intention_inferred": false,
+    "exogenous_nuisance_process": "a stationary mean-reverting spatiotemporal field that is not conditioned on the target interaction",
+    "interaction_directed_target_process": "a localized entry-dwell-exit actor process, optionally followed by a target-caused local scene response",
+    "observation_layer": "observation support is conceptually separate from physical state; unavailable observation is not a third physical cause",
+    "physical_states": [
+      "baseline",
+      "target_only",
+      "nuisance_only",
+      "target_coupled",
+      "target_nuisance_superposed",
+      "target_nuisance_coupled"
+    ],
+    "v14b_measurement_boundary": "the frozen surface measures deviation-side U; baseline remains no-query and contributes to partial-identification width rather than being crossed with an explicit unavailable-O factor"
+  },
+  "schema": "insepi-v14b-prefield-programming-closeout-v1",
+  "source_identity": {
+    "figure_data_canonical_sha256": "dfca13da6792ced1a0c486a567bc652f352f2e304b38b17081cfb33abbbf59e4",
+    "locked_summary_canonical_sha256": "14af819a27e78c4175e076d2ad27499c4cc35d7763babb615c26eef1327c1b45",
+    "observer_retuned": false,
+    "phase_surface_sha256": "1d2c7c1f8f7370aad3cdde4d9d9d47bf318b2a057b6f788d3a48df9ea8d16c34",
+    "ternary_protocol_canonical_sha256": "d1cae09fef9d6698409660094bddd48b0d1edbaeea043f0951d50db275ad7581",
+    "world_count": 5880000,
+    "world_protocol_canonical_sha256": "d6d1a2cffa979d4861091b9781e604a4fe82f1b8315e3bf218a74ea501728d27"
+  },
+  "status": "closed-pre-field-programming-result",
+  "synthesis_boundary": {
+    "explicit_cross_state_observation_factor_measured": false,
+    "new_acceptance_threshold_added": false,
+    "post_result_interaction_directed_wording": true,
+    "prefrozen_surface_estimand": true,
+    "scientific_simulation_rerun": false
+  }
+}
