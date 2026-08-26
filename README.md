@@ -120,7 +120,7 @@ Normative V15-v2 files:
 
 - `benchmarks/v15_empirical_bridge_v2_contract.json`
 - `docs/V15_EMPIRICAL_BRIDGE_V2.md`
-- `src/interaction_sensing/target_absence.py`
+- `src/interaction_sensing/absence_certification.py`
 - `src/interaction_sensing/v15.py`
 
 ## Repository structure
