@@ -8,6 +8,17 @@ from .contradiction_ledger import (
     SaturationTracker,
     action_for_contradiction,
 )
+from .visit_contradiction import (
+    VisitContradictionRecord,
+    VisitContradictionSaturationTracker,
+    VisitDevelopmentAction,
+    VisitDevelopmentCause,
+    VisitDiagnosticPattern,
+    VisitObserverSnapshot,
+    VisitPatternClassifier,
+    VisitSubsystem,
+    permitted_action,
+)
 
 __all__ = [
     "ContradictionCause",
@@ -15,5 +26,14 @@ __all__ = [
     "DevelopmentAction",
     "ObserverRole",
     "SaturationTracker",
+    "VisitContradictionRecord",
+    "VisitContradictionSaturationTracker",
+    "VisitDevelopmentAction",
+    "VisitDevelopmentCause",
+    "VisitDiagnosticPattern",
+    "VisitObserverSnapshot",
+    "VisitPatternClassifier",
+    "VisitSubsystem",
     "action_for_contradiction",
+    "permitted_action",
 ]
