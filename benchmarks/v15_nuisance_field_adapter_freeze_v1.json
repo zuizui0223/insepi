@@ -1,0 +1,51 @@
+{
+  "schema": "insepi-v15-v2-nuisance-field-adapter-freeze-v1",
+  "generation": "V15-v2",
+  "status": "frozen-pre-heldout-measurement-adapter",
+  "purpose": "Freeze the primary-stream nuisance-process measurement formula and the pre-scoring reference-zone binding rule while leaving effect-risk calibration and nuisance decision thresholds to the separate operational calibration gate.",
+  "measurement_code": {
+    "path": "src/interaction_sensing/nuisance_field_measurement_v15.py",
+    "git_blob_sha1": "1e0498e853d79c1c9b3ee0b100e190e54e65ba7b",
+    "input": "grayscale primary-stream frames in [0,255], focal zone, prebound disjoint reference zones"
+  },
+  "reference_manifest": {
+    "path": "src/interaction_sensing/nuisance_reference_manifest_v15.py",
+    "required_binding": [
+      "window_id",
+      "primary_clip_sha256",
+      "focal_zone",
+      "one or more spatially disjoint reference_zones",
+      "selection_method"
+    ],
+    "must_be_selected_before_model_scoring": true,
+    "forbidden_selection_inputs": [
+      "target observer output",
+      "nuisance observer output",
+      "biological truth",
+      "nuisance truth"
+    ],
+    "actual per-window coordinates remain part of the realised dataset/split manifest": "split_blinding_protocol remains a separate blocker until those entries are frozen"
+  },
+  "frozen_measurement": {
+    "motion_trace": "frame-to-frame mean absolute grayscale change per ROI divided by 255",
+    "focal_motion_fraction": "RMS focal motion trace",
+    "reference_trace": "pointwise median across reference-zone motion traces",
+    "reference_motion_fraction": "RMS reference trace",
+    "positive_correlation": "positive part of centered cosine/Pearson-equivalent correlation; flat traces return 0",
+    "amplitude_agreement": "2 * min(focal_rms, reference_rms) / (focal_rms + reference_rms), with zero for no motion",
+    "scale_sensitive_spatial_coherence": "positive_correlation * amplitude_agreement",
+    "reference_stationarity": "1 - absolute first-half/second-half RMS difference divided by their sum",
+    "reference_spectral_concentration": "maximum non-DC power fraction of centered reference trace",
+    "temporal_process_support": "max(reference_stationarity, reference_spectral_concentration)",
+    "nuisance_process_index": "cube root(scale_sensitive_spatial_coherence * temporal_process_support * reference_motion_fraction)"
+  },
+  "hard_boundaries": [
+    "target-driven focal-only motion is not promoted to exogenous nuisance without reference motion",
+    "Pearson correlation alone is insufficient because amplitude agreement is required",
+    "static focal/reference agreement is not positive nuisance-process evidence",
+    "the nuisance_process_index is not a probability",
+    "the nuisance_process_index is not yet false_event_risk, missed_event_risk, or attribution_risk",
+    "no nuisance decision threshold is frozen by this artifact"
+  ],
+  "remaining_calibration_blocker": "target_nuisance_decision_calibration"
+}
