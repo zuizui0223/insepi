@@ -1,7 +1,7 @@
 {
   "schema": "insepi-v15b-heldout-measurement-freeze-v1",
   "status": "TEMPLATE_NOT_EXECUTABLE",
-  "protocol_canonical_sha256": "156a505fe05279e9dbd4726eeb59082151fe54944f5cb7ea1a5eebcbe3bc9f8f",
+  "protocol_canonical_sha256": "bf48612dfbfbbabc95e8e6c20ccc72c1829ec332a9504743a81f498064f9d2fa",
   "v14b_phase_surface_sha256": "1d2c7c1f8f7370aad3cdde4d9d9d47bf318b2a057b6f788d3a48df9ea8d16c34",
   "development_complete": false,
   "heldout_data_accessed_before_freeze": false,

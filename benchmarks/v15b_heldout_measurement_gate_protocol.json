@@ -84,6 +84,7 @@
       "window-level fixed-metric summaries",
       "reason-preserving censoring and false-absence accounting",
       "actual recording-date x physical-scene cluster inventory",
+      "actual recording-date x physical-scene sufficient statistics without confidence bounds or decisions",
       "provenance and information-barrier audit"
     ],
     "forbidden": [
@@ -100,5 +101,5 @@
     "real execution_requires_separately_frozen_manifest": true,
     "committed_real_heldout_result_present": false
   },
-  "claim_ceiling": "Executable no-peek software boundary only. No V15 held-out field data, calibrated field observability, cluster-level inference, family-wise decision, or field accuracy result is included."
+  "claim_ceiling": "Executable no-peek software boundary and descriptive cluster sufficient-statistic exporter only. No V15 held-out field data, calibrated field observability, cluster-level inference, family-wise decision, or field accuracy result is included."
 }

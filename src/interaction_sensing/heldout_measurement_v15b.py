@@ -22,7 +22,7 @@ from .layered_visit_truth import (
     join_layered_truth,
 )
 from .nuisance_effects import NuisanceEffect
-from .observation_triad import NuisanceEvidence
+from .observation_triad import NuisanceEvidence, ObservationAvailability
 from .prefield_programming_closeout import canonical_json_sha256
 from .support_estimation import (
     PrimaryStreamSupportEstimator,
@@ -48,7 +48,7 @@ from .visit_validation import (
 )
 
 PROTOCOL_CANONICAL_SHA256 = (
-    "156a505fe05279e9dbd4726eeb59082151fe54944f5cb7ea1a5eebcbe3bc9f8f"
+    "bf48612dfbfbbabc95e8e6c20ccc72c1829ec332a9504743a81f498064f9d2fa"
 )
 V14B_PHASE_SURFACE_SHA256 = (
     "1d2c7c1f8f7370aad3cdde4d9d9d47bf318b2a057b6f788d3a48df9ea8d16c34"
@@ -966,6 +966,11 @@ def evaluate_committed_predictions(
         )
         summaries[variant] = asdict(summary)
 
+    cluster_sufficient_statistics = build_cluster_sufficient_statistics(
+        truth=truth,
+        prediction_rows=prediction_rows,
+    )
+
     cluster_counts = Counter(
         (str(row["recording_date_local"]), str(row["physical_scene_code"]))
         for row in prediction_rows
@@ -983,6 +988,10 @@ def evaluate_committed_predictions(
         "block_count": len({str(row["block_id"]) for row in prediction_rows}),
         "actual_day_x_scene_cluster_count": len(cluster_inventory),
         "cluster_inventory": cluster_inventory,
+        "cluster_sufficient_statistics_schema": (
+            "insepi-v15b-day-scene-system-sufficient-statistics-v1"
+        ),
+        "cluster_sufficient_statistics": cluster_sufficient_statistics,
         "total_opportunity_seconds": sum(
             float(row["opportunity_seconds"]) for row in prediction_rows
         ),
@@ -992,7 +1001,7 @@ def evaluate_committed_predictions(
         "cluster_level_inference_executed": False,
     }
     return {
-        "schema": "insepi-v15b-descriptive-heldout-evaluation-v1",
+        "schema": "insepi-v15b-descriptive-heldout-evaluation-v2",
         "status": "descriptive-only-no-cluster-inference",
         "provenance": {
             "protocol_canonical_sha256": PROTOCOL_CANONICAL_SHA256,
@@ -1025,3 +1034,83 @@ def evaluate_committed_predictions(
             ),
         },
     }
+
+
+def build_cluster_sufficient_statistics(
+    *,
+    truth: Sequence[VisitTruthRecord],
+    prediction_rows: Sequence[Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    """Aggregate fixed V15 metrics by actual day x scene and system.
+
+    The rows are descriptive sufficient statistics only.  They deliberately
+    contain no confidence bounds or decisions; the separately frozen V15c
+    generation is the only component allowed to perform family-wise inference.
+    """
+
+    truth_by_id = {row.window_id: row for row in truth}
+    if len(truth_by_id) != len(truth):
+        raise ValueError("truth window_id values must be unique")
+    prediction_by_id = {str(row["window_id"]): row for row in prediction_rows}
+    if len(prediction_by_id) != len(prediction_rows):
+        raise ValueError("prediction window_id values must be unique")
+    if set(truth_by_id) != set(prediction_by_id):
+        raise ValueError(
+            "truth/prediction window sets differ before cluster aggregation"
+        )
+
+    count_fields = (
+        "window_count",
+        "resolved_visit_windows",
+        "negative_calls_on_resolved_visit_windows",
+        "observable_resolved_visit_windows",
+        "retained_observable_resolved_visit_windows",
+        "true_unobservable_windows",
+        "censored_true_unobservable_windows",
+        "true_observable_windows",
+        "censored_true_observable_windows",
+    )
+    counts: dict[tuple[str, str, str], dict[str, int]] = {}
+    for window_id in sorted(prediction_by_id):
+        row = prediction_by_id[window_id]
+        date = _require_text("recording_date_local", row.get("recording_date_local"))
+        scene = _require_text("physical_scene_code", row.get("physical_scene_code"))
+        truth_row = truth_by_id[window_id]
+        serialized_predictions = _mapping(row, "predictions")
+        _exact_keys(serialized_predictions, set(SYSTEM_VARIANTS), "system predictions")
+
+        for variant in SYSTEM_VARIANTS:
+            prediction = _deserialize_prediction(
+                _mapping(serialized_predictions, variant)
+            )
+            key = (date, scene, variant)
+            bucket = counts.setdefault(key, {name: 0 for name in count_fields})
+            bucket["window_count"] += 1
+
+            if truth_row.biological_truth_resolved and truth_row.is_visit:
+                bucket["resolved_visit_windows"] += 1
+                bucket["negative_calls_on_resolved_visit_windows"] += int(
+                    prediction.negative_evidence
+                )
+                if truth_row.support_truth is ObservationAvailability.OBSERVABLE:
+                    bucket["observable_resolved_visit_windows"] += 1
+                    bucket["retained_observable_resolved_visit_windows"] += int(
+                        prediction.retain_candidate
+                    )
+
+            if truth_row.support_truth is ObservationAvailability.UNOBSERVABLE:
+                bucket["true_unobservable_windows"] += 1
+                bucket["censored_true_unobservable_windows"] += int(prediction.censored)
+            elif truth_row.support_truth is ObservationAvailability.OBSERVABLE:
+                bucket["true_observable_windows"] += 1
+                bucket["censored_true_observable_windows"] += int(prediction.censored)
+
+    return [
+        {
+            "recording_date_local": date,
+            "physical_scene_code": scene,
+            "system_variant": variant,
+            **counts[(date, scene, variant)],
+        }
+        for date, scene, variant in sorted(counts)
+    ]

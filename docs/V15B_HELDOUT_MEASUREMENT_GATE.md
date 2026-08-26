@@ -49,7 +49,9 @@ positive candidateを保持し、同時にaudit対象となる。
 
 実装済みなのは、no-peek順序、prediction/truthのhash binding、4層truth join、
 window-level descriptive metrics、実際の
-`recording_date_local × physical_scene_code` cluster inventoryまでである。
+`recording_date_local × physical_scene_code` cluster inventory、および次世代が
+再びraw truthを開かずに使えるsystem別cluster十分統計までである。十分統計には
+confidence boundや判定を含めない。
 
 family-wise alpha `0.05` はmanifestで保持するが、この世代が実行するfamily-wise
 hypothesis testは0件である。cluster bootstrap、sample-size/powerに基づく判定、

@@ -1,0 +1,22 @@
+{
+  "schema": "insepi-v15c-cluster-analysis-plan-v1",
+  "status": "TEMPLATE_NOT_EXECUTABLE",
+  "protocol_canonical_sha256": "61007eea4777a1d069aba52eb97d28d8ad2690f67e77f57275db0f17648184af",
+  "sample_size_plan_sha256": "REPLACE_WITH_64_HEX",
+  "cluster_identity": "recording_date_local_x_physical_scene_code",
+  "familywise_alpha": 0.05,
+  "minimum_support": {
+    "actual_day_x_scene_clusters": null,
+    "pooled_resolved_visit_windows": null,
+    "pooled_observable_resolved_visit_windows": null,
+    "pooled_true_unobservable_windows": null,
+    "pooled_true_observable_windows": null
+  },
+  "claim_thresholds": {
+    "minimum_false_absence_reduction": null,
+    "observable_visit_recall_noninferiority_margin": null,
+    "minimum_unobservable_recall": null,
+    "maximum_observable_false_censor_rate": null
+  },
+  "post_truth_plan_change_permitted": false
+}

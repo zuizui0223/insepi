@@ -1,0 +1,51 @@
+name: V15c cluster family-wise inference
+
+on:
+  pull_request:
+    paths:
+      - "src/interaction_sensing/cluster_inference_v15c.py"
+      - "src/interaction_sensing/heldout_measurement_v15b.py"
+      - "scripts/v15c_run_cluster_inference.py"
+      - "benchmarks/v15c_cluster_inference_protocol.json"
+      - "benchmarks/v15c_cluster_analysis_plan_TEMPLATE.json"
+      - "tests/test_v15c_cluster_inference.py"
+      - "docs/V15C_CLUSTER_FAMILYWISE_INFERENCE.md"
+      - ".github/workflows/v15c-cluster-familywise-inference.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  prefield-cluster-inference:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install package and tests
+        run: python -m pip install -e ".[dev]"
+      - name: Verify locked family and fail-closed gates
+        run: pytest -q tests/test_v15b_heldout_measurement_gate.py tests/test_v15c_cluster_inference.py
+      - name: Assert repository has templates but no field result
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          protocol = json.loads(
+              Path("benchmarks/v15c_cluster_inference_protocol.json").read_text()
+          )
+          template = json.loads(
+              Path("benchmarks/v15c_cluster_analysis_plan_TEMPLATE.json").read_text()
+          )
+          assert protocol["frozen_parents"]["familywise_alpha"] == 0.05
+          assert protocol["estimator"]["hypothesis_count"] == 4
+          assert protocol["analysis_unit"]["frame_is_independent_replicate"] is False
+          assert protocol["execution_gate"]["committed_real_heldout_result_present"] is False
+          assert template["status"] == "TEMPLATE_NOT_EXECUTABLE"
+          assert not list(Path("benchmarks").glob("v15c_*_FIELD_RESULT.json"))
+          print("V15C_PREFIELD_CLUSTER_INFERENCE PASS")
+          print("V15C_FIELD_RESULT_PRESENT false")
+          PY

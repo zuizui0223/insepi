@@ -352,6 +352,20 @@ def test_locked_truth_join_is_descriptive_and_preserves_censoring() -> None:
     assert result["claim"]["field_performance_claim"] is False
     assert result["measurement"]["familywise_hypothesis_tests_executed"] == 0
     assert result["measurement"]["actual_day_x_scene_cluster_count"] == 2
+    assert result["schema"] == "insepi-v15b-descriptive-heldout-evaluation-v2"
+    sufficient = result["measurement"]["cluster_sufficient_statistics"]
+    assert len(sufficient) == 2 * len(SYSTEM_VARIANTS)
+    full_hidden_cluster = next(
+        row
+        for row in sufficient
+        if row["recording_date_local"] == "2026-09-10"
+        and row["physical_scene_code"] == "scene-a"
+        and row["system_variant"]
+        == "full_direct_coupled_target_nuisance_observability_triad"
+    )
+    assert full_hidden_cluster["resolved_visit_windows"] == 1
+    assert full_hidden_cluster["true_unobservable_windows"] == 1
+    assert full_hidden_cluster["censored_true_unobservable_windows"] == 1
     summaries = result["measurement"]["system_summaries"]
     assert summaries["direct_target_only_naive"]["false_absence_count"] == 1
     assert summaries["target_plus_support_without_nuisance"]["false_absence_count"] == 0

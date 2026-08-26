@@ -1,0 +1,78 @@
+{
+  "schema": "insepi-v15c-cluster-familywise-inference-protocol-v1",
+  "generation": "V15c",
+  "status": "software-contract-prefrozen-no-field-execution-authorized",
+  "purpose": "Estimate whether rejection of a visit interpretation is a function of observation support rather than silently treating every low target score as biological absence.",
+  "frozen_parents": {
+    "v14b_phase_surface_sha256": "1d2c7c1f8f7370aad3cdde4d9d9d47bf318b2a057b6f788d3a48df9ea8d16c34",
+    "v15a_measurement_payload_sha256": "4346304cbef50a0e68ed57c2ae45356ed118b7a8713d08bf557ce7e1f4f185a1",
+    "v15b_protocol_canonical_sha256": "bf48612dfbfbbabc95e8e6c20ccc72c1829ec332a9504743a81f498064f9d2fa",
+    "target_or_nuisance_observer_retuning_permitted": false,
+    "familywise_alpha": 0.05
+  },
+  "analysis_unit": {
+    "cluster_identity": "recording_date_local x physical_scene_code",
+    "cluster_source": "completed V15b prediction metadata bound to the sealed held-out truth join",
+    "frame_is_independent_replicate": false,
+    "window_is_independent_replicate": false,
+    "resampling_unit": "actual day x physical scene cluster"
+  },
+  "comparison": {
+    "baseline": "target_plus_nuisance_without_support_gate",
+    "system_under_test": "full_direct_coupled_target_nuisance_observability_triad",
+    "contrast_interpretation": "same T/C/N components; the contrast isolates the explicit observation-support gate and process-preserving triad decision"
+  },
+  "family": [
+    {
+      "id": "H1_false_absence_reduction",
+      "estimand": "baseline minus full missed-visit-as-absence rate on resolved visit windows",
+      "direction": "lower_bound_at_least_minimum",
+      "threshold_field": "minimum_false_absence_reduction"
+    },
+    {
+      "id": "H2_observable_visit_recall_noninferiority",
+      "estimand": "full minus baseline retained-candidate recall on observable resolved visit windows",
+      "direction": "lower_bound_at_least_negative_margin",
+      "threshold_field": "observable_visit_recall_noninferiority_margin"
+    },
+    {
+      "id": "H3_unobservable_recall_floor",
+      "estimand": "full censored fraction on truth-resolved unobservable support windows",
+      "direction": "lower_bound_at_least_floor",
+      "threshold_field": "minimum_unobservable_recall"
+    },
+    {
+      "id": "H4_observable_false_censor_ceiling",
+      "estimand": "full censored fraction on truth-resolved observable support windows",
+      "direction": "upper_bound_at_most_ceiling",
+      "threshold_field": "maximum_observable_false_censor_rate"
+    }
+  ],
+  "estimator": {
+    "point_estimator": "pooled numerator divided by pooled denominator across actual clusters",
+    "resampling": "paired nonparametric cluster bootstrap",
+    "bootstrap_resamples": 10000,
+    "bootstrap_seed": 1515,
+    "bootstrap_quantile_method": "linear",
+    "interval": "one-sided percentile bound",
+    "multiplicity": "Bonferroni simultaneous family",
+    "hypothesis_count": 4,
+    "per_hypothesis_one_sided_alpha": 0.0125,
+    "zero_denominator_rule": "not_evaluable; never replace with a zero rate"
+  },
+  "decision_rule": {
+    "supported": "all four predeclared hypotheses meet their separately frozen thresholds",
+    "not_supported": "all four are evaluable and at least one misses its threshold",
+    "not_evaluable": "cluster or denominator support misses the separately frozen minimum; no family claim",
+    "post_truth_threshold_change_permitted": false,
+    "failure_is_retained": true
+  },
+  "execution_gate": {
+    "repository_analysis_plan_template_is_executable": false,
+    "real_execution_requires_separately_frozen_analysis_plan": true,
+    "analysis_plan_must_be_hashed_by_v15b_measurement_freeze": true,
+    "source_v15b_result_must_report_zero_familywise_tests": true,
+    "committed_real_heldout_result_present": false
+  },
+  "claim_ceiling": "Pre-field cluster-inference software contract only. A future supported family may establish the declared held-out observation-support claim for the sampled day x scene population; it cannot establish universal superiority, pollination effectiveness, or a biological absence claim for censored windows."
+}
