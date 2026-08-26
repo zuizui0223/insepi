@@ -38,7 +38,7 @@ def strategy_fields(strategy: str) -> dict:
     }
 
 
-def test_current_v15_prefreeze_registry_includes_missing_coupled_and_decision_calibration_items() -> None:
+def test_current_v15_prefreeze_registry_has_eight_frozen_core_items() -> None:
     readiness = evaluate_prefreeze_registry(current_registry())
     assert readiness.state is PrefreezeGateState.BLOCKED_SAFE
     assert readiness.design_complete is True
@@ -51,17 +51,17 @@ def test_current_v15_prefreeze_registry_includes_missing_coupled_and_decision_ca
         "nuisance_truth_annotation",
         "support_truth_annotation",
         "target_field_adapter",
+        "nuisance_field_adapter",
         "forced_vs_certified_absence_metrics",
         "cluster_exposure_estimand",
     }
     assert len(CORE_FREEZE_ITEMS) == 14
-    assert len(readiness.frozen_items) == 7
-    assert len(readiness.development_defined_items) == 7
+    assert len(readiness.frozen_items) == 8
+    assert len(readiness.development_defined_items) == 6
     assert set(readiness.blockers) == set(CORE_FREEZE_ITEMS) - set(readiness.frozen_items)
     assert "split_blinding_protocol" in readiness.development_defined_items
     assert "o_measurement_calibration" in readiness.development_defined_items
     assert "coupled_field_adapter" in readiness.development_defined_items
-    assert "nuisance_field_adapter" in readiness.development_defined_items
     assert "target_nuisance_decision_calibration" in readiness.development_defined_items
     assert "sampling_power_plan" in readiness.development_defined_items
     assert "claim_thresholds" in readiness.development_defined_items
@@ -105,7 +105,6 @@ def test_decided_absence_strategy_requires_predata_provenance() -> None:
     }
     with pytest.raises(ValueError, match="evidence_path"):
         evaluate_prefreeze_registry(payload)
-
     payload["absence_strategy_evidence_path"] = "freeze/absence.json"
     with pytest.raises(ValueError, match="64-hex"):
         evaluate_prefreeze_registry(payload)
@@ -121,7 +120,6 @@ def test_validated_A_minus_path_requires_its_own_frozen_protocol() -> None:
     readiness = evaluate_prefreeze_registry(payload)
     assert readiness.state is PrefreezeGateState.BLOCKED_SAFE
     assert A_MINUS_VALIDATION_ITEM in readiness.blockers
-
     payload["items"].append(frozen_item(A_MINUS_VALIDATION_ITEM))
     assert assert_ready_for_heldout(payload).ready
 
@@ -143,7 +141,6 @@ def test_missing_or_unknown_freeze_item_fails_closed() -> None:
     payload["items"] = payload["items"][:-1]
     with pytest.raises(ValueError, match="missing core freeze items"):
         evaluate_prefreeze_registry(payload)
-
     payload = current_registry()
     payload["items"].append({"name": "invented_gate", "status": "unset"})
     with pytest.raises(ValueError, match="unknown freeze items"):
