@@ -1,0 +1,56 @@
+{
+  "schema": "insepi-v15-v2-nuisance-field-adapter-v1-contract",
+  "generation": "V15-v2",
+  "status": "development-measurement-contract-not-yet-frozen",
+  "purpose": "Measure continuous exogenous nuisance-process structure from primary-stream grayscale frames without using target evidence, biological truth, coupling truth, nuisance truth, or observation-support labels.",
+  "inputs": {
+    "frames": "grayscale primary-stream array with shape time x height x width, at least 3 frames, values in [0,255]",
+    "focal_zone": "geometry-defined focal interaction zone",
+    "reference_layout": "one or more reference zones selected independently of target-observer output, with retained method provenance"
+  },
+  "forbidden_inputs": [
+    "PolliPi or other target score",
+    "biological-event truth",
+    "target-coupling truth",
+    "nuisance truth labels",
+    "observation-support labels or O estimate"
+  ],
+  "measurements": {
+    "focal_motion_fraction": "RMS frame-to-frame mean absolute grayscale change in focal zone, normalized by 255",
+    "reference_motion_fraction": "RMS median reference-zone motion trace, normalized by 255",
+    "scale_sensitive_spatial_coherence": "positive focal/reference temporal correlation multiplied by RMS amplitude agreement",
+    "reference_stationarity": "agreement of reference-motion RMS between first and second halves; static traces give zero dynamic support",
+    "reference_spectral_concentration": "largest non-DC spectral-power fraction of centered reference motion trace",
+    "temporal_process_support": "maximum of stationarity and spectral concentration",
+    "nuisance_process_index": "cube root of spatial coherence x temporal support x absolute reference-motion fraction"
+  },
+  "design_rationale": [
+    "target-driven local motion is not nuisance merely because it moves",
+    "a spatially coherent exogenous process should be supported by independent reference-zone motion",
+    "Pearson correlation alone is insufficient because it is amplitude-scale invariant",
+    "absolute reference-motion magnitude therefore remains in the process index",
+    "static agreement is not positive nuisance-process evidence",
+    "reference-zone selection provenance is part of the measurement record"
+  ],
+  "current_output_semantics": {
+    "nuisance_process_index": "uncalibrated continuous process-support index",
+    "not_a_probability": true,
+    "not_a_binary_nuisance_decision": true,
+    "not_yet_NuisanceEvidence": true
+  },
+  "next_calibration_boundary": {
+    "required_truth": "independently collected exogenous nuisance truth/effect labels on development data only",
+    "required_outputs_before_freeze": [
+      "mapping from process measurements to false-event / missed-event / attribution effects",
+      "risk or decision calibration under a prefrozen false-certainty contract",
+      "held-out field adapter provenance and hashes"
+    ],
+    "forbidden": [
+      "choose a field threshold from held-out results",
+      "treat process index as nuisance probability",
+      "infer nuisance truth from low target evidence",
+      "use target-driven coupling truth as positive exogenous nuisance"
+    ]
+  },
+  "claim_boundary": "Software-level field measurement baseline only; no field nuisance accuracy, calibrated nuisance probability, or held-out decision claim."
+}
