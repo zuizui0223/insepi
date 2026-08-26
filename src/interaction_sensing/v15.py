@@ -18,6 +18,13 @@ from .support_estimation import (
     SupportMeasurementProvenance,
     evaluate_support_estimates,
 )
+from .target_field_adapter_v15 import (
+    POLLIPI_ORDINAL_TARGET_SCALE,
+    POLLIPI_TARGET_EVIDENCE_MAPPING,
+    PolliPiTargetEvidenceInput,
+    V15DirectTargetFieldEvidence,
+    adapt_pollipi_target_evidence,
+)
 from .v15_claims import (
     ClaimDecision,
     ClaimDirection,
@@ -84,6 +91,9 @@ __all__ = [
     "FreezeStatus",
     "HeldOutMetricInterval",
     "NuisanceReferenceLayout",
+    "POLLIPI_ORDINAL_TARGET_SCALE",
+    "POLLIPI_TARGET_EVIDENCE_MAPPING",
+    "PolliPiTargetEvidenceInput",
     "PrecisionPlan",
     "PrefreezeGateState",
     "PrefreezeReadiness",
@@ -94,6 +104,7 @@ __all__ = [
     "SupportEstimatorValidationSummary",
     "SupportMeasurementProvenance",
     "TargetAbsenceEvidence",
+    "V15DirectTargetFieldEvidence",
     "VisitPredictionRecord",
     "VisitSystemInputs",
     "VisitSystemThresholds",
@@ -102,6 +113,7 @@ __all__ = [
     "VisitTruthResolution",
     "VisitTruthState",
     "VisitValidationSummary",
+    "adapt_pollipi_target_evidence",
     "assert_ready_for_heldout",
     "evaluate_claim",
     "evaluate_prefreeze_registry",

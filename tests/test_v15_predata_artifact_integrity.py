@@ -9,6 +9,7 @@ CLAIMS = Path("benchmarks/v15_claim_thresholds_v1_template.json")
 ABSENCE_METRICS = Path("benchmarks/v15_absence_metric_freeze_v1.json")
 EXPOSURE_ESTIMAND = Path("benchmarks/v15_cluster_exposure_estimand_freeze_v1.json")
 TRUTH_ANNOTATION = Path("benchmarks/v15_truth_annotation_freeze_v1.json")
+TARGET_ADAPTER = Path("benchmarks/v15_target_field_adapter_freeze_v1.json")
 
 
 def _registry_item(registry: dict, name: str) -> dict:
@@ -83,3 +84,23 @@ def test_four_truth_layers_share_one_frozen_annotation_artifact() -> None:
         "else five adequate components => resolved OBSERVABLE",
     ]
     assert "final development/held-out block assignment" in payload["split_blinding_boundary"]["not_frozen_here"]
+
+
+def test_target_field_adapter_artifact_matches_registry_and_pollipi_provenance() -> None:
+    registry = json.loads(REGISTRY.read_text(encoding="utf-8"))
+    payload = json.loads(TARGET_ADAPTER.read_text(encoding="utf-8"))
+    digest = hashlib.sha256(TARGET_ADAPTER.read_bytes()).hexdigest()
+    item = _registry_item(registry, "target_field_adapter")
+
+    assert item["status"] == "frozen"
+    assert item["evidence_path"] == str(TARGET_ADAPTER)
+    assert item["sha256"] == digest
+    assert payload["pollipi_provenance"]["repository"] == "zuizui0223/pollipi"
+    assert payload["pollipi_provenance"]["main_commit"] == "f3b266897f3e9139e6c3fe9ce6b645e25371e092"
+    assert payload["pollipi_provenance"]["adapter_git_blob_sha1"] == "4be5f7c88edda1dda3b62e8a95529386d702bb47"
+    assert payload["frozen_mapping"] == {
+        "no_activity": 0.0,
+        "environmental_noise": 0.0,
+        "uncertain_local_activity": 0.5,
+        "strong_visitation_candidate": 1.0,
+    }
