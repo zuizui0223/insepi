@@ -5,7 +5,7 @@ from pathlib import Path
 
 import numpy as np
 
-from scripts.run_v14a2_plateau_diagnosis import auc, fit_lda
+from interaction_sensing.evaluation.plateau_diagnosis import auc, fit_lda
 
 
 ROOT = Path(__file__).resolve().parents[1]
