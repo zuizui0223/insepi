@@ -1,27 +1,22 @@
 """Pre-data evaluator contracts for V15 real visit-observation validation.
 
 Biological truth, target-coupled response truth, exogenous nuisance truth, and
-primary-stream observation support remain separate. Biological truth may be
-unresolved when even the independent reference truth channel cannot determine
-whether a visit occurred. Primary-stream support may independently be unresolved
-when no support component is known to fail but at least one required component
-cannot be adjudicated. Neither unresolved state is silently converted to absence.
+primary-stream observation support remain separate. V15 v2 additionally keeps
+**certified target absence** separate from a forced negative call.
 
-Window-level classification is also kept distinct from event-rate inference. A
-single biological visit can span multiple analysis windows; resolved visit windows
-therefore carry a stable ``event_id`` so later block-level estimators can count one
-visit event rather than one visit per window.
+A low score from a positive-only target observer is not target-absence evidence.
+Observation support O can make a window interpretable, but O does not itself
+supply the missing biological negative evidence. Historical/naive architectures
+may still emit a ``forced_absence_call`` so their false-certainty cost can be
+measured without misnaming that call as evidence.
 """
 from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import Enum
 
-from .observation_triad import (
-    InferentialStatus,
-    ObservationAvailability,
-    ObservationInterpretation,
-)
+from .absence_certification import TargetAbsenceEvidence
+from .observation_triad import InferentialStatus, ObservationAvailability, ObservationInterpretation
 from .support_truth import PrimaryStreamSupportTruth, SupportTruthResolution
 from .target_routes import TargetRouteEvidence
 
@@ -82,9 +77,6 @@ class VisitTruthRecord:
         elif self.target_coupled_response_present is not None:
             raise ValueError("unresolved coupled-response truth must not carry a present/absent state")
 
-        # A positively identified target-driven local response is causal evidence
-        # of target contact in the V14/V15 definition. If reference evidence cannot
-        # support that implication, the coupling label must remain unresolved.
         if self.target_coupled_response_present is True:
             if self.biological_truth_resolution is not VisitTruthResolution.RESOLVED:
                 raise ValueError("resolved target-coupled response requires resolved biological truth")
@@ -105,8 +97,6 @@ class VisitTruthRecord:
 
     @property
     def support_truth(self) -> ObservationAvailability | None:
-        """Derived support availability; None means support truth is unresolved."""
-
         return self.primary_support_truth.availability
 
     @property
@@ -116,7 +106,13 @@ class VisitTruthRecord:
 
 @dataclass(frozen=True, slots=True)
 class VisitPredictionRecord:
-    """System output expressed in inference-safe actions rather than one score."""
+    """Window output with safe absence separated from forced binarisation.
+
+    ``negative_evidence`` now means an absence call backed by an independently
+    validated target-absence channel. ``forced_absence_call`` records an unsafe or
+    deliberately naive negative decision made without that certification. A
+    window with neither positive/negative evidence nor censoring is unresolved.
+    """
 
     window_id: str
     retain_candidate: bool
@@ -129,14 +125,20 @@ class VisitPredictionRecord:
     nuisance_burden: float | None = None
     direct_target_score: float | None = None
     coupled_target_score: float | None = None
+    forced_absence_call: bool = False
+    absence_certification_source: str | None = None
 
     def __post_init__(self) -> None:
         if not self.window_id:
             raise ValueError("window_id cannot be empty")
         if self.positive_evidence and self.negative_evidence:
-            raise ValueError("a window cannot be both positive and negative evidence")
-        if self.censored and (self.positive_evidence or self.negative_evidence):
-            raise ValueError("a censored window cannot be used as interpretable positive/negative evidence")
+            raise ValueError("a window cannot be both positive and certified negative evidence")
+        if self.censored and (self.positive_evidence or self.negative_evidence or self.forced_absence_call):
+            raise ValueError("a censored window cannot carry positive, certified-negative, or forced-absence calls")
+        if self.forced_absence_call and (self.positive_evidence or self.negative_evidence):
+            raise ValueError("forced absence is an unsafe comparator and cannot also be positive/certified negative")
+        if self.absence_certification_source is not None and not self.negative_evidence:
+            raise ValueError("absence certification source is only valid for certified negative evidence")
         for name, value in (
             ("target_score", self.target_score),
             ("nuisance_burden", self.nuisance_burden),
@@ -145,6 +147,10 @@ class VisitPredictionRecord:
         ):
             if value is not None and not 0.0 <= value <= 1.0:
                 raise ValueError(f"{name} must lie in [0, 1]")
+
+    @property
+    def unresolved(self) -> bool:
+        return not (self.positive_evidence or self.negative_evidence or self.censored)
 
 
 @dataclass(frozen=True, slots=True)
@@ -161,14 +167,19 @@ class VisitValidationSummary:
     retained_observable_true_visits: int
     visit_recall_on_observable_truth: float
     candidate_false_positive_rate: float
-    negative_calls_on_resolved_truth: int
-    false_absence_count: int
-    false_absence_rate: float
-    missed_visit_as_absence_rate: float
+    certified_absence_calls_on_resolved_truth: int
+    false_certified_absence_count: int
+    false_certified_absence_rate: float
+    missed_visit_as_certified_absence_rate: float
+    forced_absence_calls_on_resolved_truth: int
+    forced_false_absence_count: int
+    forced_false_absence_rate: float
+    forced_missed_visit_as_absence_rate: float
     true_unobservable_windows: int
     unobservable_recall: float
     observable_false_censor_rate: float
     fraction_censored: float
+    unresolved_fraction: float
     audit_fraction: float
     retained_candidate_fraction: float
     shared_blind_spot_truth_windows: int
@@ -190,26 +201,34 @@ def prediction_from_triad(
     *,
     protected_random_audit: bool = False,
     target_routes: TargetRouteEvidence | None = None,
+    absence_evidence: TargetAbsenceEvidence | None = None,
 ) -> VisitPredictionRecord:
-    """Convert a V14 triad interpretation to the V15 evaluator contract.
+    """Convert a V14 interpretation without inverting low target evidence.
 
-    Route-specific target scores are optional so historical aggregate-only
-    predictions remain evaluable. Indirect-rescue metrics are calculated only for
-    predictions that carry those route-specific scores.
+    Historical V14 triad policies can emit ``NEGATIVE_EVIDENCE`` from low target
+    score plus adequate support. V15 v2 does not accept that as certified absence
+    unless an independent ``TargetAbsenceEvidence`` record is supplied. Without
+    certification the historical negative is retained only as a forced comparator
+    and routed to audit.
     """
 
+    historical_negative = result.inferential_status is InferentialStatus.NEGATIVE_EVIDENCE
+    certified = bool(historical_negative and absence_evidence is not None and absence_evidence.supports_absence)
+    forced = bool(historical_negative and not certified)
     return VisitPredictionRecord(
         window_id=window_id,
         retain_candidate=result.retain_target_clip,
         positive_evidence=result.inferential_status is InferentialStatus.POSITIVE_CANDIDATE,
-        negative_evidence=result.inferential_status is InferentialStatus.NEGATIVE_EVIDENCE,
+        negative_evidence=certified,
         censored=result.inferential_status is InferentialStatus.CENSORED,
-        audit_priority=result.audit_priority,
+        audit_priority=result.audit_priority or forced,
         protected_random_audit=protected_random_audit,
         target_score=result.target_score,
         nuisance_burden=result.nuisance_burden,
         direct_target_score=None if target_routes is None else target_routes.direct_insect_score,
         coupled_target_score=None if target_routes is None else target_routes.coupled_target_score,
+        forced_absence_call=forced,
+        absence_certification_source=(absence_evidence.source if certified and absence_evidence is not None else None),
     )
 
 
@@ -225,16 +244,7 @@ def evaluate_visit_predictions(
     target_high_threshold: float = 0.65,
     nuisance_low_threshold: float = 0.60,
 ) -> VisitValidationSummary:
-    """Evaluate visit inference, indirect target rescue and censoring.
-
-    Biological metrics use resolved reference truth only. Observation-support
-    metrics use windows whose component-level support truth resolves to an
-    availability state; unresolved support truth is reported separately rather
-    than being forced into observable or unobservable. Target-coupling metrics
-    additionally require resolved coupling truth and route-specific prediction
-    scores. Confidence intervals and event-rate estimators remain outside this
-    pre-data evaluator until the V15 cluster/exposure-time design is frozen.
-    """
+    """Evaluate target retention, certified absence, forced absence and censoring."""
 
     truth_by_id = {row.window_id: row for row in truth}
     pred_by_id = {row.window_id: row for row in predictions}
@@ -255,8 +265,7 @@ def evaluate_visit_predictions(
     resolved_visit_event_ids = {t.event_id for t, _ in resolved_rows if t.is_visit and t.event_id is not None}
 
     observable_visits = [
-        (t, p)
-        for t, p in resolved_rows
+        (t, p) for t, p in resolved_rows
         if t.is_visit and t.support_truth is ObservationAvailability.OBSERVABLE
     ]
     retained_observable_visits = sum(p.retain_candidate for _, p in observable_visits)
@@ -264,14 +273,23 @@ def evaluate_visit_predictions(
     nonvisit_rows = [(t, p) for t, p in resolved_rows if not t.is_visit]
     candidate_false_positives = sum(p.retain_candidate for _, p in nonvisit_rows)
 
-    negative_rows = [(t, p) for t, p in resolved_rows if p.negative_evidence]
-    false_absences = sum(t.is_visit for t, _ in negative_rows)
+    certified_rows = [(t, p) for t, p in resolved_rows if p.negative_evidence]
+    false_certified = sum(t.is_visit for t, _ in certified_rows)
+    forced_rows = [(t, p) for t, p in resolved_rows if p.forced_absence_call]
+    false_forced = sum(t.is_visit for t, _ in forced_rows)
     all_visits = [(t, p) for t, p in resolved_rows if t.is_visit]
-    visits_called_negative = sum(p.negative_evidence for _, p in all_visits)
+    visits_certified_absent = sum(p.negative_evidence for _, p in all_visits)
+    visits_forced_absent = sum(p.forced_absence_call for _, p in all_visits)
 
-    unobservable_rows = [(t, p) for t, p in resolved_support_rows if t.support_truth is ObservationAvailability.UNOBSERVABLE]
+    unobservable_rows = [
+        (t, p) for t, p in resolved_support_rows
+        if t.support_truth is ObservationAvailability.UNOBSERVABLE
+    ]
     censored_unobservable = sum(p.censored for _, p in unobservable_rows)
-    observable_rows = [(t, p) for t, p in resolved_support_rows if t.support_truth is ObservationAvailability.OBSERVABLE]
+    observable_rows = [
+        (t, p) for t, p in resolved_support_rows
+        if t.support_truth is ObservationAvailability.OBSERVABLE
+    ]
     censored_observable = sum(p.censored for _, p in observable_rows)
 
     shared_blind_spots = [
@@ -298,7 +316,9 @@ def evaluate_visit_predictions(
         and p.coupled_target_score is not None
     ]
     indirect_rescues = sum(
-        p.retain_candidate and p.coupled_target_score is not None and p.coupled_target_score >= target_high_threshold
+        p.retain_candidate
+        and p.coupled_target_score is not None
+        and p.coupled_target_score >= target_high_threshold
         for _, p in weak_direct_coupled_visits
     )
 
@@ -309,7 +329,9 @@ def evaluate_visit_predictions(
         and t.support_truth is ObservationAvailability.OBSERVABLE
     ]
     spurious_coupled = sum(
-        p.retain_candidate and p.coupled_target_score is not None and p.coupled_target_score >= target_high_threshold
+        p.retain_candidate
+        and p.coupled_target_score is not None
+        and p.coupled_target_score >= target_high_threshold
         for _, p in observable_no_insect
     )
 
@@ -326,14 +348,19 @@ def evaluate_visit_predictions(
         retained_observable_true_visits=retained_observable_visits,
         visit_recall_on_observable_truth=_ratio(retained_observable_visits, len(observable_visits)),
         candidate_false_positive_rate=_ratio(candidate_false_positives, len(nonvisit_rows)),
-        negative_calls_on_resolved_truth=len(negative_rows),
-        false_absence_count=false_absences,
-        false_absence_rate=_ratio(false_absences, len(negative_rows)),
-        missed_visit_as_absence_rate=_ratio(visits_called_negative, len(all_visits)),
+        certified_absence_calls_on_resolved_truth=len(certified_rows),
+        false_certified_absence_count=false_certified,
+        false_certified_absence_rate=_ratio(false_certified, len(certified_rows)),
+        missed_visit_as_certified_absence_rate=_ratio(visits_certified_absent, len(all_visits)),
+        forced_absence_calls_on_resolved_truth=len(forced_rows),
+        forced_false_absence_count=false_forced,
+        forced_false_absence_rate=_ratio(false_forced, len(forced_rows)),
+        forced_missed_visit_as_absence_rate=_ratio(visits_forced_absent, len(all_visits)),
         true_unobservable_windows=len(unobservable_rows),
         unobservable_recall=_ratio(censored_unobservable, len(unobservable_rows)),
         observable_false_censor_rate=_ratio(censored_observable, len(observable_rows)),
         fraction_censored=_ratio(sum(p.censored for _, p in rows), len(rows)),
+        unresolved_fraction=_ratio(sum(p.unresolved for _, p in rows), len(rows)),
         audit_fraction=_ratio(sum(p.audit_priority for _, p in rows), len(rows)),
         retained_candidate_fraction=_ratio(sum(p.retain_candidate for _, p in rows), len(rows)),
         shared_blind_spot_truth_windows=len(shared_blind_spots),
