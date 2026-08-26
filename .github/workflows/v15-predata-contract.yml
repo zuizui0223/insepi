@@ -1,0 +1,80 @@
+name: V15 pre-data visit-observation contract
+
+on:
+  pull_request:
+    paths:
+      - "src/interaction_sensing/support_truth.py"
+      - "src/interaction_sensing/support_estimation.py"
+      - "src/interaction_sensing/support_measurement.py"
+      - "src/interaction_sensing/target_routes.py"
+      - "src/interaction_sensing/visit_validation.py"
+      - "src/interaction_sensing/visit_systems.py"
+      - "src/interaction_sensing/visit_rate.py"
+      - "src/interaction_sensing/layered_visit_truth.py"
+      - "src/interaction_sensing/phase_localisation.py"
+      - "src/interaction_sensing/development/visit_contradiction.py"
+      - "scripts/locate_v15_on_frozen_phase_surface.py"
+      - "benchmarks/v15_*"
+      - "tests/test_support_*"
+      - "tests/test_visit_*"
+      - "tests/test_layered_visit_truth.py"
+      - "tests/test_v15_*"
+      - ".github/workflows/v15-predata-contract.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install package and tests
+        run: python -m pip install -e ".[dev]"
+      - name: Run V15 semantic and plumbing contracts
+        run: |
+          pytest -q \
+            tests/test_observation_triad.py \
+            tests/test_target_routes_v14.py \
+            tests/test_support_truth.py \
+            tests/test_support_estimation.py \
+            tests/test_support_measurement.py \
+            tests/test_v15_observability_contract.py \
+            tests/test_visit_validation.py \
+            tests/test_visit_systems.py \
+            tests/test_visit_rate.py \
+            tests/test_layered_visit_truth.py \
+            tests/test_visit_contradiction_development.py \
+            tests/test_v15_contradiction_contract.py \
+            tests/test_phase_localisation.py \
+            tests/test_v15_phase_localisation_runner.py \
+            tests/test_visit_annotation.py
+      - name: Assert V15 claim boundaries
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          visit = json.loads(Path('benchmarks/v15_visit_observation_validation_contract.json').read_text())
+          obs = json.loads(Path('benchmarks/v15_observability_estimator_contract.json').read_text())
+          dev = json.loads(Path('benchmarks/v15_contradiction_guided_development_contract.json').read_text())
+          phase = json.loads(Path('benchmarks/v15_phase_surface_localisation_contract.json').read_text())
+
+          assert visit['status'] == 'pre-data-protocol-draft-not-yet-frozen'
+          assert visit['observability_estimator_contract']['O_is_not_one_minus_N'] is True
+          assert visit['annotation_contract']['truth_layers_use_separate_blinded_passes'] is True
+          assert 'field visit accuracy' in visit['claim_ceiling_before_data']['forbidden']
+          assert obs['claim_ceiling']['before_real_support_data'] == 'software/semantic separation only'
+          assert dev['stop_rule']['not_criterion'] == 'zero contradiction count'
+          assert phase['status'] == 'pre-data-measurement-profile-not-yet-frozen'
+          assert phase['frozen_parent']['phase_surface_sha256'] == '1d2c7c1f8f7370aad3cdde4d9d9d47bf318b2a057b6f788d3a48df9ea8d16c34'
+          assert phase['interpretation_rules']['interpolation_permitted'] is False
+          assert phase['interpretation_rules']['extrapolation_permitted'] is False
+          assert phase['interpretation_rules']['localisation_runner_reads_frozen_surface_values'] is False
+          print('V15_PREDATA_CONTRACT PASS')
+          print('V15_FIELD_RESULT_PRESENT false')
+          PY

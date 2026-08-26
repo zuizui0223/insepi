@@ -13,6 +13,17 @@ from .pi2_negative_diagnosis import (
     Pi2NegativeDiagnosis,
     diagnose_pi2_negative,
 )
+from .visit_contradiction import (
+    VisitContradictionRecord,
+    VisitContradictionSaturationTracker,
+    VisitDevelopmentAction,
+    VisitDevelopmentCause,
+    VisitDiagnosticPattern,
+    VisitObserverSnapshot,
+    VisitPatternClassifier,
+    VisitSubsystem,
+    permitted_action,
+)
 
 __all__ = [
     "ContradictionCause",
@@ -22,6 +33,15 @@ __all__ = [
     "ObserverRole",
     "Pi2NegativeDiagnosis",
     "SaturationTracker",
+    "VisitContradictionRecord",
+    "VisitContradictionSaturationTracker",
+    "VisitDevelopmentAction",
+    "VisitDevelopmentCause",
+    "VisitDiagnosticPattern",
+    "VisitObserverSnapshot",
+    "VisitPatternClassifier",
+    "VisitSubsystem",
     "action_for_contradiction",
     "diagnose_pi2_negative",
+    "permitted_action",
 ]

@@ -1,0 +1,63 @@
+{
+  "schema": "insepi-v15-phase-surface-localisation-contract-v1",
+  "generation": "V15",
+  "status": "pre-data-measurement-profile-not-yet-frozen",
+  "purpose": "Locate independently measured empirical blocks on the already frozen V14b dimensionless coordinate grid without modifying observers, thresholds, axes, or surface results.",
+  "frozen_parent": {
+    "world_protocol": "benchmarks/v14a2_spatiotemporal_world_protocol.json",
+    "ternary_protocol": "benchmarks/v14b_frozen_ternary_phase_surface_protocol.json",
+    "phase_surface_sha256": "1d2c7c1f8f7370aad3cdde4d9d9d47bf318b2a057b6f788d3a48df9ea8d16c34",
+    "observer_or_threshold_changes_permitted": false
+  },
+  "dimensionless_coordinate_formulas": {
+    "pi1": "observation_window_duration / target_process_timescale",
+    "pi2": "nuisance_or_coupled_response_timescale / target_process_timescale",
+    "pi3": "direct_target_motion_amplitude / reference_nuisance_motion_amplitude",
+    "pi4": "target_driven_local_response_amplitude / reference_nuisance_motion_amplitude",
+    "pi5": "nuisance_spatial_correlation_length / target_spatial_support_width",
+    "pi6": "sampling_frequency * target_process_timescale"
+  },
+  "measurement_contract": {
+    "one_measurement_profile_sha256_per_run": true,
+    "measurement_profile_must_be_frozen_before_held_out_capture": true,
+    "time_quantities_use_one_declared_unit": true,
+    "sampling_frequency_uses_inverse_declared_time_unit": true,
+    "amplitude_quantities_use_one_declared_unit": true,
+    "length_quantities_use_one_declared_unit": true,
+    "reference_nuisance_motion_amplitude_must_be_strictly_positive": true,
+    "epsilon_denominator_rescue_permitted": false,
+    "missing_or_nonfinite_values_permitted": false,
+    "block_ids_must_be_unique": true
+  },
+  "localisation_states": {
+    "exact": "all six empirical coordinates equal frozen grid coordinates",
+    "bracketed": "all six coordinates are within frozen support and at least one lies strictly between grid values",
+    "out_of_support": "one or more coordinates lie outside the frozen grid support"
+  },
+  "interpretation_rules": {
+    "interpolation_permitted": false,
+    "extrapolation_permitted": false,
+    "nearest_grid_rounding_permitted": false,
+    "grid_override_permitted": false,
+    "bracketing_coordinates_are_reported_not_averaged": true,
+    "out_of_support_is_not_a_negative_result": true,
+    "localisation_runner_reads_frozen_surface_values": false,
+    "localisation_may_not_consume_biological_truth": true,
+    "localisation_may_not_consume_target_or_nuisance_observer_outputs": true
+  },
+  "next_freeze_gate": {
+    "required_before_held_out_measurement": [
+      "raw measurement procedures for every formula input",
+      "units and calibration references",
+      "block construction and exclusion rules",
+      "measurement-profile SHA-256 commitment"
+    ],
+    "not_yet_authorized": [
+      "held-out empirical localisation",
+      "surface-value lookup",
+      "field performance claim",
+      "post-localisation retuning"
+    ]
+  },
+  "claim_ceiling": "software and fail-closed localisation semantics only; no field block has yet been measured or placed on the frozen surface"
+}
