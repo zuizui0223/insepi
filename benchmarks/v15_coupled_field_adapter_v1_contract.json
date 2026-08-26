@@ -1,31 +1,56 @@
 {
   "schema": "insepi-v15-v2-coupled-field-adapter-v1-contract",
   "generation": "V15-v2",
-  "status": "development-defined-not-frozen",
-  "purpose": "Define the missing field bridge for C without inventing coupled evidence from the direct target or nuisance channels.",
+  "status": "development-measurement-baseline-not-yet-frozen",
+  "purpose": "Define the field bridge for C without inventing coupled evidence from the direct target or nuisance channels.",
   "required_outputs": {
-    "coupled_response_score": "positive evidence that the focal biological target/flower exhibited the predeclared local response pattern",
+    "coupled_response_score": "continuous uncalibrated local target-response measurement",
     "target_link_confidence": "independent evidence that the response is attributable to the focal actor/interaction rather than arbitrary local motion"
+  },
+  "field_measurement_implementation": "src/interaction_sensing/coupled_field_measurement_v15.py",
+  "response_measurement": {
+    "focal_trace": "frame-to-frame mean absolute grayscale change in the focal zone, normalized by 255",
+    "reference_trace": "median of predeclared neighbouring reference-zone motion traces",
+    "local_response_excess": "max(0, focal_rms - reference_rms) / (focal_rms + reference_rms), zero if both are static",
+    "coupled_response_score": "sqrt(local_response_excess * focal_rms)",
+    "semantics": "uncalibrated local-response process score, not probability"
+  },
+  "attribution_input": {
+    "type": "IndependentAttributionCue",
+    "allowed_source_classes": [
+      "independent_contact_geometry",
+      "independent_secondary_sensor",
+      "prevalidated_independent_link_model"
+    ],
+    "required_provenance": [
+      "window_id",
+      "source_id",
+      "evidence_sha256",
+      "calibration_sha256"
+    ],
+    "fail_closed_rule": "without a valid independent attribution cue, target_link_confidence = 0 and usable coupled target score = 0"
   },
   "hard_independence_rules": [
     "coupled_response_score cannot be copied from PolliPi direct target evidence",
     "target_link_confidence cannot be copied from PolliPi direct target evidence",
     "neither coupled field quantity may be defined as 1 - nuisance",
     "nuisance truth cannot be used as a runtime input to create positive coupled evidence",
-    "known biological truth is annotation/calibration-only and cannot be consumed at held-out runtime"
+    "known biological truth or coupling truth cannot be consumed at held-out runtime",
+    "shared focal/reference motion is not by itself a local coupled response"
   ],
   "runtime_combination": "usable coupled target route = coupled_response_score * target_link_confidence",
   "current_state": {
-    "field_measurement_implementation": null,
+    "local_response_measurement_implementation": "implemented",
+    "independent_attribution_source_implementation": null,
     "field_calibration": null,
     "frozen_threshold_or_mapping": null
   },
-  "freeze_requirements": [
-    "predeclare the primary-stream measurement used for local target response",
-    "predeclare the independent attribution/link measurement",
-    "freeze any parameters or thresholds from development-only data",
+  "freeze_requirements_remaining": [
+    "select and implement the concrete independent attribution/link source",
+    "freeze attribution scoring/calibration from development-only data",
+    "bind response/reference geometry and attribution evidence to the realised pre-scoring manifest",
     "verify no target/nuisance/truth leakage in runtime inputs",
-    "register the final artifact SHA-256 before held-out scoring"
+    "register the final coupled-field artifact SHA-256 before held-out scoring"
   ],
-  "claim_boundary": "Until frozen, C may remain absent from a field implementation or be treated as development-only; no indirect-rescue field claim is authorized."
+  "claim_boundary": "Local-response measurement is development-implemented, but C remains held-out blocked until an independently calibrated attribution source is frozen. No indirect-rescue field claim is authorized."
 }
