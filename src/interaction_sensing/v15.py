@@ -4,6 +4,11 @@ V14b/V14c remains the closed-world decision framework. This module exposes the
 real-data validation layer without rewriting the V14 package-level API.
 """
 from .absence_certification import TargetAbsenceEvidence
+from .nuisance_field_measurement_v15 import (
+    FieldNuisanceProcessMeasurement,
+    NuisanceReferenceLayout,
+    measure_field_nuisance_process,
+)
 from .support_estimation import (
     PrimaryStreamSupportEstimate,
     PrimaryStreamSupportEstimator,
@@ -49,8 +54,10 @@ __all__ = [
     "AbsenceStrategy",
     "CORE_FREEZE_ITEMS",
     "CoupledResponseResolution",
+    "FieldNuisanceProcessMeasurement",
     "FreezeItem",
     "FreezeStatus",
+    "NuisanceReferenceLayout",
     "PrefreezeGateState",
     "PrefreezeReadiness",
     "PrimaryStreamSupportEstimate",
@@ -74,6 +81,7 @@ __all__ = [
     "evaluate_visit_predictions",
     "evaluate_visit_system_variants",
     "load_prefreeze_registry",
+    "measure_field_nuisance_process",
     "predict_all_visit_variants",
     "predict_visit_variant",
     "prediction_from_triad",
