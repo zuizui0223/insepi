@@ -9,38 +9,38 @@
   "items": [
     {
       "name": "biological_truth_annotation",
-      "status": "development_defined",
-      "evidence_path": "docs/V15_LAYERED_TRUTH_COLLECTION.md",
-      "sha256": null,
-      "note": "Layered reference-truth rules exist but are not yet scientifically frozen for held-out scoring."
+      "status": "frozen",
+      "evidence_path": "benchmarks/v15_truth_annotation_freeze_v1.json",
+      "sha256": "2848f3715f359d5543c75b4e9ae7e74e18a70ddfa088a8896777019e32bb007c",
+      "note": "Biological reference-stream states, unresolved handling and event-id semantics are frozen before held-out scoring."
     },
     {
       "name": "coupling_truth_annotation",
-      "status": "development_defined",
-      "evidence_path": "docs/V15_LAYERED_TRUTH_COLLECTION.md",
-      "sha256": null,
-      "note": "Causal-attribution pass is defined but not yet held-out frozen."
+      "status": "frozen",
+      "evidence_path": "benchmarks/v15_truth_annotation_freeze_v1.json",
+      "sha256": "2848f3715f359d5543c75b4e9ae7e74e18a70ddfa088a8896777019e32bb007c",
+      "note": "Target-coupled causal-attribution states, positive consistency rule and unresolved handling are frozen."
     },
     {
       "name": "nuisance_truth_annotation",
-      "status": "development_defined",
-      "evidence_path": "benchmarks/v15_visit_observation_validation_contract.json",
-      "sha256": null,
-      "note": "Exogenous nuisance truth is separated from biological/coupled truth but final field annotation rules are not frozen."
+      "status": "frozen",
+      "evidence_path": "benchmarks/v15_truth_annotation_freeze_v1.json",
+      "sha256": "2848f3715f359d5543c75b4e9ae7e74e18a70ddfa088a8896777019e32bb007c",
+      "note": "Exogenous nuisance truth is frozen as positive multi-label process effects with target-driven response excluded."
     },
     {
       "name": "support_truth_annotation",
-      "status": "development_defined",
-      "evidence_path": "benchmarks/v15_observability_estimator_contract.json",
-      "sha256": null,
-      "note": "Component-level support truth exists as a development contract; held-out freeze remains pending."
+      "status": "frozen",
+      "evidence_path": "benchmarks/v15_truth_annotation_freeze_v1.json",
+      "sha256": "2848f3715f359d5543c75b4e9ae7e74e18a70ddfa088a8896777019e32bb007c",
+      "note": "Five component support states and the failed/unresolved/compromised/observable aggregation order are frozen."
     },
     {
       "name": "split_blinding_protocol",
       "status": "development_defined",
       "evidence_path": "benchmarks/v15_visit_observation_validation_contract.json",
       "sha256": null,
-      "note": "New-day/new-scene and blinded-layer rules exist but are not yet frozen with the final sampling design."
+      "note": "Truth-layer blinding invariants and minimum double-annotation rules are frozen inside the truth artifact, but the realised development/held-out block allocation remains tied to the final sampling plan and dataset manifest."
     },
     {
       "name": "o_measurement_calibration",
@@ -61,7 +61,7 @@
       "status": "development_defined",
       "evidence_path": "src/interaction_sensing/nuisance_field_measurement_v15.py",
       "sha256": null,
-      "note": "Primary-stream continuous process measurement baseline now exists. It is uncalibrated and must not be treated as nuisance probability or held-out-frozen risk mapping."
+      "note": "Primary-stream continuous process measurement baseline exists. It is uncalibrated and must not be treated as nuisance probability or held-out-frozen risk mapping."
     },
     {
       "name": "forced_vs_certified_absence_metrics",
