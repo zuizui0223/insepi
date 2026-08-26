@@ -1,0 +1,91 @@
+{
+  "schema": "insepi-v15-visit-contradiction-guided-development-v1",
+  "generation": "V15-development",
+  "status": "pre-data-development-contract",
+  "purpose": "Use complementary target, nuisance and observation-support views to localise development failures without forcing legitimate superposition or information absence into binary target/noise labels.",
+  "runtime_axes": {
+    "T_direct": "direct evidence for the focal insect/actor",
+    "C_coupled": "target-linked local response attributed to the focal interaction",
+    "N": "exogenous nuisance risk capable of mimic/mask/attribution/support effects",
+    "O": "primary-stream observation support independent of T and N"
+  },
+  "pattern_rules": [
+    {
+      "pattern": "target_nuisance_superposition",
+      "example": "high target evidence + high nuisance + observable support",
+      "interpretation": "not automatically a contradiction; target and nuisance may both be true",
+      "next_test": "join independent biological/nuisance truth and test whether either representation is wrong or the state is legitimate superposition"
+    },
+    {
+      "pattern": "quiet_unobservable",
+      "example": "low target + low nuisance + unobservable support",
+      "interpretation": "information absence/shared blind spot; never biological absence",
+      "next_test": "audit support component failure and retain censored"
+    },
+    {
+      "pattern": "target_support_conflict",
+      "example": "high target route + unobservable support",
+      "interpretation": "retain candidate pixels but do not treat the window as claim-bearing positive/negative evidence",
+      "next_test": "independent reference truth and primary-stream support audit"
+    },
+    {
+      "pattern": "nuisance_possible_miss",
+      "example": "low target + high nuisance + non-failed support",
+      "interpretation": "possible target suppression or nuisance-driven ambiguity",
+      "next_test": "hold support/target or support/nuisance fixed and test the suspected representation"
+    },
+    {
+      "pattern": "coupled_rescue_candidate",
+      "example": "weak direct insect evidence + high target-coupled response",
+      "interpretation": "possible indirect target evidence, not automatically a visit",
+      "next_test": "independent coupling truth must establish that the local target response was caused by insect contact"
+    }
+  ],
+  "post_truth_cause_classes": [
+    "definition_defect",
+    "representation_defect",
+    "information_absent",
+    "essential_ambiguity",
+    "model_uncertainty",
+    "legitimate_process_coupling"
+  ],
+  "actions": {
+    "definition_defect": "revise_definition_new_generation",
+    "representation_defect": "modify_exactly_one_identified_subsystem",
+    "information_absent": "retain_censored",
+    "essential_ambiguity": "design_discriminating_intervention_or_new_measurement",
+    "model_uncertainty": "collect_or_calibrate_exactly_one_identified_subsystem",
+    "legitimate_process_coupling": "retain_multi_process_state"
+  },
+  "alternating_development": {
+    "subsystems": ["target", "nuisance", "support"],
+    "rule": "When a representation/model defect is assigned to one subsystem, all sibling subsystems remain frozen for that diagnostic round.",
+    "forbidden": [
+      "modify target and nuisance simultaneously after one contradiction",
+      "modify target and support simultaneously after one contradiction",
+      "modify nuisance and support simultaneously after one contradiction",
+      "use held-out truth while emitting observer outputs",
+      "relabel information absence as a model error solely to reduce undetermined rate",
+      "tune away legitimate target+nuisance or target-coupled superposition"
+    ]
+  },
+  "truth_timing": {
+    "observer_outputs_first": true,
+    "independent_truth_join_after_outputs": true,
+    "cause_class_assigned_after_truth_join": true
+  },
+  "stop_rule": {
+    "criterion": "contradiction-type saturation across required strata",
+    "not_criterion": "zero contradiction count",
+    "reason": "legitimate coupling, information absence and essential ambiguity may remain after a well-specified system is mature"
+  },
+  "claim_boundary": {
+    "development_use_only": true,
+    "forbidden": [
+      "field visit accuracy before V15 held-out truth",
+      "claim that disagreement itself is error",
+      "claim that one observer wins because another is silent",
+      "claim that unobservable means no visit"
+    ]
+  }
+}
