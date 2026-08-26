@@ -30,7 +30,7 @@ def frozen_item(name: str) -> dict:
     }
 
 
-def test_current_v15_prefreeze_registry_is_blocked_safe_with_explicit_missing_work() -> None:
+def test_current_v15_prefreeze_registry_is_blocked_safe_but_has_no_undefined_core_items() -> None:
     readiness = evaluate_prefreeze_registry(current_registry())
     assert readiness.state is PrefreezeGateState.BLOCKED_SAFE
     assert readiness.absence_strategy is AbsenceStrategy.UNDECIDED
@@ -38,7 +38,8 @@ def test_current_v15_prefreeze_registry_is_blocked_safe_with_explicit_missing_wo
     assert "absence_strategy" in readiness.blockers
     assert "nuisance_field_adapter" in readiness.development_defined_items
     assert "sampling_power_plan" in readiness.development_defined_items
-    assert "claim_thresholds" in readiness.unset_items
+    assert "claim_thresholds" in readiness.development_defined_items
+    assert readiness.unset_items == ()
     assert set(readiness.frozen_items) == set()
 
 
