@@ -38,7 +38,7 @@ def strategy_fields(strategy: str) -> dict:
     }
 
 
-def test_current_v15_prefreeze_registry_is_design_complete_but_heldout_blocked() -> None:
+def test_current_v15_prefreeze_registry_is_design_complete_with_two_frozen_invariants() -> None:
     readiness = evaluate_prefreeze_registry(current_registry())
     assert readiness.state is PrefreezeGateState.BLOCKED_SAFE
     assert readiness.design_complete is True
@@ -46,13 +46,15 @@ def test_current_v15_prefreeze_registry_is_design_complete_but_heldout_blocked()
     assert readiness.safe_target_presence_upper_bound == 1.0
     assert readiness.absence_strategy_evidence_path == "benchmarks/v15_absence_strategy_v1.json"
     assert readiness.absence_strategy_sha256 == "5fd40b6b09753b11c62d4f20b8dedc061414d733c3fe1fc179089c98f468aaff"
-    assert "nuisance_field_adapter" in readiness.development_defined_items
+    assert readiness.unset_items == ()
+    assert set(readiness.frozen_items) == {
+        "forced_vs_certified_absence_metrics",
+        "cluster_exposure_estimand",
+    }
+    assert set(readiness.blockers) == set(CORE_FREEZE_ITEMS) - set(readiness.frozen_items)
+    assert len(readiness.development_defined_items) == 10
     assert "sampling_power_plan" in readiness.development_defined_items
     assert "claim_thresholds" in readiness.development_defined_items
-    assert readiness.unset_items == ()
-    assert "absence_strategy" not in readiness.blockers
-    assert set(readiness.blockers) == set(CORE_FREEZE_ITEMS)
-    assert set(readiness.frozen_items) == set()
 
 
 def test_current_registry_cannot_start_heldout() -> None:
