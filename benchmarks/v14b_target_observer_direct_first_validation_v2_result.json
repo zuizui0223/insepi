@@ -1,0 +1,21 @@
+{
+  "schema": "insepi-v14b-target-observer-direct-first-validation-v2",
+  "workflow_run": 32928566405,
+  "execution_commit": "791a58b30bfa2f7ac8acac20e654006ac8d3e0c8",
+  "artifact_id": 9592413407,
+  "artifact_digest": "sha256:7caade2a19b21d700cb21cb19b5955e611fcff6c984ecd44d72e9b2e322d0b6e",
+  "validation_sha256": "c863dc123f3d6f7a624043e0626a776af371097814fd84226469139146c4c7eb",
+  "runtime": {"python": "3.11.16", "numpy": "2.4.6"},
+  "metrics": {
+    "nuisance_only_target_support_rate": 0.0,
+    "direct_visible_superposed_target_support_rate": 1.0,
+    "direct_visible_coupled_target_support_rate": 1.0,
+    "indirect_only_coupled_target_support_rate": 0.0,
+    "indirect_only_coupled_inference_undetermined_rate": 1.0
+  },
+  "all_invariants_hold": true,
+  "new_contradiction_type_count": 0,
+  "target_side_type_saturated": true,
+  "nuisance_observer_modified": false,
+  "development_decision": "FREEZE_TARGET_OBSERVER_AND_SWITCH_TO_NUISANCE_SIDE"
+}
