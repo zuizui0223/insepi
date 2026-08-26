@@ -19,6 +19,7 @@
     "direct_positive_evidence": "direct_target_signal_fraction > 0 under the frozen exact-zero direct channel",
     "indirect_local_response": "local_excess_motion_fraction is retained as unattributed context only",
     "target_supported": "direct positive evidence only",
+    "indirect_only": "retain unresolved at inference level; never promote to target without an independent link/attribution channel",
     "observer_local_indirect_flag": "true only when local response is observed without direct target evidence; false does not imply safe absence",
     "inference_level_indirect_only": "for truth-known validation, a target-present Pi3=0 world with target_supported=false remains UNDETERMINED whether local response was detected or not",
     "no_lda_import": true,
