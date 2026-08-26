@@ -1,0 +1,38 @@
+{
+  "schema": "insepi-v15-v2-support-calibration-v1-contract",
+  "generation": "V15-v2",
+  "status": "development-calibration-method-not-yet-frozen",
+  "implementation": "src/interaction_sensing/v15_support_calibration.py",
+  "allowed_inputs": [
+    "support ceiling computed from primary-stream support measurements",
+    "resolved support truth only",
+    "explicit predeclared false-censor budget",
+    "explicit predeclared false-observable budget"
+  ],
+  "forbidden_inputs": [
+    "biological target truth",
+    "PolliPi target evidence",
+    "nuisance evidence or nuisance truth",
+    "held-out support truth",
+    "held-out observer output"
+  ],
+  "calibration_rule": {
+    "unobservable_threshold": "largest candidate threshold whose empirical false-censor rate on truly observable development windows is within budget",
+    "observable_threshold": "smallest candidate threshold strictly above the unobservable boundary whose empirical false-observable rate on truly unobservable development windows is within budget",
+    "middle_state": "the strict interval between thresholds remains COMPROMISED",
+    "infeasible_budget": "fail closed rather than collapse the middle state or move the budget"
+  },
+  "no_defaults": {
+    "max_false_censor_on_observable": null,
+    "max_false_observable_on_unobservable": null,
+    "final_unobservable_threshold": null,
+    "final_observable_threshold": null
+  },
+  "freeze_requirements_remaining": [
+    "freeze the two error budgets before calibration",
+    "run calibration on development-only support truth",
+    "commit the calibrated thresholds, development counts, achieved error rates and source manifest SHA",
+    "register the final artifact SHA-256 before held-out scoring"
+  ],
+  "claim_boundary": "Calibration method only; historical 0.30/0.70 remain development defaults and no field O threshold or performance is claimed."
+}
