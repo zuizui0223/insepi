@@ -4,7 +4,10 @@ from interaction_sensing.observation_triad import (
     ObservationSupport,
 )
 from interaction_sensing.support_estimation import PrimaryStreamSupportEstimate
-from interaction_sensing.support_truth import PrimaryStreamSupportTruth, SupportComponentState
+from interaction_sensing.support_truth import (
+    PrimaryStreamSupportTruth,
+    SupportComponentState,
+)
 from interaction_sensing.target_routes import TargetRouteEvidence
 from interaction_sensing.visit_systems import (
     VisitSystemInputs,
@@ -94,7 +97,7 @@ def test_target_coupled_route_can_rescue_weak_direct_insect_evidence() -> None:
     assert full.retain_candidate is True
 
 
-def test_high_nuisance_keeps_target_candidate_but_prevents_clean_positive_claim() -> None:
+def test_full_triad_preserves_observable_target_nuisance_superposition() -> None:
     row = inputs(
         direct=0.90,
         coupled_response=0.10,
@@ -112,7 +115,8 @@ def test_high_nuisance_keeps_target_candidate_but_prevents_clean_positive_claim(
     assert target_nuisance.positive_evidence is False
     assert target_nuisance.audit_priority is True
     assert full.retain_candidate is True
-    assert full.positive_evidence is False
+    assert full.positive_evidence is True
+    assert full.negative_evidence is False
     assert full.audit_priority is True
 
 

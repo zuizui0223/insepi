@@ -20,7 +20,7 @@ from enum import Enum
 from .observation_triad import (
     NuisanceEvidence,
     ObservationAvailability,
-    ObservationTriadPolicy,
+    ProcessPreservingObservationTriadPolicy,
 )
 from .support_estimation import PrimaryStreamSupportEstimate
 from .target_routes import TargetRouteEvidence
@@ -192,7 +192,7 @@ def predict_visit_variant(
         )
 
     if variant is VisitSystemVariant.FULL_TRIAD:
-        triad = ObservationTriadPolicy(
+        triad = ProcessPreservingObservationTriadPolicy(
             target_high_threshold=th.target_high,
             target_low_threshold=th.target_low,
             nuisance_high_threshold=th.nuisance_high,
