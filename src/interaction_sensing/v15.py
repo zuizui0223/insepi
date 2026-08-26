@@ -54,6 +54,12 @@ from .v15_prefreeze import (
     evaluate_prefreeze_registry,
     load_prefreeze_registry,
 )
+from .v15_support_calibration import (
+    SupportCalibrationBudget,
+    SupportCalibrationResult,
+    SupportCalibrationRow,
+    calibrate_support_thresholds,
+)
 from .visit_systems import (
     VisitSystemInputs,
     VisitSystemThresholds,
@@ -100,6 +106,9 @@ __all__ = [
     "PrimaryStreamSupportEstimate",
     "PrimaryStreamSupportEstimator",
     "PrimaryStreamSupportMeasurements",
+    "SupportCalibrationBudget",
+    "SupportCalibrationResult",
+    "SupportCalibrationRow",
     "SupportComponentMeasurement",
     "SupportEstimatorValidationSummary",
     "SupportMeasurementProvenance",
@@ -115,6 +124,7 @@ __all__ = [
     "VisitValidationSummary",
     "adapt_pollipi_target_evidence",
     "assert_ready_for_heldout",
+    "calibrate_support_thresholds",
     "evaluate_claim",
     "evaluate_prefreeze_registry",
     "evaluate_support_estimates",
