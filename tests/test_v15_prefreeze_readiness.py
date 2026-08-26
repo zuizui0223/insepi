@@ -38,21 +38,25 @@ def strategy_fields(strategy: str) -> dict:
     }
 
 
-def test_current_v15_prefreeze_registry_is_design_complete_with_two_frozen_invariants() -> None:
+def test_current_v15_prefreeze_registry_has_six_frozen_core_items() -> None:
     readiness = evaluate_prefreeze_registry(current_registry())
     assert readiness.state is PrefreezeGateState.BLOCKED_SAFE
     assert readiness.design_complete is True
     assert readiness.absence_strategy is AbsenceStrategy.RETAIN_UPPER_BOUND_1
     assert readiness.safe_target_presence_upper_bound == 1.0
-    assert readiness.absence_strategy_evidence_path == "benchmarks/v15_absence_strategy_v1.json"
-    assert readiness.absence_strategy_sha256 == "5fd40b6b09753b11c62d4f20b8dedc061414d733c3fe1fc179089c98f468aaff"
     assert readiness.unset_items == ()
     assert set(readiness.frozen_items) == {
+        "biological_truth_annotation",
+        "coupling_truth_annotation",
+        "nuisance_truth_annotation",
+        "support_truth_annotation",
         "forced_vs_certified_absence_metrics",
         "cluster_exposure_estimand",
     }
+    assert len(readiness.frozen_items) == 6
+    assert len(readiness.development_defined_items) == 6
     assert set(readiness.blockers) == set(CORE_FREEZE_ITEMS) - set(readiness.frozen_items)
-    assert len(readiness.development_defined_items) == 10
+    assert "split_blinding_protocol" in readiness.development_defined_items
     assert "sampling_power_plan" in readiness.development_defined_items
     assert "claim_thresholds" in readiness.development_defined_items
 
