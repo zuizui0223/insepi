@@ -1,0 +1,37 @@
+{
+  "schema": "insepi-v15-v2-absence-metric-freeze-v1",
+  "generation": "V15-v2",
+  "status": "frozen-pre-heldout",
+  "scope": "forced-versus-certified target-absence evaluation metrics only",
+  "source_implementation": "src/interaction_sensing/visit_validation.py",
+  "truth_denominator": "resolved biological truth rows only",
+  "certified_absence": {
+    "call_definition": "prediction.negative_evidence is true",
+    "required_semantics": "negative_evidence is permitted only with independently validated target-absence certification",
+    "calls_on_resolved_truth": "count resolved biological truth rows with negative_evidence",
+    "false_count": "among certified absence calls on resolved truth, count rows whose biological truth is visit_event",
+    "false_rate": "false_certified_absence_count / certified_absence_calls_on_resolved_truth; 0 when denominator is 0",
+    "missed_visit_rate": "resolved true visits called certified absent / all resolved true visits; 0 when denominator is 0"
+  },
+  "forced_absence": {
+    "call_definition": "prediction.forced_absence_call is true",
+    "required_semantics": "forced_absence_call is an intentionally unsafe comparator and never certified biological negative evidence",
+    "calls_on_resolved_truth": "count resolved biological truth rows with forced_absence_call",
+    "false_count": "among forced absence calls on resolved truth, count rows whose biological truth is visit_event",
+    "false_rate": "forced_false_absence_count / forced_absence_calls_on_resolved_truth; 0 when denominator is 0",
+    "missed_visit_rate": "resolved true visits forced absent / all resolved true visits; 0 when denominator is 0"
+  },
+  "hard_boundaries": [
+    "unresolved biological truth is excluded from biological accuracy denominators",
+    "censored predictions cannot carry forced or certified absence calls",
+    "forced and certified absence calls are mutually exclusive",
+    "under the fixed V15-v2 no-A-minus strategy, a certified absence call is not expected from the default system; any occurrence requires explicit independent certification provenance",
+    "held-out results cannot change these formulas"
+  ],
+  "not_frozen_here": [
+    "numerical claim thresholds",
+    "confidence interval method",
+    "sample size",
+    "field A-minus calibration"
+  ]
+}

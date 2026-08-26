@@ -65,24 +65,24 @@
     },
     {
       "name": "forced_vs_certified_absence_metrics",
-      "status": "development_defined",
-      "evidence_path": "src/interaction_sensing/visit_validation.py",
-      "sha256": null,
-      "note": "Evaluator separates forced and certified absence cost; final held-out formulas/claim use are not frozen."
+      "status": "frozen",
+      "evidence_path": "benchmarks/v15_absence_metric_freeze_v1.json",
+      "sha256": "4154359c2b348c70292ef2dc7bc15d0a6e00a385d54eb54f0e89d725acb62d80",
+      "note": "Forced and certified absence formulas, denominators and zero-denominator behavior are frozen before held-out scoring."
     },
     {
       "name": "cluster_exposure_estimand",
-      "status": "development_defined",
-      "evidence_path": "src/interaction_sensing/visit_rate.py",
-      "sha256": null,
-      "note": "Detected events per interpretable exposure is implemented; total-time extrapolation and final cluster estimator remain unfrozen."
+      "status": "frozen",
+      "evidence_path": "benchmarks/v15_cluster_exposure_estimand_freeze_v1.json",
+      "sha256": "b129892d693e291e8b45451f03061ba0853e54532c34dad6515281d4af825298",
+      "note": "Primary estimand is frozen as detected unique visit events per interpretable primary-stream hour; censored time is not no-visit exposure."
     },
     {
       "name": "sampling_power_plan",
       "status": "development_defined",
       "evidence_path": "benchmarks/v15_cluster_power_plan_v1_contract.json",
       "sha256": null,
-      "note": "A parameterized cluster-aware precision/power calculation method now exists. Final MESI, endpoint assumptions, ICC, cluster count, split rule and hashes remain to be frozen before held-out scoring."
+      "note": "A parameterized cluster-aware precision/power calculation method exists. Final MESI, endpoint assumptions, ICC, cluster count, split rule and hashes remain to be frozen before held-out scoring."
     },
     {
       "name": "claim_thresholds",
