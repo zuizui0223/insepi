@@ -1,0 +1,17 @@
+{
+  "claim_boundary": "receipt only; no scientific sweep or result generated",
+  "design_commit": "b88ad58c6db53b3bbc5bf5d00d3e54ade15ae32a",
+  "runtime": {
+    "numpy": "2.4.6",
+    "python": "3.11.16"
+  },
+  "schema": "insepi-v14a2-spatiotemporal-prefreeze-receipt-v1",
+  "scientific_file_sha256": {
+    "generator": "4217e71ea7563ddcc5306d2f9bcc4c3f1194ebb221647d49fdea706a1d9b444a",
+    "protocol": "b347a6939aedd3487ec64a933034dcad510b3a89ba2f12e4cfaeb3f4384c92db",
+    "runner": "ef31b561a0a5417f6ff980d5d35f71952d050ea39d7e8ad65f8ba6fd4182a391",
+    "sweep_helpers": "87dbebf39f367b3eb5b6b65d802c22f1b116141b34f9cfc86ddbd4e0972d6801"
+  },
+  "status": "candidate-generated-after-prefreeze-tests",
+  "unlocked_for_first_scientific_sweep": true
+}
