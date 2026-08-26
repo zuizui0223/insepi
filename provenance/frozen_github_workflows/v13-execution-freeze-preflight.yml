@@ -1,0 +1,74 @@
+name: V13 execution freeze preflight
+
+on:
+  pull_request:
+    paths:
+      - "benchmarks/v13_*.json"
+      - "src/interaction_sensing/causal_diagnostics.py"
+      - "src/interaction_sensing/physical_*v13.py"
+      - "src/interaction_sensing/simulation/real_video_v10.py"
+      - "scripts/v13_*.py"
+      - "tests/test_v13_execution_digest.py"
+      - ".github/workflows/v13-execution-freeze-preflight.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  freeze-preflight:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11.16"
+      - name: Verify committed scientific execution freeze
+        run: |
+          python -m pip install "numpy==2.4.6"
+          python -m pip install -e ".[dev]"
+          echo "V13_CURRENT_TREE_CANDIDATE"
+          python scripts/v13_execution_digest.py
+          pytest -q tests/test_v13_execution_digest.py
+          python - <<'PY' > /tmp/v13-freeze.env
+          import hashlib, json, platform
+          from pathlib import Path
+          import numpy as np
+
+          freeze=json.loads(Path('benchmarks/v13_execution_freeze.json').read_text())
+          assert freeze['schema']=='interaction-sensing-v13-execution-freeze-v1'
+          assert freeze['status']=='pre-field-scientific-execution-frozen'
+          assert freeze['critical_path_count']==22
+          assert freeze['runtime']['python']=='3.11.16'
+          assert freeze['runtime']['numpy']=='2.4.6'
+          assert platform.python_version()=='3.11.16'
+          assert np.__version__=='2.4.6'
+          helper=Path(freeze['digest_helper']['path'])
+          actual_sha=hashlib.sha256(helper.read_bytes()).hexdigest()
+          assert actual_sha==freeze['digest_helper']['sha256'], (actual_sha, freeze['digest_helper']['sha256'])
+          print('EXPECTED_DIGEST='+freeze['scientific_execution_digest_sha256'])
+          print('EXPECTED_HELPER_BLOB='+freeze['digest_helper']['git_blob_sha1'])
+          PY
+          source /tmp/v13-freeze.env
+          actual_helper_blob="$(git hash-object scripts/v13_execution_digest.py)"
+          test "$actual_helper_blob" = "$EXPECTED_HELPER_BLOB" || {
+            echo "V13 digest helper git blob drift: $actual_helper_blob != $EXPECTED_HELPER_BLOB"; exit 1;
+          }
+          python scripts/v13_execution_digest.py --expect "$EXPECTED_DIGEST"
+          echo "V13_EXECUTION_FREEZE PASS $EXPECTED_DIGEST"
+      - name: Confirm no V13 scientific data/result exists in repository
+        run: |
+          test ! -e benchmarks/v13_physical_result.json
+          test ! -e benchmarks/v13_physical_result_summary.json
+          test ! -e .v13/v13_predictions.json
+          test ! -e .v13/v13_report.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          freeze=json.loads(Path('benchmarks/v13_execution_freeze.json').read_text())
+          state=freeze['materialisation_state']
+          assert not any(state.values()), state
+          print('V13_NO_SCIENTIFIC_RESULT_YET PASS')
+          PY

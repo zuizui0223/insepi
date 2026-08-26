@@ -1,0 +1,59 @@
+name: V14b target observer validation v2
+
+on:
+  push:
+    branches:
+      - feature/v14b-target-observer-direct-first
+    paths:
+      - ".github/v14b_target_observer_validation_v2_once"
+
+jobs:
+  validate-v2:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11.16"
+      - name: Install frozen validation runtime
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install "numpy==2.4.6" -e ".[dev]"
+      - name: Verify marker and contracts
+        run: |
+          test "$(cat .github/v14b_target_observer_validation_v2_once)" = "RUN_ONCE_V14B_TARGET_VALIDATION_V2"
+          pytest -q tests/test_target_observer_v14b.py
+          python - <<'PY'
+          import json
+          p=json.load(open('benchmarks/v14b_target_observer_direct_first_protocol.json'))
+          assert p['schema']=='insepi-v14b-target-observer-direct-first-protocol-v2'
+          assert p['validation_rules']['fresh_after_definition_fix'] is True
+          PY
+      - name: Run fresh fixed 32-seed validation v2 exactly once
+        run: |
+          python scripts/run_v14b_target_observer_direct_first_validation.py --output v14b_output/target_direct_first_validation_v2.json
+      - name: Build immutable v2 receipt
+        run: |
+          python - <<'PY'
+          import hashlib, json, os, platform
+          from pathlib import Path
+          import numpy as np
+          out=Path('v14b_output/target_direct_first_validation_v2.json')
+          payload=json.loads(out.read_text())
+          receipt={
+            'schema':'insepi-v14b-target-observer-direct-first-validation-v2-receipt-v1',
+            'execution_commit':os.environ['GITHUB_SHA'],
+            'runtime':{'python':platform.python_version(),'numpy':np.__version__},
+            'validation_sha256':hashlib.sha256(out.read_bytes()).hexdigest(),
+            'all_invariants_hold':payload['all_invariants_hold'],
+            'target_side_type_saturated':payload['target_side_type_saturated'],
+            'new_contradiction_type_count':payload['new_contradiction_type_count'],
+            'nuisance_observer_modified':payload['nuisance_observer_modified'],
+          }
+          Path('v14b_output/target_direct_first_validation_v2_receipt.json').write_text(json.dumps(receipt,indent=2,sort_keys=True)+'\n')
+          PY
+      - name: Upload immutable validation v2
+        uses: actions/upload-artifact@v4
+        with:
+          name: v14b-target-observer-direct-first-validation-v2
+          path: v14b_output/

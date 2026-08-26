@@ -1,0 +1,82 @@
+name: V14a2 locked first scientific sweep
+
+on:
+  push:
+    branches:
+      - feature/v14a2-spatiotemporal-prefreeze
+    paths:
+      - benchmarks/v14a2_FIRST_SCIENTIFIC_SWEEP
+
+jobs:
+  first-sweep:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11.16"
+      - name: Install frozen V14a2 runtime
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install "numpy==2.4.6" -e ".[dev]"
+      - name: Verify one-shot trigger and frozen runtime
+        run: |
+          test "$(cat benchmarks/v14a2_FIRST_SCIENTIFIC_SWEEP)" = "execute-once-after-prefreeze-receipt"
+          python - <<'PY'
+          import platform, numpy as np
+          assert platform.python_version() == "3.11.16"
+          assert np.__version__ == "2.4.6"
+          print(platform.python_version(), np.__version__)
+          PY
+      - name: Run locked coarse sweep
+        run: |
+          python scripts/run_v14a2_spatiotemporal_sweep.py \
+            --sweep coarse_sweep \
+            --output-dir .v14a2/locked
+      - name: Run locked focused collision sweep
+        run: |
+          python scripts/run_v14a2_spatiotemporal_sweep.py \
+            --sweep focused_collision_sweep \
+            --output-dir .v14a2/locked
+      - name: Build immutable first-run receipt
+        env:
+          V14A2_RUN_SHA: ${{ github.sha }}
+          V14A2_RUN_ID: ${{ github.run_id }}
+        run: |
+          python - <<'PY'
+          import hashlib, json, os, platform
+          from pathlib import Path
+          import numpy as np
+
+          root = Path('.')
+          out = root / '.v14a2/locked'
+          def sha(p):
+              return hashlib.sha256(Path(p).read_bytes()).hexdigest()
+          coarse_summary = json.loads((out/'v14a2_coarse_sweep_summary.json').read_text())
+          focused_summary = json.loads((out/'v14a2_focused_collision_sweep_summary.json').read_text())
+          receipt = {
+              'schema': 'insepi-v14a2-first-scientific-sweep-receipt-v1',
+              'status': 'immutable-first-scientific-sweep-result',
+              'workflow_run_id': int(os.environ['V14A2_RUN_ID']),
+              'execution_commit': os.environ['V14A2_RUN_SHA'],
+              'runtime': {'python': platform.python_version(), 'numpy': np.__version__},
+              'prefreeze_receipt_sha256': sha('benchmarks/v14a2_spatiotemporal_prefreeze_receipt.json'),
+              'protocol_sha256': sha('benchmarks/v14a2_spatiotemporal_world_protocol.json'),
+              'coarse_surface_sha256': sha(out/'v14a2_coarse_sweep_surface.csv'),
+              'coarse_summary_sha256': sha(out/'v14a2_coarse_sweep_summary.json'),
+              'focused_surface_sha256': sha(out/'v14a2_focused_collision_sweep_surface.csv'),
+              'focused_summary_sha256': sha(out/'v14a2_focused_collision_sweep_summary.json'),
+              'coarse_summary': coarse_summary,
+              'focused_summary': focused_summary,
+              'claim_boundary': 'closed-world V14a2 geometry only; unfavorable results retained; no field or physical-transition claim',
+          }
+          (out/'v14a2_first_scientific_sweep_receipt.json').write_text(
+              json.dumps(receipt, indent=2, sort_keys=True) + '\n', encoding='utf-8'
+          )
+          PY
+      - name: Upload immutable V14a2 first-run evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: v14a2-first-scientific-sweep
+          path: .v14a2/locked/

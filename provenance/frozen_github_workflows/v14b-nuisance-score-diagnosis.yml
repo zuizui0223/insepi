@@ -1,0 +1,49 @@
+name: V14b nuisance score diagnosis locked run
+on:
+  push:
+    branches: [feature/v14b-nuisance-score-distribution-diagnosis]
+    paths:
+      - '.github/v14b_nuisance_score_diagnosis_once'
+      - '.github/workflows/v14b-nuisance-score-diagnosis.yml'
+jobs:
+  diagnose:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11.16'
+      - name: Install frozen diagnostic runtime
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install "numpy==2.4.6" -e ".[dev]"
+      - name: Verify marker and contract
+        run: |
+          test "$(cat .github/v14b_nuisance_score_diagnosis_once)" = "RUN_ONCE_V14B_NUISANCE_SCORE_DIAGNOSIS"
+          pytest -q tests/test_v14b_nuisance_score_distribution_diagnosis.py
+      - name: Run locked nuisance score diagnosis exactly once
+        run: |
+          mkdir -p v14b_nuisance_score_diagnosis_artifact
+          python scripts/run_v14b_nuisance_score_distribution_diagnosis.py --output v14b_nuisance_score_diagnosis_artifact/result.json
+      - name: Build immutable diagnosis receipt
+        run: |
+          python - <<'PY'
+          import hashlib, json, os, platform
+          from pathlib import Path
+          import numpy as np
+          out=Path('v14b_nuisance_score_diagnosis_artifact/result.json')
+          payload=json.loads(out.read_text())
+          receipt={
+            'schema':'insepi-v14b-nuisance-score-diagnosis-receipt-v1',
+            'execution_commit':os.environ['GITHUB_SHA'],
+            'runtime':{'python':platform.python_version(),'numpy':np.__version__},
+            'result_sha256':hashlib.sha256(out.read_bytes()).hexdigest(),
+            'failure_classification':payload.get('failure_classification'),
+          }
+          Path('v14b_nuisance_score_diagnosis_artifact/receipt.json').write_text(json.dumps(receipt,indent=2,sort_keys=True)+'\n')
+          PY
+      - name: Upload immutable nuisance score diagnosis
+        uses: actions/upload-artifact@v4
+        with:
+          name: v14b-nuisance-score-diagnosis-first-run
+          path: v14b_nuisance_score_diagnosis_artifact/

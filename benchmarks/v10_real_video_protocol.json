@@ -1,0 +1,200 @@
+{
+  "schema": "interaction-sensing-v10-real-video-protocol-v1",
+  "status": "pre-result-frozen; pixel-materialisation-not-yet-run; observer-execution-blocked-on-exact-v5-commits",
+  "scientific_question": "Do the frozen observation-risk and exploration-guarded allocation principles transfer from synthetic validation to byte-frozen real pollinator-video pixels under known observation-process perturbations, without claiming biological-event detection accuracy?",
+  "source": {
+    "source_lock": "benchmarks/v10_real_video_source_lock.json",
+    "annotation_provenance_audit": "benchmarks/v10_annotation_provenance_audit.json",
+    "container_metadata": "benchmarks/v10_container_metadata_summary.json",
+    "decoder_freeze": "benchmarks/v10_decoder_freeze.json",
+    "video_count": 7,
+    "video_sha256": [
+      "3223f41041629bcba84d2686f74c08c3d8e03b5cfef27ec74198eb5e72f69de0",
+      "1d39f369ab5c4a6bf015fec69c8aaf65ec10f618c50fda69e947c510e89959fe",
+      "6193736d994ad1ec0a94558aed41d7d93643c6bc830fb9d5ed1d5b21e9dbf433",
+      "c0a9c8219d0e588a976aa57dbb35ec66b1efadf927223e13f2f10ccfdf8f15f9",
+      "eb24100057410ec31dc4bd452507b6457abcd3c4e5ba629d65501f9ad7e6c49c",
+      "bc325107cedafbeae508f118be563a11605a6dbae1e19a0d981bfcf49f51707f",
+      "ce19e09cca6681d400c868597269ad207d2ddfcf43d151523d19f9f40bdb4448"
+    ],
+    "native_width": 1920,
+    "native_height": 1080,
+    "native_fps": 60,
+    "native_total_frames": 22260,
+    "native_total_duration_seconds": 371
+  },
+  "decoder": {
+    "package": "imageio-ffmpeg==0.6.0",
+    "ffmpeg_executable": "ffmpeg-linux-x86_64-v7.0.2",
+    "ffmpeg_sha256": "e7e7fb30477f717e6f55f9180a70386c62677ef8a4d4d1a5d948f4098aa3eb99",
+    "ffmpeg_version": "7.0.2-static",
+    "selected_frame_indices": "n mod 60 == 0, beginning at n=0",
+    "filter": "select='not(mod(n,60))'",
+    "fps_mode": "passthrough",
+    "output_pixel_format": "rgb24"
+  },
+  "base_windows": {
+    "rule": "For every video, decode frame indices 0,60,120,... below frame_count. For each adjacent decoded pair, background is the earlier frame and current is the later frame. No pixel/content criterion may add, remove, or shift a window.",
+    "time_step_seconds": 1,
+    "background_lag_frames": 60,
+    "per_video_window_count": [58,48,59,46,57,70,26],
+    "total_base_windows": 364,
+    "window_id": "v{video_index}-f{current_native_frame_index}"
+  },
+  "canonicalisation": {
+    "output_shape": [96,128],
+    "output_dtype": "uint8",
+    "rgb_to_gray": "gray = (77*R + 150*G + 29*B + 128) // 256, computed in an integer type wider than uint8",
+    "downsample": "Reshape 1080x1920 grayscale to [72,15,128,15], sum over each exact non-overlapping 15x15 block, then round to nearest uint8 as (sum + 112) // 225. This produces 72x128 without interpolation or cropping.",
+    "pad": "Edge-replicate the first and last 72x128 rows by 12 rows above and 12 rows below, yielding 96x128.",
+    "rationale": "Preserve the native 16:9 field of view without crop or anisotropic resize while retaining the V7 96x128 / 32-pixel-cell observer lattice.",
+    "apply_to": "Both current and background native frames before any V10 perturbation."
+  },
+  "conditions": {
+    "native_label": "native",
+    "perturb_current_only": true,
+    "background_always_native": true,
+    "v7_operator_provenance_commit": "1c4c5ffc214ebdfb71ddabe170a071352acd4879",
+    "intensity_tiers": [0.45,0.80,1.15],
+    "families": ["shadow","occlusion","blur","sensor_banding","glare","framing_drift"],
+    "excluded_v7_families": {
+      "wind": "synthetic scene-motion generator rather than a generic post-capture observation transform",
+      "clutter": "synthetic object insertion; not a generic sensor/observation degradation",
+      "lens": "redundant with glare/occlusion for this transfer test and not needed for the minimum generic family set",
+      "shake": "V7 implementation uses wrap-around np.roll and is redundant with the non-wrapping framing_drift transfer test",
+      "composite_families": "single-operator transfer is evaluated first; no post-result composition is allowed within V10"
+    },
+    "operator_contract": {
+      "shadow": "Copy the exact V7 shadow formula: Gaussian vertical darkening with amplitude 39*intensity and seed-determined center in [0.42,0.64]*width.",
+      "occlusion": "Copy the exact V7 occlusion formula: centered seed-sized patch, patch height/width integers in [13,19], patch values 96 + N(0,2.5), blend amount min(1,0.78*intensity).",
+      "blur": "Copy V7 _smooth: amount min(1,0.72*intensity), rounds max(1, round(2+2*intensity)), 5-neighbour roll smooth repeated on the current canonical frame.",
+      "sensor_banding": "Copy V7 banding: add 20*intensity*sin(yy*U(0.40,0.62)+phase), phase U(-pi,pi).",
+      "glare": "Copy V7 glare: seed-determined center within central 3/5, sigma U(0.08,0.14)*min(height,width), add 150*intensity*Gaussian.",
+      "framing_drift": "Copy V7 non-wrapping drift: dy=clip(round(4*intensity),1,7), dx=clip(round(-6*intensity),-9,-1), median-fill uncovered pixels."
+    },
+    "perturbation_seed_domain": "interaction-sensing-v10-real-pixel-perturbation-v1",
+    "perturbation_seed_rule": "First 8 bytes, big-endian unsigned, of SHA256(domain|video_sha256|current_native_frame_index|family|tier_index).",
+    "variants_per_base_window": 19,
+    "total_condition_count": 6916
+  },
+  "truth_and_labels": {
+    "primary_known_truth": "whether the current canonical frame received a preregistered perturbation, and its family/tier",
+    "biological_event_truth": "unavailable at frame level and forbidden as a V10 primary metric",
+    "experiment1_human_aggregate_use": "secondary descriptive video-level context only",
+    "hydat_csv_as_truth": false,
+    "yolo_csv_as_truth": false,
+    "experiment1_results_as_frame_truth": false
+  },
+  "observers": {
+    "shared_input_contract": "Both observers receive only the same 2-D uint8 (frame, background) canonical images. Perturbation family/tier and any human aggregate metadata are attached only after decisions are emitted.",
+    "pollipi_required_exact_v5_commit": "d58d0a86034a6c2d53f90efbe4245370fd7cd2e9",
+    "insepi_required_exact_v5_commit": "980813bab996909020140fad5bd83b055eb3db9c",
+    "pollipi_adapter_contract": "Use the V7 no-truth adapter semantics and exact frozen analyze(frame, background) generation once the V5 commit is reachable.",
+    "insepi_adapter_contract": "Use the V7 generic no-truth adapter with the exact frozen V5 decision_fn(frame, background) once the V5 commit is reachable.",
+    "execution_before_both_exact_commits_reachable": "forbidden"
+  },
+  "paired_transfer_metrics": {
+    "insepi_risk_score": "max(false_event_risk, missed_event_risk, attribution_risk)",
+    "risk_delta": "risk(perturbed current, native background) - risk(native current, same native background)",
+    "summaries": [
+      "median risk_delta by family and tier",
+      "fraction of base windows with risk_delta > 0 by family and tier",
+      "global median risk_delta by tier",
+      "fraction of base windows with nondecreasing risk across tier0 <= tier1 <= tier2 within each family"
+    ],
+    "pollipi_candidate_indicator": "1 for strong_visitation_candidate or uncertain_local_activity, otherwise 0",
+    "pollipi_diagnostics": [
+      "absolute candidate-rate change from paired native by family/tier",
+      "transition rate from non-environmental native state to environmental_noise under perturbation by family/tier"
+    ],
+    "pollipi_diagnostics_are_accuracy_metrics": false
+  },
+  "allocation_transfer": {
+    "panel_count": 18,
+    "panel_ids": "one panel for each of 6 perturbation families x 3 intensity tiers",
+    "windows_per_panel": 364,
+    "disturbance_prevalence": 0.5,
+    "disturbed_windows_per_panel": 182,
+    "panel_assignment_domain": "interaction-sensing-v10-panel-assignment-v1",
+    "panel_assignment_rule": "For each panel, rank all 364 stable window_ids by SHA256(domain|panel_id|window_id); the 182 lexicographically smallest digests receive that panel's perturbation and the remaining 182 use native current frames. Assignment is fixed before observer output.",
+    "budgets": [0.10,0.25,0.50],
+    "selection_replicates": 200,
+    "selection_seed_domain": "interaction-sensing-v10-panel-selection-v1",
+    "selection_seed_rule": "First 8 bytes of SHA256(domain|panel_id|budget|replicate_index); the same seed is passed to every compared policy for that panel/budget/replicate.",
+    "policies": [
+      {"name":"uniform","exploration":1.0,"arms":[]},
+      {"name":"guarded_v6","exploration":0.50,"evidence":0.10,"observability":0.40},
+      {"name":"guarded_e_only","exploration":0.50,"evidence":0.50},
+      {"name":"guarded_o_only","exploration":0.50,"observability":0.50},
+      {"name":"guarded_fused_20_80","exploration":0.50,"fused_target_score":"0.20*evidence_score + 0.80*observability_risk"},
+      {"name":"guarded_max","exploration":0.50,"maximum_target_score":"max(evidence_score, observability_risk)"}
+    ],
+    "evidence_score": "1.0 strong_visitation_candidate; 0.70 uncertain_local_activity; 0 otherwise",
+    "observability_risk": "max(false_event_risk, missed_event_risk, attribution_risk)",
+    "primary_metrics": [
+      "known_disturbance_recall",
+      "known_disturbance_recall_ratio_to_paired_uniform",
+      "selected_known_disturbance_yield"
+    ],
+    "representation_metrics": [
+      "source_video TV distance of selected windows versus the full panel",
+      "video-by-temporal-quartile TV distance of selected windows versus the full panel"
+    ],
+    "no_biological_event_recall_metric": true
+  },
+  "claim_ceiling": {
+    "level_A_broad_real_pixel_transfer": {
+      "requirements": [
+        "At least 5 of 6 families have high-tier median InsePi risk_delta > 0.",
+        "At least 4 of 6 families have nondecreasing family-level median InsePi risk across tier0 <= tier1 <= tier2.",
+        "Frozen V6 mean disturbance-recall ratio to paired uniform is >= 1.0 in at least 45 of the 54 family-tier x budget regime cells, and its overall mean ratio is > 1.0."
+      ],
+      "allowed_claim": "Broad real-pixel transfer of observation-process risk sensitivity plus disturbance-enriching guarded allocation, with the pre-existing exploration guarantees retained."
+    },
+    "level_B_observer_transfer_allocation_mixed": {
+      "requirements": [
+        "The first two Level-A observer-transfer requirements pass, but the allocation requirement does not."
+      ],
+      "allowed_claim": "Observation-risk transfer to real ecological pixels is supported, but real-pixel allocation benefit is mixed."
+    },
+    "level_C_partial_transfer": {
+      "requirements": [
+        "Exactly 3 or 4 of 6 families have high-tier median InsePi risk_delta > 0, or broad transfer is otherwise family-specific."
+      ],
+      "allowed_claim": "Transfer is perturbation-family-specific; applicability boundaries must be reported and the method is not broadly validated on real pixels."
+    },
+    "level_D_null_or_adverse": {
+      "requirements": [
+        "At most 2 of 6 families have high-tier median InsePi risk_delta > 0, or the global high-tier median risk_delta is <= 0."
+      ],
+      "allowed_claim": "The synthetic observability result did not transfer adequately to this real-pixel stress test; retain as a negative validation result."
+    },
+    "never_allowed_from_v10": [
+      "field biological-event detection accuracy",
+      "pollinator identification accuracy",
+      "occupancy/detection-probability validity",
+      "universal optimality of 50/10/40",
+      "use of V10 to rescue or reinterpret V7"
+    ]
+  },
+  "materialisation": {
+    "allowed_after_this_protocol_is_committed": true,
+    "observer_execution_allowed_after_materialisation": false,
+    "artifact_layout": "Store 364 canonical native backgrounds and 19 current-frame variants per base window as uint8 96x128 arrays, plus immutable registry/provenance. No human visual selection or manual editing is permitted after materialisation.",
+    "required_receipt": [
+      "protocol SHA-256",
+      "seven source video SHA-256 values",
+      "decoder executable SHA-256",
+      "base-window registry SHA-256",
+      "pixel artifact SHA-256",
+      "condition registry SHA-256"
+    ]
+  },
+  "non_interference": {
+    "v6_weights_changed": false,
+    "v7_seed_or_pixels_used": false,
+    "v8_or_v9_retuned": false,
+    "real_video_clip_selection_after_performance": false,
+    "observer_outputs_seen_before_protocol_freeze": false
+  }
+}

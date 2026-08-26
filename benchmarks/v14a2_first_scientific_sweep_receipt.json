@@ -1,0 +1,58 @@
+{
+  "claim_boundary": "closed-world V14a2 geometry only; unfavorable results retained; no field or physical-transition claim",
+  "coarse_summary": {
+    "canonical": true,
+    "claim_boundary": "closed-world phase geometry only; no field accuracy or physical transition claim",
+    "prediction_checks_descriptive_not_gates": {
+      "Q1_high_pi6_information_absence": 0.4048,
+      "Q1_low_pi6_information_absence": 0.4048,
+      "Q1_sampling_prediction_supported": false,
+      "note": "descriptive result; never a CI gate"
+    },
+    "prefreeze_design_commit": "b88ad58c6db53b3bbc5bf5d00d3e54ade15ae32a",
+    "protocol_sha256": "b347a6939aedd3487ec64a933034dcad510b3a89ba2f12e4cfaeb3f4384c92db",
+    "schema": "insepi-v14a2-spatiotemporal-sweep-result-v1",
+    "surface_row_count": 153125,
+    "surface_sha256": "2753f8f881a89fd73a31b8fe8f2731c3479ddf8658e0f8d4d977961208636b32",
+    "sweep": "coarse_sweep",
+    "world_count": 612500
+  },
+  "coarse_summary_sha256": "d3010a92242126377fa4cfe284dceb250f1afc1164ba10d8a71ab1d65ca7ce0b",
+  "coarse_surface_sha256": "2753f8f881a89fd73a31b8fe8f2731c3479ddf8658e0f8d4d977961208636b32",
+  "execution_commit": "9d4467c6c93f5b51fe46b250ede4e4e10d3e4bb3",
+  "focused_summary": {
+    "canonical": true,
+    "claim_boundary": "closed-world phase geometry only; no field accuracy or physical transition claim",
+    "prediction_checks_descriptive_not_gates": {
+      "Q3_broad_spatial_near_pi2_ambiguity": 0.4351851851851852,
+      "Q3_broad_spatial_shoulder_pi2_ambiguity": 0.42901234567901236,
+      "Q3_collision_interaction_supported": false,
+      "Q3_matched_spatial_near_pi2_ambiguity": 0.44058641975308643,
+      "Q3_matched_spatial_shoulder_pi2_ambiguity": 0.44135802469135804,
+      "Q3_pi2_by_pi5_interaction": -0.00694444444444442,
+      "Q3_resolved_row_count": 2700,
+      "Q3_temporal_collision_effect_at_broad_pi5": 0.006172839506172811,
+      "Q3_temporal_collision_effect_at_pi5_1": -0.0007716049382716084,
+      "Q4_reject_timescale_collision_more_strongly_if_false": true,
+      "note": "descriptive registered contrast; never a CI gate"
+    },
+    "prefreeze_design_commit": "b88ad58c6db53b3bbc5bf5d00d3e54ade15ae32a",
+    "protocol_sha256": "b347a6939aedd3487ec64a933034dcad510b3a89ba2f12e4cfaeb3f4384c92db",
+    "schema": "insepi-v14a2-spatiotemporal-sweep-result-v1",
+    "surface_row_count": 4050,
+    "surface_sha256": "e3e1a11907e5634ab1a2639e1cfc80a379d46dde656c044c2037b1242fed6424",
+    "sweep": "focused_collision_sweep",
+    "world_count": 32400
+  },
+  "focused_summary_sha256": "39dd239d764075e0585010e497bb6002539a58b55c2800b151668ed7d0ed8019",
+  "focused_surface_sha256": "e3e1a11907e5634ab1a2639e1cfc80a379d46dde656c044c2037b1242fed6424",
+  "prefreeze_receipt_sha256": "1401e3f64a30b34205f5ad2afafc9cd2f29ac81de281b20d052454da0dfa9538",
+  "protocol_sha256": "b347a6939aedd3487ec64a933034dcad510b3a89ba2f12e4cfaeb3f4384c92db",
+  "runtime": {
+    "numpy": "2.4.6",
+    "python": "3.11.16"
+  },
+  "schema": "insepi-v14a2-first-scientific-sweep-receipt-v1",
+  "status": "immutable-first-scientific-sweep-result",
+  "workflow_run_id": 32921177706
+}

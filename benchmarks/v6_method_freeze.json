@@ -1,0 +1,52 @@
+{
+  "schema": "observer-portfolio-v6-method-freeze-v1",
+  "method_name": "exploration_guarded_dual_observer_portfolio_v6",
+  "allocator_implementation_commit": "a8ac75991ab28fd74a3f3a5482304a2b127a97bc",
+  "weights": {
+    "exploration": 0.5,
+    "pollipi": 0.1,
+    "insepi": 0.4,
+    "disagreement": 0.0
+  },
+  "development_evidence": {
+    "world": "V4 development holdout (inspected; not final validation)",
+    "world_fingerprint": "10e38358499b79829876752986492c6a69b3ab15ec7b6756e6ae7ad75b314193",
+    "pollipi_emitted_trace_source_commit": "5541201b376689c32aaabeafbc8e7e9592150d23",
+    "windows_per_regime": 4800,
+    "replicates": 200,
+    "prevalences": [0.1, 0.5, 0.9],
+    "budgets": [0.1, 0.25, 0.5],
+    "paired_against_uniform": true,
+    "hard_ratio_floor": 1.0,
+    "hard_tv_ceiling": 0.25,
+    "worst_joint_ratio": 1.00846,
+    "mean_joint_ratio": 1.11642,
+    "max_tv_distance": 0.21919,
+    "regimes_at_or_above_uniform": 9,
+    "n_regimes": 9
+  },
+  "per_regime": [
+    {"prevalence": 0.1, "budget": 0.1, "event_ratio": 1.25691, "hidden_error_ratio": 1.34958, "joint_ratio": 1.25691, "tv": 0.21919},
+    {"prevalence": 0.1, "budget": 0.25, "event_ratio": 1.26794, "hidden_error_ratio": 1.34923, "joint_ratio": 1.26794, "tv": 0.21571},
+    {"prevalence": 0.1, "budget": 0.5, "event_ratio": 1.29637, "hidden_error_ratio": 1.37983, "joint_ratio": 1.29637, "tv": 0.20378},
+    {"prevalence": 0.5, "budget": 0.1, "event_ratio": 1.06397, "hidden_error_ratio": 1.07263, "joint_ratio": 1.06397, "tv": 0.18349},
+    {"prevalence": 0.5, "budget": 0.25, "event_ratio": 1.06406, "hidden_error_ratio": 1.06696, "joint_ratio": 1.06406, "tv": 0.17826},
+    {"prevalence": 0.5, "budget": 0.5, "event_ratio": 1.07249, "hidden_error_ratio": 1.07446, "joint_ratio": 1.07249, "tv": 0.16788},
+    {"prevalence": 0.9, "budget": 0.1, "event_ratio": 1.00864, "hidden_error_ratio": 1.06937, "joint_ratio": 1.00864, "tv": 0.17921},
+    {"prevalence": 0.9, "budget": 0.25, "event_ratio": 1.00846, "hidden_error_ratio": 1.06473, "joint_ratio": 1.00846, "tv": 0.17386},
+    {"prevalence": 0.9, "budget": 0.5, "event_ratio": 1.00896, "hidden_error_ratio": 1.06417, "joint_ratio": 1.00896, "tv": 0.16375}
+  ],
+  "focused_alternatives": {
+    "E40_P10_I50_D0": {"passes": false, "worst_joint_ratio": 1.00842, "mean_joint_ratio": 1.11598, "max_tv": 0.26567, "failure": "tv_ceiling"},
+    "E50_P10_I40_D0": {"passes": true, "worst_joint_ratio": 1.00846, "mean_joint_ratio": 1.11642, "max_tv": 0.21919, "selected": true},
+    "E60_P10_I30_D0": {"passes": true, "worst_joint_ratio": 1.00832, "mean_joint_ratio": 1.10303, "max_tv": 0.17222, "selected": false},
+    "E70_P10_I20_D0": {"passes": false, "worst_joint_ratio": 0.98329, "mean_joint_ratio": 1.08413, "max_tv": 0.12907, "failure": "common_prevalence_hidden_error_recall"}
+  },
+  "claim_boundary": {
+    "direct_disagreement_allocation": "rejected for V6 frozen candidate",
+    "disagreement_role": "development diagnostic, falsification, and failure localisation",
+    "allocation_claim": "majority uniform exploration plus independent PolliPi and InsePi quotas is the V6 candidate for locked validation",
+    "field_accuracy_claim": false
+  },
+  "v7_status": "BLOCKED until frozen observer/evidence prerequisites are reproducibly reachable; no V7 seed or world generated"
+}

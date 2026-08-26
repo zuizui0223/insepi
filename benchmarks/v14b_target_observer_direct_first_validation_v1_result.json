@@ -1,0 +1,22 @@
+{
+  "schema": "insepi-v14b-target-observer-direct-first-validation-v1",
+  "execution_commit": "4c0a583ef10e887aeb81b0bb73565fb525735ba7",
+  "workflow_run": 32928088060,
+  "artifact_status": "not_uploaded_hidden_path_workflow_defect",
+  "metrics": {
+    "nuisance_only_target_support_rate": 0.0,
+    "direct_visible_superposed_target_support_rate": 1.0,
+    "direct_visible_coupled_target_support_rate": 1.0,
+    "indirect_only_coupled_target_support_rate": 0.0,
+    "indirect_only_coupled_unresolved_rate": 0.8491666666666666
+  },
+  "all_invariants_hold": false,
+  "new_contradiction_type_count": 0,
+  "target_side_type_saturated_reported": true,
+  "diagnosis": {
+    "cause": "validation_definition_defect",
+    "detail": "unresolved_indirect_only is an observer-local flag requiring observed local response; it cannot encode latent target presence when both direct and local evidence are absent",
+    "observer_change_required": false,
+    "next_action": "revise inference-level validation semantics with fresh validation seeds; keep target observer and nuisance observer unchanged"
+  }
+}

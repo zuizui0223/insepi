@@ -1,0 +1,36 @@
+{
+  "schema": "insepi-v14b-nuisance-risk-calibration-protocol-v1",
+  "status": "prefrozen-before-risk-calibration-run",
+  "source_diagnosis": {
+    "workflow_run_id": 32929754709,
+    "execution_commit": "fe5ffa04b41ab02c9d5c26b0d662e61fe8b98bc2",
+    "artifact_digest": "sha256:990adc30a779d893c0ec072b6264111083e0339c27d726b7c23a8ae0b15f6cdb",
+    "result_sha256": "7310178cf064fe1d06cf2564adf3b7e6b3df57b4ce446fd8b23fb48aff4ff6ee",
+    "prefrozen_failure_classification": "mixed_or_unresolved"
+  },
+  "definition_correction": {
+    "invalid_contract": "carry inherited raw score threshold 0.55 across a redefined nuisance score",
+    "replacement_contract": "bound false nuisance attribution by a fixed false-certainty budget alpha",
+    "alpha": 0.05,
+    "observer_features_changed": false,
+    "observer_aggregation_changed": false,
+    "target_observer_changed": false
+  },
+  "calibration": {
+    "negative_regimes": ["target_only", "target_nuisance_coupled"],
+    "calibration_seeds": [101001,101002,101003,101004,101005,101006,101007,101008,101009,101010,101011,101012,101013,101014,101015,101016,101017,101018,101019,101020,101021,101022,101023,101024,101025,101026,101027,101028,101029,101030,101031,101032],
+    "threshold_rule": "smallest score boundary strictly above the empirical 95th percentile of pooled negative nuisance_process_support; no positive-world score may influence the threshold",
+    "no_threshold_search": true
+  },
+  "validation": {
+    "validation_seeds": [111001,111002,111003,111004,111005,111006,111007,111008,111009,111010,111011,111012,111013,111014,111015,111016,111017,111018,111019,111020,111021,111022,111023,111024,111025,111026,111027,111028,111029,111030,111031,111032],
+    "temporally_resolved_required": true,
+    "minimum_observation_support": 0.20,
+    "heldout_target_only_fpr_max": 0.05,
+    "heldout_target_coupled_fpr_max": 0.05,
+    "nuisance_recall_is_not_a_freeze_gate": true,
+    "nuisance_coverage_reported_by_pi": true
+  },
+  "stop_rule": "freeze nuisance decision contract if held-out false-attribution budgets hold across required negative regimes and no new nuisance-side contradiction type appears; unresolved nuisance worlds remain U",
+  "claim_boundary": "closed-world decision-risk calibration only; no field threshold or field nuisance accuracy claim"
+}

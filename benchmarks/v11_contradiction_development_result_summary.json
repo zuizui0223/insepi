@@ -1,0 +1,62 @@
+{
+  "schema": "interaction-sensing-v11-contradiction-development-result-summary-v1",
+  "status": "canonical-first-run-frozen",
+  "workflow_run_id": 32696262650,
+  "workflow_artifact_id": 9508974835,
+  "workflow_artifact_zip_sha256": "e8a6d2fe913250a7a6e26fb968aeb6083356f724ebeaa55476ef6ba30f143428",
+  "protocol_sha256": "af358226f4afccff3bb148e90a30c5fe9a25c2170d3f223497a22fb3dd685080",
+  "result_sha256": "654d0be81c459f11d35b37ca91fa7251f395e352a31f44993384bac92b1107c1",
+  "runtime": {"python": "3.11.16", "numpy": "2.4.6"},
+  "byte_determinism": {"pythonhashseed_11_vs_97": true},
+  "pre_result_contract_tests_passed": 11,
+  "claim": {"level": "D", "label": "no_general_localisation_advantage"},
+  "strategies": {
+    "contradiction_guided": {
+      "heldout_failure_localisation_accuracy": 0.346944,
+      "wrong_module_intervention_rate": 0.870741,
+      "shared_blindspot_discovery_rate": 0.251111,
+      "no_fault_false_intervention_rate": 0.0,
+      "experiments_to_stable_falsification": 5.590278,
+      "heldout_repair_positive_transfer_rate": 0.196296,
+      "heldout_repair_relative_loss_reduction": 0.095349
+    },
+    "early_scalar_fusion": {
+      "heldout_failure_localisation_accuracy": 0.505833,
+      "wrong_module_intervention_rate": 0.644815,
+      "shared_blindspot_discovery_rate": 0.411111,
+      "no_fault_false_intervention_rate": 0.042222,
+      "experiments_to_stable_falsification": 4.960833,
+      "heldout_repair_positive_transfer_rate": 0.473704,
+      "heldout_repair_relative_loss_reduction": 0.222841
+    },
+    "event_only": {
+      "heldout_failure_localisation_accuracy": 0.349722,
+      "wrong_module_intervention_rate": 0.692963,
+      "shared_blindspot_discovery_rate": 0.248889,
+      "no_fault_false_intervention_rate": 0.522222,
+      "experiments_to_stable_falsification": 5.573056,
+      "heldout_repair_positive_transfer_rate": 0.508519,
+      "heldout_repair_relative_loss_reduction": 0.185823
+    },
+    "observability_only": {
+      "heldout_failure_localisation_accuracy": 0.4475,
+      "wrong_module_intervention_rate": 0.564815,
+      "shared_blindspot_discovery_rate": 0.674444,
+      "no_fault_false_intervention_rate": 0.515556,
+      "experiments_to_stable_falsification": 5.369167,
+      "heldout_repair_positive_transfer_rate": 0.675556,
+      "heldout_repair_relative_loss_reduction": 0.274506
+    }
+  },
+  "locked_interpretation": [
+    "The tested raw two-channel plus four-state diagnostic representation did not improve held-out failure localisation over simpler strategies.",
+    "Contradiction-guided development had the lowest no-fault false-intervention rate but poor shared-blind-spot discovery and poor repair transfer.",
+    "Early scalar fusion having the highest localisation accuracy in this synthetic benchmark does not establish early fusion as a generally better scientific architecture.",
+    "The V11 scientific representation, mechanisms and claim ceiling must not be retuned under the same generation after this result."
+  ],
+  "non_interference": {
+    "v7_retained": {"gate": "FAIL", "claim_level": "C"},
+    "v6_weights_changed": false,
+    "v10_changed": false
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "schema": "insepi-v14b-nuisance-score-distribution-diagnosis-protocol-v1",
+  "status": "post-result-diagnostic-prefrozen-before-run",
+  "source_failed_validation": {
+    "workflow_run": 32929245729,
+    "execution_commit": "68a3219d4eba07ff6bb8c415d75fcdd4aaa980e3",
+    "artifact_digest": "sha256:92b6c1588ac94fdec11c2da2b3fc345aa7c143545bbbe286495b116cafa25253",
+    "coherent_recall_at_0_55": 0.23125
+  },
+  "question": "Is the nuisance recall failure caused by spatial-process evidence, temporal-process evidence, their aggregation, or an invalid mapping from Pi5>=1 to a coherent-nuisance stratum?",
+  "frozen_inputs": {
+    "validation_seeds": [91001,91002,91003,91004,91005,91006,91007,91008,91009,91010,91011,91012,91013,91014,91015,91016,91017,91018,91019,91020,91021,91022,91023,91024,91025,91026,91027,91028,91029,91030,91031,91032],
+    "threshold": 0.55,
+    "no_observer_change": true,
+    "no_threshold_search": true
+  },
+  "diagnostics": [
+    "nuisance-only spatial, temporal and combined score quantiles by exact Pi5",
+    "component pass rates at 0.55 by exact Pi5",
+    "combined pass rate by exact Pi2 and Pi5",
+    "target-only and target-coupled maxima for false-positive safety"
+  ],
+  "interpretation_rules_prefrozen": {
+    "coherent_stratum_definition_defect": "Pi5=1 combined recall <0.50 while at least one larger Pi5 level has recall >=0.80; Pi5>=1 was too broad a latent definition of spatial coherence",
+    "spatial_representation_bottleneck": "for genuinely high-Pi5 nuisance, temporal pass rate >=0.80 but spatial pass rate <0.80",
+    "temporal_representation_bottleneck": "for genuinely high-Pi5 nuisance, spatial pass rate >=0.80 but temporal pass rate <0.80",
+    "aggregation_bottleneck": "for genuinely high-Pi5 nuisance, both component pass rates >=0.80 but combined pass rate <0.80",
+    "mixed_or_unresolved": "otherwise",
+    "no_retuning": "diagnosis selects the failure branch only; it does not authorize threshold search or rewriting the failed validation result"
+  },
+  "claim_boundary": "post-result development diagnosis only; no field-calibrated nuisance threshold claim"
+}

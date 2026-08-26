@@ -1,0 +1,63 @@
+name: V14a2 corrected observation-safe plateau diagnosis
+
+on:
+  push:
+    branches:
+      - feature/v14a2-plateau-diagnosis-observation-safe
+    paths:
+      - benchmarks/v14a2_plateau_observation_safe_run_once.marker
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11.16"
+      - name: Install frozen diagnostic runtime
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install "numpy==2.4.6" -e ".[dev]"
+      - name: Verify one-shot marker and corrected contract
+        run: |
+          test "$(cat benchmarks/v14a2_plateau_observation_safe_run_once.marker)" = "V14A2_PLATEAU_OBSERVATION_SAFE_RUN_ONCE_v1"
+          pytest -q tests/test_v14a2_plateau_diagnosis_observation_safe.py
+      - name: Run corrected observation-safe audit exactly once
+        run: |
+          python scripts/run_v14a2_plateau_diagnosis_observation_safe.py \
+            --protocol benchmarks/v14a2_plateau_diagnosis_observation_safe_protocol.json \
+            --output-dir .v14a2/plateau_observation_safe
+      - name: Build immutable corrected-audit receipt
+        run: |
+          python - <<'PY'
+          import hashlib, json, platform, subprocess
+          from pathlib import Path
+          import numpy as np
+          paths = {
+              "protocol": Path("benchmarks/v14a2_plateau_diagnosis_observation_safe_protocol.json"),
+              "runner": Path("scripts/run_v14a2_plateau_diagnosis_observation_safe.py"),
+              "statistics": Path("src/interaction_sensing/evaluation/plateau_diagnosis.py"),
+              "summary": Path(".v14a2/plateau_observation_safe/v14a2_plateau_observation_safe_summary.json"),
+              "coordinates": Path(".v14a2/plateau_observation_safe/v14a2_plateau_observation_safe_coordinates.csv"),
+          }
+          sha = lambda p: hashlib.sha256(p.read_bytes()).hexdigest()
+          payload = {
+              "schema": "insepi-v14a2-plateau-observation-safe-first-run-receipt-v1",
+              "status": "immutable-first-corrected-diagnostic-run",
+              "execution_commit": subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip(),
+              "runtime": {"python": platform.python_version(), "numpy": np.__version__},
+              "file_sha256": {name: sha(path) for name, path in paths.items()},
+              "claim_boundary": "corrected post-result information-presence audit only; V14a2 remains immutable",
+          }
+          Path(".v14a2/plateau_observation_safe/v14a2_plateau_observation_safe_first_run_receipt.json").write_text(
+              json.dumps(payload, indent=2, sort_keys=True) + "\n"
+          )
+          PY
+      - name: Upload immutable corrected audit
+        uses: actions/upload-artifact@v4
+        with:
+          name: v14a2-plateau-observation-safe-first-run
+          path: .v14a2/plateau_observation_safe

@@ -1,0 +1,264 @@
+name: V13 pre-field protocol
+
+on:
+  pull_request:
+    paths:
+      - "benchmarks/v13_*.json"
+      - "docs/V13_*.md"
+      - "src/interaction_sensing/causal_diagnostics.py"
+      - "src/interaction_sensing/physical_*v13.py"
+      - "scripts/v13_*.py"
+      - "tests/test_v13_*.py"
+      - "tests/test_physical_*v13.py"
+      - "tests/test_causal_diagnostics.py"
+      - ".github/workflows/v13-pre-field.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  pre-field:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11.16"
+
+      - name: Install pinned analysis and decoder runtime
+        run: |
+          python -m pip install "numpy==2.4.6" "imageio-ffmpeg==0.6.0"
+          python -m pip install -e ".[dev]"
+          python - <<'PY'
+          import platform, numpy as np
+          assert platform.python_version() == '3.11.16'
+          assert np.__version__ == '2.4.6'
+          print('V13_PINNED_RUNTIME PASS', platform.python_version(), np.__version__)
+          PY
+          ffmpeg_path="$(python - <<'PY'
+          import imageio_ffmpeg
+          print(imageio_ffmpeg.get_ffmpeg_exe())
+          PY
+          )"
+          test -f "$ffmpeg_path"
+          actual="$(sha256sum "$ffmpeg_path" | awk '{print $1}')"
+          expected="e7e7fb30477f717e6f55f9180a70386c62677ef8a4d4d1a5d948f4098aa3eb99"
+          test "$actual" = "$expected" || { echo "V13 ffmpeg drift: $actual != $expected"; exit 1; }
+          echo "V13_FFMPEG_FREEZE PASS $actual"
+
+      - name: Compile every V13 execution boundary
+        run: |
+          python -m py_compile \
+            scripts/v13_build_randomisation.py \
+            scripts/v13_validate_field_bundle.py \
+            scripts/v13_make_capture_templates.py \
+            scripts/v13_validate_capture_logs.py \
+            scripts/v13_materialize_pixels.py \
+            scripts/v13_split_private_truth.py \
+            scripts/v13_make_qc_template.py \
+            scripts/v13_run_pollipi_frozen.py \
+            scripts/v13_run_insepi_frozen.py \
+            scripts/v13_summarize_observer_traces.py \
+            scripts/v13_predict_blinded.py \
+            scripts/v13_commit_prediction.py \
+            scripts/v13_evaluate_locked.py
+
+      - name: Run V13 protocol, capture, measurement, artifact and evaluation contracts
+        run: |
+          pytest -q \
+            tests/test_causal_diagnostics.py \
+            tests/test_v13_physical_protocol.py \
+            tests/test_v13_phase_contract.py \
+            tests/test_v13_capture_logs.py \
+            tests/test_physical_measurement_v13.py \
+            tests/test_physical_artifact_v13.py \
+            tests/test_physical_evaluation_v13.py
+
+      - name: Dry-run blinded randomisation and private truth split without V13 pixels
+        run: |
+          set -euo pipefail
+          mkdir -p .v13/test-private .v13/test-split .v13/test-capture
+          test_salt="$(printf '13%.0s' {1..32})"
+          python scripts/v13_build_randomisation.py \
+            --salt "$test_salt" \
+            --output-dir .v13/test-private > .v13/randomisation.json
+          python scripts/v13_validate_field_bundle.py \
+            --commitment .v13/test-private/v13_randomisation_commitment.json \
+            --private-truth .v13/test-private/v13_private_truth_ledger.csv \
+            --observer-plan .v13/test-private/v13_observer_plan.csv \
+            --qc-plan .v13/test-private/v13_protected_qc_plan.csv \
+            --output-receipt .v13/test-private/v13_plan_validation.json
+          python scripts/v13_split_private_truth.py \
+            --private-truth .v13/test-private/v13_private_truth_ledger.csv \
+            --commitment .v13/test-private/v13_randomisation_commitment.json \
+            --output-dir .v13/test-split
+          python scripts/v13_make_qc_template.py \
+            --qc-plan .v13/test-private/v13_protected_qc_plan.csv \
+            --commitment .v13/test-private/v13_randomisation_commitment.json \
+            --output .v13/test-private/v13_qc_template.csv
+          python scripts/v13_make_capture_templates.py \
+            --observer-plan .v13/test-private/v13_observer_plan.csv \
+            --commitment .v13/test-private/v13_randomisation_commitment.json \
+            --output-dir .v13/test-capture
+          test "$(($(wc -l < .v13/test-private/v13_private_truth_ledger.csv)-1))" = 180
+          test "$(($(wc -l < .v13/test-private/v13_observer_plan.csv)-1))" = 720
+          test "$(($(wc -l < .v13/test-split/v13_development_labels.csv)-1))" = 108
+          test "$(($(wc -l < .v13/test-split/v13_heldout_truth_SEALED.csv)-1))" = 72
+          test "$(($(wc -l < .v13/test-capture/v13_block_capture_log.csv)-1))" = 180
+          test "$(($(wc -l < .v13/test-capture/v13_phase_capture_log.csv)-1))" = 720
+          ! grep -Eiq 'event_side|nuisance_side|shared_optical|no_fault|treatment_class|treatment_subtype' \
+            .v13/test-private/v13_observer_plan.csv
+          echo "V13_BLIND_RANDOMISATION_DRY_RUN PASS"
+
+      - name: Rehearse blinded prediction then sealed-truth join on synthetic responses only
+        run: |
+          set -euo pipefail
+          mkdir -p .v13/test-analysis
+          python - <<'PY'
+          import csv, hashlib, json
+          from pathlib import Path
+
+          private = list(csv.DictReader(open('.v13/test-private/v13_private_truth_ledger.csv', newline='', encoding='utf-8')))
+          templates = {
+              'event_side': {'event_restore': (.80,.05), 'observability_restore': (.05,.02), 'shared_restore': (.40,.10)},
+              'nuisance_side': {'event_restore': (.02,.05), 'observability_restore': (.05,.80), 'shared_restore': (.10,.40)},
+              'shared_optical': {'event_restore': (.35,.10), 'observability_restore': (.10,.35), 'shared_restore': (.65,.65)},
+              'no_fault': {'event_restore': (-.02,-.01), 'observability_restore': (-.01,-.02), 'shared_restore': (-.02,-.02)},
+          }
+          fields = [
+              'block_id','split',
+              'event_restore_delta_evidence','event_restore_delta_observability',
+              'observability_restore_delta_evidence','observability_restore_delta_observability',
+              'shared_restore_delta_evidence','shared_restore_delta_observability',
+          ]
+          path = Path('.v13/test-analysis/v13_safe_block_responses.csv')
+          with path.open('w', newline='', encoding='utf-8') as h:
+              w=csv.DictWriter(h, fieldnames=fields, lineterminator='\n'); w.writeheader()
+              for row in sorted(private, key=lambda r:r['block_id']):
+                  t=templates[row['treatment_class']]
+                  jitter=(int(hashlib.sha256(row['block_id'].encode()).hexdigest()[:4],16)%101-50)*1e-5
+                  w.writerow({
+                      'block_id':row['block_id'],'split':row['split'],
+                      'event_restore_delta_evidence':t['event_restore'][0]+jitter,
+                      'event_restore_delta_observability':t['event_restore'][1]-jitter,
+                      'observability_restore_delta_evidence':t['observability_restore'][0]+jitter,
+                      'observability_restore_delta_observability':t['observability_restore'][1]-jitter,
+                      'shared_restore_delta_evidence':t['shared_restore'][0]+jitter,
+                      'shared_restore_delta_observability':t['shared_restore'][1]-jitter,
+                  })
+          sha=hashlib.sha256(path.read_bytes()).hexdigest()
+          receipt={'schema':'interaction-sensing-v13-safe-response-table-v1','truth_metadata_present':False,'safe_block_responses_sha256':sha}
+          Path('.v13/test-analysis/v13_response_receipt.json').write_text(json.dumps(receipt,sort_keys=True,indent=2)+'\n')
+
+          block_path = Path('.v13/test-capture/v13_block_capture_log.csv')
+          block_rows = list(csv.DictReader(block_path.open(newline='', encoding='utf-8')))
+          block_fields = list(block_rows[0])
+          by_split = {
+              split: sorted([r for r in block_rows if r['split']==split], key=lambda r:r['block_id'])
+              for split in ('development','heldout')
+          }
+          for split, rows in by_split.items():
+              dates = ['2026-09-01','2026-09-02','2026-09-03'] if split=='development' else ['2026-09-10','2026-09-11']
+              scenes = ['dev_scene_a','dev_scene_b','dev_scene_c'] if split=='development' else ['held_scene_x','held_scene_y','held_scene_z']
+              for i, r in enumerate(rows):
+                  cluster = i // 12
+                  r['recording_date_local'] = dates[cluster // 3]
+                  r['physical_scene_code'] = scenes[cluster % 3]
+                  r['operator_code'] = 'ci-op'
+                  r['device_id'] = 'ci-device'
+                  r['firmware_version'] = 'ci-fw'
+                  r['lens_id'] = 'ci-lens'
+                  r['mount_id'] = 'ci-mount'
+                  r['width'], r['height'], r['fps'] = '1920', '1080', '30'
+                  r['exposure_mode'] = 'manual'
+                  r['exposure_us'] = '1000'
+                  r['analogue_gain'] = '1.0'
+                  r['focus_mode'] = 'manual'
+                  r['lens_position'] = '1.0'
+                  r['ambient_light_note'] = 'synthetic-ci'
+                  r['weather_note'] = 'synthetic-ci'
+                  r['block_complete'] = 'yes'
+                  r['comments'] = 'synthetic rehearsal only'
+          with block_path.open('w', newline='', encoding='utf-8') as h:
+              w=csv.DictWriter(h, fieldnames=block_fields, lineterminator='\n'); w.writeheader()
+              for r in block_rows: w.writerow(r)
+
+          phase_path = Path('.v13/test-capture/v13_phase_capture_log.csv')
+          phase_rows = list(csv.DictReader(phase_path.open(newline='', encoding='utf-8')))
+          phase_fields = list(phase_rows[0])
+          for i, r in enumerate(phase_rows):
+              r['start_time_local'] = f'2026-09-01T00:{(i//60)%60:02d}:{i%60:02d}'
+              r['end_time_local'] = f'2026-09-01T00:{(i//60)%60:02d}:{(i%60+10)%60:02d}'
+              if int(r['phase_order']) == 0:
+                  r['washout_completed_before_phase'] = 'na'
+                  r['latent_baseline_restored_before_phase'] = 'na'
+              else:
+                  r['washout_completed_before_phase'] = 'yes'
+                  r['latent_baseline_restored_before_phase'] = 'yes'
+              r['camera_settings_changed_within_block'] = 'no'
+              r['operator_protocol_deviation'] = 'no'
+              r['notes'] = 'synthetic rehearsal only'
+          with phase_path.open('w', newline='', encoding='utf-8') as h:
+              w=csv.DictWriter(h, fieldnames=phase_fields, lineterminator='\n'); w.writeheader()
+              for r in phase_rows: w.writerow(r)
+          PY
+          python scripts/v13_validate_capture_logs.py \
+            --observer-plan .v13/test-private/v13_observer_plan.csv \
+            --commitment .v13/test-private/v13_randomisation_commitment.json \
+            --block-log .v13/test-capture/v13_block_capture_log.csv \
+            --phase-log .v13/test-capture/v13_phase_capture_log.csv \
+            --output-receipt .v13/test-capture/v13_capture_validation_receipt.json
+          python scripts/v13_predict_blinded.py \
+            --responses .v13/test-analysis/v13_safe_block_responses.csv \
+            --response-receipt .v13/test-analysis/v13_response_receipt.json \
+            --development-labels .v13/test-split/v13_development_labels.csv \
+            --output .v13/test-analysis/v13_predictions.json
+          python scripts/v13_commit_prediction.py \
+            --predictions .v13/test-analysis/v13_predictions.json \
+            --output .v13/test-analysis/v13_prediction_commitment.json
+          python - <<'PY'
+          import csv
+          p='.v13/test-private/v13_qc_template.csv'
+          rows=list(csv.DictReader(open(p,newline='',encoding='utf-8')))
+          fields=list(rows[0]) if rows else []
+          with open('.v13/test-analysis/v13_qc_annotations.csv','w',newline='',encoding='utf-8') as h:
+              w=csv.DictWriter(h,fieldnames=fields,lineterminator='\n'); w.writeheader()
+              for r in rows:
+                  r['local_event_reference_present_as_planned']='yes'
+                  r['nuisance_treatment_present_as_planned']='yes'
+                  r['shared_optical_treatment_present_as_planned']='yes'
+                  r['gross_protocol_violation']='no'
+                  r['annotator_code']='ci-test'
+                  w.writerow(r)
+          PY
+          python scripts/v13_evaluate_locked.py \
+            --predictions .v13/test-analysis/v13_predictions.json \
+            --prediction-commitment .v13/test-analysis/v13_prediction_commitment.json \
+            --heldout-truth .v13/test-split/v13_heldout_truth_SEALED.csv \
+            --truth-split-receipt .v13/test-split/v13_truth_split_receipt.json \
+            --block-capture-log .v13/test-capture/v13_block_capture_log.csv \
+            --capture-validation-receipt .v13/test-capture/v13_capture_validation_receipt.json \
+            --randomisation-commitment .v13/test-private/v13_randomisation_commitment.json \
+            --qc-plan .v13/test-private/v13_protected_qc_plan.csv \
+            --qc-annotations .v13/test-analysis/v13_qc_annotations.csv \
+            --output .v13/test-analysis/v13_test_report.json
+          python - <<'PY'
+          import json
+          r=json.load(open('.v13/test-analysis/v13_test_report.json'))
+          assert r['schema']=='interaction-sensing-v13-physical-evaluation-v1'
+          assert r['heldout_block_count']==72
+          assert r['claim']['level'] in {'A','B','C','D'}
+          assert r['provenance']['truth_join_stage']=='after blinded prediction ledger commitment'
+          assert r['provenance']['cluster_identity_source']=='validated completed capture log'
+          print('V13_SYNTHETIC_BLINDED_ANALYSIS_REHEARSAL PASS', r['claim']['level'], '(not scientific evidence)')
+          PY
+
+      - name: Confirm pre-field workflow generated no real V13 pixels or observer traces
+        run: |
+          test ! -e .v13/v13_frames.npy
+          test ! -e .v13/pollipi_v13_trace.jsonl
+          test ! -e .v13/insepi_v13_trace.jsonl
+          echo "V13_PRE_FIELD_ONLY PASS"

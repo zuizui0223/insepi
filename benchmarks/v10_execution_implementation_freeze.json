@@ -1,0 +1,89 @@
+{
+  "schema": "interaction-sensing-v10-execution-implementation-freeze-v1",
+  "status": "pre-observer-frozen",
+  "scientific_semantics_freeze": "benchmarks/v10_evaluator_freeze.json",
+  "protocol_sha256": "c84947c998f69d4c8f2d056e79c7f91c6c6736b938236c17386618ac5a924e03",
+  "pixel_npz_sha256": "b971caa2b0c06b45ccf114df99d6515765ea9ec5fb8e58ded226b424f8afad66",
+  "required_observer_commits": {
+    "pollipi": "d58d0a86034a6c2d53f90efbe4245370fd7cd2e9",
+    "insepi": "980813bab996909020140fad5bd83b055eb3db9c"
+  },
+  "runtime_contract": {
+    "python_version": "3.11.16",
+    "numpy_version": "2.4.6",
+    "capture_before_observer_smoke": true,
+    "capture_before_canonical_v10_pixel_download": true,
+    "pip_freeze_required": true,
+    "v7_prerequisite_generation_verified_before_observer_smoke": true,
+    "v7_prerequisite_generation_verified_before_canonical_v10_pixel_download": true
+  },
+  "last_change_commits": {
+    "scripts/v10_trace_common.py": "ba62a5d72b3e8a784e3531fd2338fa285f5d9f2a",
+    "scripts/v10_run_pollipi_frozen.py": "8761a9d4c30692912a4158e4782abebf45d54dd2",
+    "scripts/v10_run_insepi_frozen.py": "79c5523bc581352b07a1501fa17a22860f164180",
+    "scripts/v10_audit_frozen_observer_independence.py": "06f0615fbd99918d5f14ce7d0f60378229eea7af",
+    "scripts/v10_capture_runtime_environment.py": "1829d06c93ebec36e518fec39d330feccf52dce0",
+    "scripts/v10_verify_v7_prerequisite.py": "1de3f127d210465efe9c61bcbf9265368c01af0c",
+    "src/interaction_sensing/simulation/v10_evaluator.py": "8d112b7fcfd760548358ca840260d5714422dd85",
+    "scripts/v10_evaluate_locked.py": "e476e5e111e18e54a662b8a93645c75cd4456edd",
+    ".github/workflows/v10-one-shot.yml": "16ca28940a6c042f8cad0db2afec370a141e32e5"
+  },
+  "generic_guarded_portfolio_git_blob_sha1": "a6397383c0d713026631b197d4aeb135222200ef",
+  "insepi_bookkeeping_frame_index": 0,
+  "insepi_bookkeeping_rule": "The frozen pixel estimator requires a frame_index field, but V10 fixes it to zero for every condition so condition ordering cannot encode family/tier truth. Only frame/background pixels vary across observer calls.",
+  "insepi_pre_pixel_frame_index_invariance_gate": {
+    "probe_indices": [0, 1, 6915],
+    "required_result": "All decision-relevant observation fields, local-structure loss, and final risk/state/action outputs must be exactly identical on the same smoke-test pixels across all probe indices. Failure blocks V10 before the canonical real-pixel artifact is downloaded."
+  },
+  "frozen_module_origin_gate": {
+    "timing": "inside each exact frozen observer runner before smoke decision and again before normal real-pixel execution",
+    "pollipi_required_root": "<exact PolliPi checkout>/packages/analysis/src",
+    "pollipi_verified_modules": ["pollipi_analysis", "pollipi_analysis.pipeline"],
+    "insepi_required_root": "<exact InsePi checkout>/src",
+    "insepi_verified_modules": [
+      "interaction_sensing",
+      "interaction_sensing.noise",
+      "interaction_sensing.simulation.factorial_benchmark_v4",
+      "interaction_sensing.simulation.visual_contradiction_v2"
+    ],
+    "module_cache_rule": "Purge existing package-prefix entries from sys.modules, put the exact checkout source root first on sys.path, import package/submodules, and require every concrete __file__ to resolve under the exact checkout root.",
+    "failure_action": "Block V10 before observer output; never fall back to the current InsePi package or another installed observer package."
+  },
+  "pre_observer_validation": {
+    "independent_allocator_oracle": "Required in one-shot preflight; cross-checks exact selected-index sets for all six policies across frozen budgets and multiple seeds without calling the production selector in the reference implementation.",
+    "uniform_seed_grid_check": "Required in one-shot preflight; 18 panels x 200 replicates x 3 budgets must remain within five standard errors of the SRSWOR finite-population expectation on a balanced synthetic truth set.",
+    "trace_tamper_resistance": "Required in one-shot preflight; injected truth keys, row-count changes, condition order/id changes and frozen provenance identity changes must be rejected by the trace-only evaluator.",
+    "execution_script_compile": "All frozen V10 execution/audit/runtime/prerequisite scripts must remain syntactically valid before external frozen checkouts or canonical pixel download; the prerequisite verifier is additionally imported and exercised by the full test suite and by pre-pixel runtime capture.",
+    "software_independence_gate": "After exact V5 checkout and before dependency installation or canonical pixel download, PolliPi analysis source must contain no static or literal-dynamic import of interaction_sensing and InsePi source must contain no static or literal-dynamic import of pollipi_analysis. This supports software-level epistemic separation only and is not a claim of statistical error independence.",
+    "module_origin_gate": "The observer runners additionally verify runtime import origin for the concrete packages/submodules actually used; this closes module-cache/editable-install ambiguity left by static source-separation checks.",
+    "v7_prerequisite_generation_verifier": "Before observer smoke and canonical V10 pixel download, and again during final V10 evaluation, the supplied prior V7 evidence must bind the exact frozen observer, allocator, generator, evaluator, materializer, baseline, world-spec and runtime identities, with report/runtime/materialisation/trace files matching all ledger SHA-256 fields. V7 PASS and FAIL are both accepted."
+  },
+  "evaluation_receipt_provenance": {
+    "required": [
+      "orchestrator git HEAD",
+      "implementation freeze SHA-256",
+      "evaluator freeze SHA-256",
+      "pixel freeze SHA-256",
+      "protocol freeze SHA-256",
+      "runtime environment SHA-256",
+      "runtime pip-freeze SHA-256 and copied files",
+      "verified V7 prerequisite ledger SHA-256 and copied ledger",
+      "copied V7 prerequisite report, materialisation receipt, runtime files and both observer traces with ledger-bound hashes",
+      "PolliPi trace SHA-256",
+      "InsePi trace SHA-256",
+      "canonical pixel artifact SHA-256",
+      "final report SHA-256"
+    ],
+    "rule": "The V10 scientific artifact must remain independently auditable after upstream Actions artifacts expire; the complete small-file V7 provenance chain is copied beside the V10 evaluation receipt. The large V7 pixel artifact is not duplicated, but its SHA-256 is bound by the copied V7 ledger and materialisation receipt."
+  },
+  "execution_order_rule": "V7 locked validation must be executed first once both exact V5 observer commits are reachable. V10 execution order is operational only and does not condition or alter V10 scientific thresholds.",
+  "forbidden_after_observer_output": [
+    "changing any listed execution implementation file under the same V10 generation",
+    "changing the generic guarded selector bytes under the same V10 generation",
+    "changing the evaluator semantic freeze",
+    "changing the pinned Python/NumPy runtime under the same V10 generation",
+    "changing the V7 prerequisite-generation verification contract under the same V10 generation",
+    "changing frozen module-origin verification under the same V10 generation",
+    "changing score mappings, budgets, replicates, comparators, perturbations, panels or claim precedence"
+  ]
+}

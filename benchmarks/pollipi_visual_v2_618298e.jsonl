@@ -1,0 +1,12 @@
+{"schema":"pollipi-insepi-visual-contradiction-v2","scenario_id":"quiet_absence","true_visit":false,"pollipi_state":"no_activity","pollipi_reason":"below_active_cell_threshold"}
+{"schema":"pollipi-insepi-visual-contradiction-v2","scenario_id":"clean_visit","true_visit":true,"pollipi_state":"strong_visitation_candidate","pollipi_reason":"localized_concentrated_offset_agreement"}
+{"schema":"pollipi-insepi-visual-contradiction-v2","scenario_id":"wind_absence","true_visit":false,"pollipi_state":"environmental_noise","pollipi_reason":"broad_global_synchrony"}
+{"schema":"pollipi-insepi-visual-contradiction-v2","scenario_id":"wind_visit","true_visit":true,"pollipi_state":"environmental_noise","pollipi_reason":"broad_global_synchrony"}
+{"schema":"pollipi-insepi-visual-contradiction-v2","scenario_id":"shake_absence","true_visit":false,"pollipi_state":"environmental_noise","pollipi_reason":"broad_active_cell_proportion"}
+{"schema":"pollipi-insepi-visual-contradiction-v2","scenario_id":"shake_visit","true_visit":true,"pollipi_state":"environmental_noise","pollipi_reason":"broad_active_cell_proportion"}
+{"schema":"pollipi-insepi-visual-contradiction-v2","scenario_id":"shadow_absence","true_visit":false,"pollipi_state":"environmental_noise","pollipi_reason":"broad_global_synchrony"}
+{"schema":"pollipi-insepi-visual-contradiction-v2","scenario_id":"shadow_visit","true_visit":true,"pollipi_state":"environmental_noise","pollipi_reason":"broad_global_synchrony"}
+{"schema":"pollipi-insepi-visual-contradiction-v2","scenario_id":"occluded_visit","true_visit":true,"pollipi_state":"no_activity","pollipi_reason":"below_active_cell_threshold"}
+{"schema":"pollipi-insepi-visual-contradiction-v2","scenario_id":"blurred_visit","true_visit":true,"pollipi_state":"no_activity","pollipi_reason":"below_active_cell_threshold"}
+{"schema":"pollipi-insepi-visual-contradiction-v2","scenario_id":"clutter_visit","true_visit":true,"pollipi_state":"environmental_noise","pollipi_reason":"broad_active_cell_proportion"}
+{"schema":"pollipi-insepi-visual-contradiction-v2","scenario_id":"unknown_visit","true_visit":true,"pollipi_state":"uncertain_local_activity","pollipi_reason":"localized_but_ambiguous"}

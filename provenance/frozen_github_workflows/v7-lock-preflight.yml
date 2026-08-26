@@ -1,0 +1,71 @@
+name: V7 lock preflight
+
+on:
+  pull_request:
+    paths:
+      - "src/interaction_sensing/simulation/locked_world_v7.py"
+      - "src/interaction_sensing/simulation/v7_lock.py"
+      - "src/interaction_sensing/simulation/v7_artifact.py"
+      - "src/interaction_sensing/simulation/v7_evaluator.py"
+      - "src/interaction_sensing/simulation/v7_insepi_adapter.py"
+      - "src/interaction_sensing/simulation/v7_materialization.py"
+      - "tests/test_v7_lock.py"
+      - "tests/test_v7_artifact.py"
+      - "tests/test_v7_evaluator.py"
+      - "tests/test_v7_insepi_adapter.py"
+      - "tests/test_v7_materialization.py"
+      - "benchmarks/v7_lock_manifest.json"
+      - "benchmarks/v7_baseline_registry.json"
+      - "docs/V7_LOCKED_VALIDATION_PROTOCOL.md"
+      - ".github/workflows/v7-lock-preflight.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  preflight:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install package
+        run: python -m pip install -e ".[dev]"
+      - name: Test seed lock, adapters, artifact, evaluator, and materializer
+        run: |
+          pytest -q \
+            tests/test_v7_lock.py \
+            tests/test_v7_artifact.py \
+            tests/test_v7_evaluator.py \
+            tests/test_v7_insepi_adapter.py \
+            tests/test_v7_materialization.py
+      - name: Assert final V7 remains unmaterialised
+        run: |
+          python - <<'PY'
+          from interaction_sensing.simulation.locked_world_v7 import spec_fingerprint
+          from interaction_sensing.simulation.v7_evaluator import load_baseline_registry
+          from interaction_sensing.simulation.v7_lock import (
+              assert_manifest_is_safely_blocked,
+              load_lock_manifest,
+          )
+
+          manifest = load_lock_manifest('benchmarks/v7_lock_manifest.json')
+          blockers = assert_manifest_is_safely_blocked(manifest)
+          expected = manifest['frozen_inputs']['world_spec_sha256']
+          actual = spec_fingerprint()
+          if actual != expected:
+              raise SystemExit(f'V7 world-spec drift: expected={expected} actual={actual}')
+          registry = load_baseline_registry('benchmarks/v7_baseline_registry.json')
+          if registry['registry_sha256'] != manifest['frozen_inputs']['baseline_registry_sha256']:
+              raise SystemExit('V7 baseline registry differs from lock manifest')
+          print('V7_STATUS BLOCKED_SAFE')
+          print('V7_WORLD_SPEC', actual)
+          print('V7_BASELINE_REGISTRY', registry['registry_sha256'])
+          for blocker in blockers:
+              print('V7_BLOCKER', blocker)
+          print('V7_MASTER_SEED NOT_MATERIALISED')
+          print('V7_WORLD_FINGERPRINT NOT_MATERIALISED')
+          print('V7_PIXEL_ARTIFACT NOT_MATERIALISED')
+          PY

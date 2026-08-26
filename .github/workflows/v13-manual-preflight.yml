@@ -1,0 +1,48 @@
+name: V13 manual preflight
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  preflight:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11.16"
+      - name: Install frozen V13 verification runtime
+        run: |
+          python -m pip install "numpy==2.4.6" "imageio-ffmpeg==0.6.0"
+          python -m pip install -e ".[dev]"
+      - name: Verify V13 frozen execution digest and contracts
+        run: |
+          python - <<'PY'
+          import json, subprocess
+          from pathlib import Path
+          freeze=json.loads(Path('benchmarks/v13_execution_freeze.json').read_text())
+          expected=freeze['scientific_execution_digest_sha256']
+          subprocess.run(['python','scripts/v13_execution_digest.py','--expect',expected],check=True)
+          print('V13_EXECUTION_FREEZE PASS', expected)
+          PY
+          pytest -q \
+            tests/test_v13_execution_digest.py \
+            tests/test_v13_physical_protocol.py \
+            tests/test_v13_phase_contract.py \
+            tests/test_v13_capture_logs.py \
+            tests/test_physical_measurement_v13.py \
+            tests/test_physical_artifact_v13.py \
+            tests/test_physical_evaluation_v13.py \
+            tests/test_causal_diagnostics.py
+      - name: Confirm no scientific V13 result has been materialised
+        run: |
+          test ! -e benchmarks/v13_physical_result.json
+          test ! -e benchmarks/v13_physical_result_summary.json
+          test ! -e .v13/v13_report.json
+          echo "V13_PRE_FIELD_MANUAL_GATE PASS"

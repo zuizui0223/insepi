@@ -1,0 +1,23 @@
+{
+  "schema": "insepi-v14b-nuisance-observer-process-scale-validation-v1",
+  "workflow_run": 32929245729,
+  "execution_commit": "68a3219d4eba07ff6bb8c415d75fcdd4aaa980e3",
+  "artifact_id": 9592634107,
+  "artifact_digest": "sha256:92b6c1588ac94fdec11c2da2b3fc345aa7c143545bbbe286495b116cafa25253",
+  "validation_sha256": "c3f3ba3c036b8b3a0c337edb6f5a89548c9375b1b1b39bfeab19916506444853",
+  "runtime": {"python": "3.11.16", "numpy": "2.4.6"},
+  "metrics": {
+    "nuisance_vs_target_only_auc": 1.0,
+    "nuisance_vs_target_coupled_auc": 1.0,
+    "coherent_nuisance_recall_at_0_55": 0.23125,
+    "target_only_false_positive_at_0_55": 0.0,
+    "target_coupled_false_positive_at_0_55": 0.0,
+    "low_pi5_nuisance_positive_rate_descriptive": 0.075
+  },
+  "all_invariants_hold": false,
+  "contradiction_types_observed": {"coherent_nuisance_missed_after_rescaling": 1},
+  "new_contradiction_type_count": 1,
+  "nuisance_side_type_saturated": false,
+  "target_observer_modified": false,
+  "development_decision": "DO_NOT_FREEZE_NUISANCE; DIAGNOSE SCORE DISTRIBUTION BEFORE NEXT REPRESENTATION CHANGE"
+}

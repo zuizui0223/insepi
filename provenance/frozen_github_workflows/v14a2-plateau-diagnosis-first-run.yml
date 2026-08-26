@@ -1,0 +1,71 @@
+name: V14a2 locked plateau diagnosis
+
+on:
+  push:
+    branches:
+      - feature/v14a2-plateau-diagnosis
+    paths:
+      - benchmarks/v14a2_plateau_diagnosis_run_once.marker
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11.16"
+      - name: Install frozen diagnostic runtime
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install "numpy==2.4.6" -e ".[dev]"
+      - name: Verify one-shot marker and diagnostic contract
+        run: |
+          test "$(cat benchmarks/v14a2_plateau_diagnosis_run_once.marker)" = "V14A2_PLATEAU_DIAGNOSIS_RUN_ONCE_v1"
+          python - <<'PY'
+          import platform, numpy as np
+          assert platform.python_version() == "3.11.16"
+          assert np.__version__ == "2.4.6"
+          print(platform.python_version(), np.__version__)
+          PY
+          pytest -q tests/test_v14a2_plateau_diagnosis.py
+      - name: Run locked plateau diagnosis exactly once
+        run: |
+          python scripts/run_v14a2_plateau_diagnosis.py \
+            --protocol benchmarks/v14a2_plateau_diagnosis_protocol.json \
+            --output-dir .v14a2/plateau_diagnosis
+      - name: Build immutable diagnosis receipt
+        run: |
+          python - <<'PY'
+          import hashlib, json, platform, subprocess
+          from pathlib import Path
+          import numpy as np
+
+          paths = {
+              "protocol": Path("benchmarks/v14a2_plateau_diagnosis_protocol.json"),
+              "runner": Path("scripts/run_v14a2_plateau_diagnosis.py"),
+              "statistics": Path("src/interaction_sensing/evaluation/plateau_diagnosis.py"),
+              "summary": Path(".v14a2/plateau_diagnosis/v14a2_plateau_diagnosis_summary.json"),
+              "coordinates": Path(".v14a2/plateau_diagnosis/v14a2_plateau_diagnosis_coordinates.csv"),
+          }
+          sha = lambda p: hashlib.sha256(p.read_bytes()).hexdigest()
+          summary = json.loads(paths["summary"].read_text())
+          payload = {
+              "schema": "insepi-v14a2-plateau-diagnosis-first-run-receipt-v1",
+              "status": "immutable-first-post-result-diagnostic-run",
+              "execution_commit": subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip(),
+              "runtime": {"python": platform.python_version(), "numpy": np.__version__},
+              "file_sha256": {name: sha(path) for name, path in paths.items()},
+              "locked_v14a2_result_artifact_digest": summary["locked_v14a2_result_artifact_digest"],
+              "claim_boundary": "post-result failure-source audit only; V14a2 scientific result remains immutable",
+          }
+          out = Path(".v14a2/plateau_diagnosis/v14a2_plateau_diagnosis_first_run_receipt.json")
+          out.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n")
+          PY
+      - name: Upload immutable plateau diagnosis
+        uses: actions/upload-artifact@v4
+        with:
+          name: v14a2-plateau-diagnosis-first-run
+          path: .v14a2/plateau_diagnosis

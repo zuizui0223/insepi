@@ -1,0 +1,53 @@
+{
+  "schema": "interaction-sensing-v9-design-inference-summary-v1",
+  "canonical_run": {
+    "workflow_run_id": 32547803107,
+    "head_sha": "0505ecf53aaf7045d3d15dbf10143be52d8c5b79",
+    "protocol_sha256": "aa8bb9c762b7f952c2c298aa2435a9f52edc64f60ebf619b4df1898a83d7cca7",
+    "result_sha256": "2586a3d166a8e67c1012b470145cc3093d70d94da777c71a816736e09177eba0",
+    "artifact_zip_sha256": "2768d54d72c19d06516bf1e579b7729569dad39db31edbc07526dafbcadea316",
+    "byte_identical_hash_seed_rerun": true
+  },
+  "headline": {
+    "regimes": 576,
+    "worlds": 57600,
+    "naive_signed_bias": 0.04257621527777823,
+    "protected_signed_bias": 0.0000009114583333352665,
+    "naive_rmse": 0.059093135334512305,
+    "protected_rmse": 0.04281926839746103,
+    "protected_mean_theory_sd": 0.04237101818520607,
+    "protected_rmse_to_theory_sd_ratio": 1.0105791701841016,
+    "naive_95_coverage": 0.5238888888888888,
+    "protected_95_coverage": 0.9775,
+    "naive_mean_interval_width": 0.12306582650633145,
+    "protected_mean_interval_width": 0.1549796657986407,
+    "protected_to_naive_width_ratio": 1.259323324746593
+  },
+  "by_nominal_prevalence": {
+    "0.01": {"naive_bias": 0.027841145833333313, "protected_bias": -0.00008671875, "naive_rmse": 0.04082924618150667, "protected_rmse": 0.01425388287742485, "naive_coverage": 0.4571875, "protected_coverage": 0.9910416666666667},
+    "0.02": {"naive_bias": 0.04218841145833366, "protected_bias": 0.00016419270833333306, "naive_rmse": 0.05443625769965987, "protected_rmse": 0.020524395577022233, "naive_coverage": 0.32697916666666665, "protected_coverage": 0.9851041666666667},
+    "0.05": {"naive_bias": 0.06066106770833334, "protected_bias": 0.0002563802083333351, "naive_rmse": 0.06967947566842929, "protected_rmse": 0.03174429133800549, "naive_coverage": 0.26177083333333334, "protected_coverage": 0.979375},
+    "0.10": {"naive_bias": 0.06993281250000007, "protected_bias": 0.00033802083333333346, "naive_rmse": 0.0778265047638016, "protected_rmse": 0.043664358141108514, "naive_coverage": 0.3179166666666667, "protected_coverage": 0.9739583333333334},
+    "0.50": {"naive_bias": 0.04595976562500013, "protected_bias": -0.00006731770833332822, "naive_rmse": 0.06686487583996438, "protected_rmse": 0.07414581394293711, "naive_coverage": 0.8121875, "protected_coverage": 0.96375},
+    "0.90": {"naive_bias": 0.008874088541666634, "protected_bias": -0.0005990885416666588, "naive_rmse": 0.030635805385441504, "protected_rmse": 0.044324220872899465, "naive_coverage": 0.9672916666666667, "protected_coverage": 0.9717708333333334}
+  },
+  "by_budget": {
+    "0.05": {"naive_coverage": 0.5899305555555555, "protected_coverage": 0.9842361111111111, "naive_rmse": 0.07760817453297239, "protected_rmse": 0.06524479229031978},
+    "0.10": {"naive_coverage": 0.5085416666666667, "protected_coverage": 0.9794444444444445, "naive_rmse": 0.06554645183448433, "protected_rmse": 0.04504406238810639},
+    "0.25": {"naive_coverage": 0.4538888888888889, "protected_coverage": 0.9745138888888889, "naive_rmse": 0.050132322736795375, "protected_rmse": 0.027167078057979438},
+    "0.50": {"naive_coverage": 0.5431944444444444, "protected_coverage": 0.9718055555555556, "naive_rmse": 0.03369538082936727, "protected_rmse": 0.017608474571527033}
+  },
+  "prevalence_budget_cell_audit": {
+    "minimum_protected_95_coverage": 0.96125,
+    "maximum_absolute_protected_bias": 0.0015046874999999982,
+    "protected_rmse_to_theory_sd_ratio_min": 0.9767039090423496,
+    "protected_rmse_to_theory_sd_ratio_max": 1.0307222700545073
+  },
+  "interpretation": {
+    "primary": "The initial protected exploration draw behaves as the design-based ecological reference sample: bias is effectively zero and exact finite-population intervals retain at least nominal coverage across all prevalence-budget cells tested.",
+    "naive_failure": "Treating the complete preferentially selected sample as representative produces strong positive prevalence bias and severe interval undercoverage, especially for rare events.",
+    "precision_tradeoff": "Protected inference is not universally lower-RMSE: at common/high event prevalence the larger targeted sample can have lower raw RMSE, but its validity is not design-guaranteed. The protected exact intervals are wider on average because they represent the smaller probability-sample component and correctly account for uncertainty.",
+    "theory_match": "Protected empirical RMSE closely matches the pre-result SRSWOR theoretical standard deviation, linking the analytical design result to the implementation.",
+    "scope": "This validates finite-population prevalence inference for variables measured without error on the protected subset; it does not establish field detection accuracy or justify treating the targeted component as a probability sample."
+  }
+}

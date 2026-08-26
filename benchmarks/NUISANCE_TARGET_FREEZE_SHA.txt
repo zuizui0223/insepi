@@ -1,0 +1,4 @@
+target_observer_v14b.py blob sha at nuisance-side branch creation:
+8bbb35809108625a18fda31323668df74cb4f00b
+
+Target observer is frozen during V14b-nuisance-1.

@@ -1,0 +1,46 @@
+{
+  "schema": "interaction-sensing-v9-design-inference-protocol-v1",
+  "purpose": "Validate design-based ecological prevalence inference from the protected uniform-exploration subset of the frozen guarded portfolio, without changing V6/V7/V8 scientific settings.",
+  "frozen_candidate": {
+    "exploration": 0.50,
+    "evidence": 0.10,
+    "observability": 0.40,
+    "disagreement": 0.00
+  },
+  "world": {
+    "finite_population_size": 800,
+    "event_prevalence": [0.01, 0.02, 0.05, 0.10, 0.50, 0.90],
+    "budget_fraction": [0.05, 0.10, 0.25, 0.50],
+    "evidence_quality": [0.55, 0.90],
+    "observability_quality": [0.55, 0.90],
+    "residual_correlation": [0.0, 0.5, 0.9],
+    "disturbance_prevalence": [0.10, 0.50],
+    "paired_replicates": 100
+  },
+  "estimands": {
+    "primary": "realized finite-population event prevalence K/N in each generated world",
+    "secondary": "nominal generating prevalence only for grouping/interpretation"
+  },
+  "estimators": {
+    "naive_full_selected": "sample mean over all guarded-selected windows; intentionally treats targeted sample as if representative",
+    "protected_exploration": "sample mean over the initial simple-random exploration draw only; targeted spillover is excluded from this reference subset"
+  },
+  "intervals": {
+    "naive_full_selected": "95% Wilson binomial interval used only as a misspecified diagnostic comparator",
+    "protected_exploration": "95% exact equal-tailed hypergeometric confidence set for the finite-population success count K, inverted from the SRS-without-replacement sampling distribution"
+  },
+  "primary_metrics": [
+    "signed_bias",
+    "rmse",
+    "95pct_interval_coverage",
+    "mean_95pct_interval_width"
+  ],
+  "pre_registered_interpretation": {
+    "design_claim": "The protected exploration subset is the probability-sample reference design; inference claims are attached to this subset, not to the targeted sample as a whole.",
+    "coverage_claim": "The exact hypergeometric interval is expected to meet or exceed nominal 95% finite-population coverage by construction; simulation verifies the implementation across the frozen regime grid.",
+    "naive_claim": "Any bias or undercoverage from the full targeted sample is a consequence of treating preferentially selected observations as representative and is retained rather than corrected post hoc.",
+    "no_tuning": "After the first V9 result is inspected, the regime grid, estimators, confidence level and frozen 50/10/40 allocation are not changed under V9."
+  },
+  "seed": 9072026,
+  "v7_independence": "V9 imports no V7 world, seed, pixels, traces, report or gate and cannot rescue a failing V7 validation."
+}

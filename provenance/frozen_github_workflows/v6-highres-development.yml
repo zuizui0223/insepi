@@ -1,0 +1,85 @@
+name: V6 high-resolution development
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  compare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install package
+        run: python -m pip install -e ".[dev]"
+      - name: Compare focused sparse candidates on paired V4 development worlds
+        run: |
+          python - <<'PY'
+          from interaction_sensing.simulation.factorial_benchmark_v4 import run_factorial_v4
+          from interaction_sensing.simulation.observer_portfolio_v6 import PortfolioWeights
+          from interaction_sensing.simulation.portfolio_development_v6 import read_pollipi_v4_tsv
+          from interaction_sensing.simulation.robustness_gate_v6 import evaluate_candidate_against_uniform
+
+          provenance, pollipi = read_pollipi_v4_tsv('benchmarks/pollipi_factorial_v4_5541201.tsv')
+          insepi = [row.to_dict() for row in run_factorial_v4()]
+          pollipi = [row for row in pollipi if row['split'] == 'test']
+          insepi = [row for row in insepi if row['split'] == 'test']
+
+          candidates = {
+              'E40_P10_I50': PortfolioWeights(0.4, 0.1, 0.5, 0.0),
+              'E50_P10_I40': PortfolioWeights(0.5, 0.1, 0.4, 0.0),
+              'E60_P10_I30': PortfolioWeights(0.6, 0.1, 0.3, 0.0),
+              'E70_P10_I20': PortfolioWeights(0.7, 0.1, 0.2, 0.0),
+          }
+          ranked = []
+          for name, weights in candidates.items():
+              gate = evaluate_candidate_against_uniform(
+                  pollipi,
+                  insepi,
+                  weights=weights,
+                  prevalences=(0.10, 0.50, 0.90),
+                  budgets=(0.10, 0.25, 0.50),
+                  world_windows=4800,
+                  replicates=200,
+                  seed=20260821,
+                  ratio_floor=1.0,
+                  tv_ceiling=0.25,
+              )
+              ranked.append((
+                  int(gate.passes_development_gate),
+                  gate.worst_joint_ratio,
+                  gate.mean_joint_ratio,
+                  -gate.max_tv_distance,
+                  name,
+                  gate,
+              ))
+              print(
+                  'V6_HIGHRES_CANDIDATE', name, weights.to_dict(),
+                  f'pass={int(gate.passes_development_gate)}',
+                  f'worst_joint={gate.worst_joint_ratio:.5f}',
+                  f'mean_joint={gate.mean_joint_ratio:.5f}',
+                  f'max_tv={gate.max_tv_distance:.5f}',
+                  f'max_excess_tv={gate.max_excess_tv_over_uniform:.5f}',
+                  f'ge_uniform={gate.n_regimes_at_or_above_uniform}/9',
+              )
+              for row in gate.regimes:
+                  print(
+                      'V6_HIGHRES_REGIME', name,
+                      f'p={row.prevalence:.2f}',
+                      f'b={row.budget_fraction:.2f}',
+                      f'event_ratio={row.event_ratio:.5f}',
+                      f'error_ratio={row.hidden_error_ratio:.5f}',
+                      f'joint={row.joint_ratio:.5f}',
+                      f'tv={row.candidate_tv_distance:.5f}',
+                  )
+          ranked.sort(reverse=True)
+          best = ranked[0]
+          print('V6_HIGHRES_SELECTED', best[4], best[5].weights.to_dict())
+          print('V6_HIGHRES_WORLD', provenance['world_fingerprint'])
+          print('V6_HIGHRES_POLLIPI_SOURCE', provenance['source_commit'])
+          PY

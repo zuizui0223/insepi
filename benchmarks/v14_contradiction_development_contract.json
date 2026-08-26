@@ -1,0 +1,82 @@
+{
+  "schema": "insepi-v14b-contradiction-development-contract-v1",
+  "generation": "V14b",
+  "status": "development-contract-only; do not start observer tuning until V14a canonical phase artifact exists",
+  "fixed_from_v14a": [
+    "dimensionless coordinate definitions Pi1-Pi4",
+    "closed-world T/N/C truth vocabulary",
+    "process generator",
+    "sufficient-statistic family used to define V14a phase geometry",
+    "information-absence versus essential-ambiguity distinction"
+  ],
+  "alternating_freeze_rule": {
+    "target_pass": "freeze nuisance observer and all world/oracle definitions; only target representation may change",
+    "nuisance_pass": "freeze target observer and all world/oracle definitions; only nuisance representation may change",
+    "forbidden": "never update both observers from the same contradiction batch"
+  },
+  "contradiction_cause_classes": {
+    "definition_defect": {
+      "action": "revise the scientific definition in a new explicit definition generation; do not tune either observer to preserve the old label",
+      "observer_change_allowed": false
+    },
+    "representation_defect": {
+      "action": "change only the currently unfrozen observer whose representation failed",
+      "observer_change_allowed": true
+    },
+    "information_absent": {
+      "action": "do not predict through the gap; retain UNDETERMINED and route the limitation to measurement-window/sensor design",
+      "observer_change_allowed": false
+    },
+    "process_coupling": {
+      "action": "do not force exclusivity; retain simultaneous process support and test whether coupling supplies indirect target evidence",
+      "observer_change_allowed": false
+    }
+  },
+  "indeterminacy_subtypes": [
+    "information_absent",
+    "essential_ambiguity",
+    "model_uncertainty"
+  ],
+  "contradiction_record_required_fields": [
+    "batch_id",
+    "observer_frozen",
+    "observer_modifiable",
+    "pi1",
+    "pi2",
+    "pi3",
+    "pi4",
+    "latent_T",
+    "latent_N",
+    "latent_C",
+    "target_output",
+    "nuisance_output",
+    "observation_support",
+    "identifiability_margin",
+    "contradiction_signature",
+    "cause_class",
+    "planned_action",
+    "new_type_boolean"
+  ],
+  "contradiction_seeking": {
+    "rule": "sample predicted phase-transition and low-margin regions deliberately rather than waiting for random contradictions",
+    "must_include": [
+      "small Pi1 information-limit region",
+      "Pi2 around 1 with weak other separation",
+      "small Pi3 direct-target failure region",
+      "Pi3-small/Pi4-large indirect-rescue region",
+      "T+N superposition",
+      "T+N+C superposition/coupling"
+    ]
+  },
+  "stop_rule": {
+    "primary": "contradiction-type saturation, not contradiction-rate minimisation",
+    "operational_default": "stop V14b after three consecutive contradiction-seeking batches add zero new contradiction signature types, provided every required transition stratum has been sampled in those batches",
+    "rate_rule": "residual contradiction rate is recorded but is not a stopping target",
+    "warning": "a continuing monotonic fall in residual rate after type saturation is flagged as possible ambiguity absorption/overfitting and cannot by itself justify further tuning"
+  },
+  "measurement_transition": {
+    "on_stop": "freeze both observer implementations and all thresholds/hashes",
+    "next_generation": "V14c",
+    "V14c_rule": "measure residual indeterminacy and contradiction surfaces without further observer modification"
+  }
+}

@@ -1,0 +1,142 @@
+{
+  "schema": "interaction-sensing-v10-real-video-source-lock-v1",
+  "status": "byte-identities-frozen; scientific-protocol-pending",
+  "scientific_use": "Source provenance and byte identities are complete. Observer execution remains forbidden until the V10 scientific protocol is frozen and the exact frozen observer commits are reachable.",
+  "selection_rule": "Use every video member in the repository's Experiment_1-Test_Videos.zip whose basename is bee_test_*.mp4. No clip was excluded, ranked, previewed, or selected using observer performance.",
+  "selected_video_count": 7,
+  "repository": {
+    "title": "Honeybee video tracking data",
+    "authors": "Malika Nisal Ratnayake; Adrian Dyer; Alan Dorin",
+    "doi": "10.26180/5f4c8d5815940",
+    "figshare_article_id": 12895433,
+    "figshare_article_version": 1,
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/"
+  },
+  "derivation_chain": {
+    "repository_file": {
+      "figshare_file_id": 24528083,
+      "name": "Experiment_Data.zip",
+      "size_bytes": 10912414618,
+      "computed_md5": "885f88ec6075ed357f77615a13aff362",
+      "download_url": "https://ndownloader.figshare.com/files/24528083"
+    },
+    "nested_test_bundle": {
+      "name": "Experiment_Data/Experiment_1/Experiment_1-Test_Videos.zip",
+      "compression_method": 8,
+      "compressed_size": 463692433,
+      "uncompressed_size": 463635092,
+      "crc32_hex": "8a7f6f61",
+      "sha256": "2249aa5c72435b12b3983955bd9b8a92b0b2350ef70dd88ca815a14ad7c044f1",
+      "local_header_offset": 8206802872,
+      "full_stream_crc32_verified": true
+    }
+  },
+  "canonical_source_resolution": {
+    "workflow_run_id": 32614581275,
+    "pre_lock_head_sha": "05923e5a48ef10be94bbb9dc00891235952f5023",
+    "workflow_artifact_zip_sha256": "12ff6f92a09b8114f87088245359bd6a5d993795c04c390c19a1a4ac8864acef",
+    "source_resolution_json_sha256": "d71b922c2350e17c932b2958a1aae09db1ccc3a728659c70947bd412600dae2e",
+    "experiment_data_index_json_sha256": "3482120a84c34318df007608f87af09db6c9096cb028889c3e2811efbafbb28d",
+    "test_bundle_index_json_sha256": "aef593dc941c3265b469d15639af9bee5a27352fd0104a9d4b33d061837f14bd"
+  },
+  "canonical_byte_lock": {
+    "workflow_run_id": 32614909080,
+    "pre_receipt_head_sha": "2b6a2b8f0f808171169b6bdf938cc56c842a0124",
+    "pre_byte_source_lock_sha256": "993cc9d9cc44fe6a12701cfce9ed149abee7fdafb38e0dbfefe25ad73da366f4",
+    "byte_receipt_json_sha256": "94db50ed3105a8b40a1dac036fe31591cb455c51d9534461df6192438b1ce7bc",
+    "workflow_artifact_zip_sha256": "56e3d2e4003077e650496a11705c6d9cf8012bd7e3bc0220114721d2c170f3a0",
+    "outer_archive_bytes_requested": 463692463,
+    "outer_archive_range_request_count": 15,
+    "individual_video_files_written": false,
+    "observer_execution": false,
+    "v7_materialisation": false
+  },
+  "videos": [
+    {
+      "index": 1,
+      "name": "Experiment_1-Test_Videos/bee_test_1.mp4",
+      "compression_method": 8,
+      "compressed_size": 69366017,
+      "uncompressed_size": 69416364,
+      "crc32_hex": "be8e6756",
+      "local_header_offset": 55,
+      "sha256": "3223f41041629bcba84d2686f74c08c3d8e03b5cfef27ec74198eb5e72f69de0"
+    },
+    {
+      "index": 2,
+      "name": "Experiment_1-Test_Videos/bee_test_2.mp4",
+      "compression_method": 8,
+      "compressed_size": 59575431,
+      "uncompressed_size": 59616748,
+      "crc32_hex": "b5d82f12",
+      "local_header_offset": 69366141,
+      "sha256": "1d39f369ab5c4a6bf015fec69c8aaf65ec10f618c50fda69e947c510e89959fe"
+    },
+    {
+      "index": 3,
+      "name": "Experiment_1-Test_Videos/bee_test_3.mp4",
+      "compression_method": 8,
+      "compressed_size": 73459641,
+      "uncompressed_size": 73510301,
+      "crc32_hex": "b4075043",
+      "local_header_offset": 128941641,
+      "sha256": "6193736d994ad1ec0a94558aed41d7d93643c6bc830fb9d5ed1d5b21e9dbf433"
+    },
+    {
+      "index": 4,
+      "name": "Experiment_1-Test_Videos/bee_test_4.mp4",
+      "compression_method": 8,
+      "compressed_size": 61443077,
+      "uncompressed_size": 61481726,
+      "crc32_hex": "f2003132",
+      "local_header_offset": 202401351,
+      "sha256": "c0a9c8219d0e588a976aa57dbb35ec66b1efadf927223e13f2f10ccfdf8f15f9"
+    },
+    {
+      "index": 5,
+      "name": "Experiment_1-Test_Videos/bee_test_5.mp4",
+      "compression_method": 8,
+      "compressed_size": 74693757,
+      "uncompressed_size": 74741879,
+      "crc32_hex": "7087e0f0",
+      "local_header_offset": 263844497,
+      "sha256": "eb24100057410ec31dc4bd452507b6457abcd3c4e5ba629d65501f9ad7e6c49c"
+    },
+    {
+      "index": 6,
+      "name": "Experiment_1-Test_Videos/bee_test_6.mp4",
+      "compression_method": 8,
+      "compressed_size": 89390525,
+      "uncompressed_size": 89449937,
+      "crc32_hex": "17091e35",
+      "local_header_offset": 338538323,
+      "sha256": "bc325107cedafbeae508f118be563a11605a6dbae1e19a0d981bfcf49f51707f"
+    },
+    {
+      "index": 7,
+      "name": "Experiment_1-Test_Videos/bee_test_7.mp4",
+      "compression_method": 8,
+      "compressed_size": 35705130,
+      "uncompressed_size": 35727534,
+      "crc32_hex": "c8c0caa4",
+      "local_header_offset": 427928917,
+      "sha256": "ce19e09cca6681d400c868597269ad207d2ddfcf43d151523d19f9f40bdb4448"
+    }
+  ],
+  "completed_preconditions": [
+    "All seven evaluation member identities were obtained from the repository container rather than inferred from filename patterns.",
+    "The complete nested test bundle was decoded and verified against its locked byte size and CRC32.",
+    "All seven MP4 members matched locked filename, compressed size, uncompressed size, CRC32, and local-header offset.",
+    "All seven MP4 SHA-256 identities were frozen in a single successful run before any observer output was inspected."
+  ],
+  "hard_rules_before_scientific_v10": [
+    "Do not drop, reorder, replace, or cherry-pick any of the seven byte-frozen videos.",
+    "Freeze frame/window extraction, any perturbation registry, observer adapters, metrics, comparators, and interpretation rules before running either observer.",
+    "Require every future materialisation of each video to match the frozen SHA-256 before observer execution.",
+    "Do not treat HyDaT or YOLO output tracks as ecological ground truth unless their provenance as human-validated labels is independently established.",
+    "V10 must not alter V6 weights or V7 generator, seed, pixels, traces, gate, or claim ceiling.",
+    "V10 cannot rescue or reinterpret a failing V7 result.",
+    "If exact frozen V5 observer commits remain unreachable, prepare data/protocol only; do not reconstruct or substitute observer logic."
+  ]
+}

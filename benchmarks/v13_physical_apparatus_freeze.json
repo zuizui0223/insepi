@@ -1,0 +1,121 @@
+{
+  "schema": "interaction-sensing-v13-physical-apparatus-freeze-v1",
+  "status": "pre-field-frozen-before-any-physical-acquisition",
+  "purpose": "Operationalise the already-preregistered event-side, nuisance-side, shared-optical and no-fault classes with one reproducible physical recipe chosen before any V13 observer output.",
+  "claim_boundary": "This is a standardised observation-system proxy experiment, not natural pollinator-detection validation.",
+  "common_geometry": {
+    "camera_mount": "rigid tripod or fixed rail; no within-block movement",
+    "camera_to_target_plane_mm": 1000,
+    "camera_to_target_tolerance_mm": 20,
+    "target_plane": "fixed carrier plane; target centre remains fixed within a block",
+    "background_plane": "behind target plane and mechanically isolated from the target carrier",
+    "canonical_reference": "geometry may be checked from raw calibration pixels before observer execution, but no PolliPi/InsePi output may be used to tune apparatus"
+  },
+  "standard_event_proxy": {
+    "shape": "matte circular disk",
+    "diameter_mm": 100,
+    "diameter_tolerance_mm": 2,
+    "surface": "matte high-contrast dark target on a matte neutral carrier",
+    "present_in_all-no-fault_nuisance-side_shared-optical_placebo_phases": true,
+    "event_restore_definition": "replace the current event proxy with an otherwise matched 100-mm high-contrast standard proxy at the same target-plane location"
+  },
+  "development_treatments": {
+    "event_side": {
+      "subtype": "local_target_contrast_attenuation",
+      "physical_recipe": "100-mm target at the standard target-plane location with luminance contrast attenuated by a matched neutral target/overlay; target geometry unchanged",
+      "contrast_fraction_of_standard_min": 0.20,
+      "contrast_fraction_of_standard_max": 0.30,
+      "contrast_reference": "absolute target-versus-carrier luminance contrast measured for the standard event proxy under the same illumination",
+      "event_restore": "replace attenuated target with the standard event proxy",
+      "observability_restore": "sham nuisance-neutral handling; event attenuation remains",
+      "shared_restore": "sham clear optical-carrier handling; event attenuation remains"
+    },
+    "nuisance_side": {
+      "subtype": "fan_driven_background_motion",
+      "physical_recipe": "mechanically isolated background foliage or flexible strips driven by a fan while the standard event proxy and camera remain fixed",
+      "air_speed_m_per_s_at_background": 1.5,
+      "air_speed_tolerance_m_per_s": 0.2,
+      "event_restore": "replace standard event proxy with an identical standard proxy while fan remains active",
+      "observability_restore": "fan off; target and optical state unchanged",
+      "shared_restore": "sham clear optical-carrier handling while fan remains active"
+    },
+    "shared_optical": {
+      "subtype": "partial_optical_occlusion",
+      "physical_recipe": "semi-opaque front-of-lens strip crossing the target region and surrounding scene on a clear carrier",
+      "occluded_canonical_frame_width_fraction": 0.30,
+      "occlusion_fraction_tolerance": 0.03,
+      "event_restore": "standard event proxy handling without removing occluder",
+      "observability_restore": "sham nuisance-neutral handling without removing occluder",
+      "shared_restore": "replace occluding carrier with matched clear carrier"
+    },
+    "no_fault": {
+      "subtype": "matched_clean_control",
+      "physical_recipe": "standard event proxy, nuisance source off, matched clear optical carrier",
+      "event_restore": "swap to an identical standard event proxy",
+      "observability_restore": "matched fan/control handling while nuisance remains off",
+      "shared_restore": "swap clear optical carrier for an identical clear carrier"
+    }
+  },
+  "heldout_treatments": {
+    "event_side": {
+      "subtype": "local_target_scale_shift",
+      "physical_recipe": "50-mm high-contrast disk at the same fixed target-plane centre; contrast material matches the standard proxy",
+      "diameter_mm": 50,
+      "diameter_tolerance_mm": 2,
+      "event_restore": "replace 50-mm target with the standard 100-mm event proxy",
+      "observability_restore": "sham nuisance-neutral handling; 50-mm target remains",
+      "shared_restore": "sham clear optical-carrier handling; 50-mm target remains"
+    },
+    "nuisance_side": {
+      "subtype": "moving_shadow",
+      "physical_recipe": "opaque vane periodically traverses the illumination path without touching camera, target or background",
+      "shadow_cycle_hz": 0.5,
+      "shadow_cycle_tolerance_hz": 0.05,
+      "trough_illuminance_fraction_of_unshadowed": 0.60,
+      "trough_fraction_tolerance": 0.10,
+      "event_restore": "replace standard event proxy with an identical standard proxy while shadow treatment continues",
+      "observability_restore": "park vane completely outside illumination path; target and optical state unchanged",
+      "shared_restore": "sham clear optical-carrier handling while moving-shadow treatment continues"
+    },
+    "shared_optical": {
+      "subtype": "full_aperture_diffusion_filter",
+      "physical_recipe": "matte diffusion film covers the full camera aperture on a removable carrier",
+      "visible_transmittance_fraction": 0.70,
+      "transmittance_tolerance": 0.10,
+      "event_restore": "standard event-proxy handling while diffuser remains installed",
+      "observability_restore": "sham nuisance-neutral handling while diffuser remains installed",
+      "shared_restore": "replace diffuser carrier with matched clear carrier"
+    },
+    "no_fault": {
+      "subtype": "matched_clean_control_new_day_scene",
+      "physical_recipe": "standard event proxy, nuisance source off, matched clear optical carrier on held-out day and scene",
+      "event_restore": "swap to an identical standard event proxy",
+      "observability_restore": "matched nuisance-control handling with nuisance off",
+      "shared_restore": "swap clear optical carrier for an identical clear carrier"
+    }
+  },
+  "physical_measurement_rules": {
+    "measurements_are_made_without_observer_outputs": true,
+    "target_dimensions": "measure before each acquisition day with ruler/caliper",
+    "camera_target_distance": "measure before each scene and lock mount thereafter",
+    "target_contrast": "measure target and carrier luminance under the same illumination before each development event-side block series",
+    "fan_air_speed": "measure at the background plane before each development fan block series",
+    "shadow_frequency": "verify from vane controller or independent timing, not observer output",
+    "shadow_illuminance": "verify with an independent light meter before each held-out shadow block series",
+    "occluder_width_fraction": "verify from physical carrier geometry or raw calibration image before observer execution",
+    "diffuser_transmittance": "measure against the same steady light source without consulting observer output",
+    "out_of_tolerance_rule": "mark protocol deviation immediately; do not tune the apparatus using PolliPi/InsePi output and do not silently replace a failed subtype"
+  },
+  "non_cumulative_rule": {
+    "all_active_phases_start_from_the_same_latent_placebo_treatment_state": true,
+    "restore_latent_baseline_during_washout": true,
+    "abort_block_if_baseline_cannot_be_restored": true
+  },
+  "forbidden_adaptations_after_acquisition_begins": [
+    "switch heldout moving-shadow treatment to another nuisance subtype",
+    "switch heldout diffusion treatment to glare based on observer performance",
+    "change target dimensions or contrast range based on PolliPi output",
+    "change fan speed, shadow frequency, occluder coverage or diffuser transmittance based on InsePi output",
+    "replace failed blocks after observer output without starting a new generation"
+  ]
+}

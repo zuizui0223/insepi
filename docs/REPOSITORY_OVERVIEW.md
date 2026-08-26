@@ -1,68 +1,108 @@
 # Repository overview
 
-A one-page map of `interaction-sensing`, for orientation before reading any
-single document in detail. See the root `README.md` for the full purpose
-statement and quick start.
+This page points to the **current scientific state** of `interaction-sensing`. Historical modules remain in the repository for reproducibility, but the active conceptual architecture is V14b/V14c rather than the older noise-first product framing.
 
-## What this repository is
+## Current scientific object
 
-`interaction-sensing` studies whether an autonomous edge camera can recognise
-*when and why* its own observations of ecological interactions (e.g.
-flower-visitor events) are unreliable, preserve that uncertainty as data, and
-use it to drive adaptive auditing — rather than starting from "detect the
-target, count the event" and treating scene noise as a nuisance to filter out.
-Target/organism recognition (Cirsium flowers, insect classes) is a downstream
-application of the method, not its core object.
+The repository studies when a dynamic ecological observation can safely support one of three deviation-side conclusions:
+
+```text
+TARGET / NUISANCE / UNDETERMINED
+```
+
+with a separate baseline state outside the dynamic query.
+
+Target and nuisance are positively defined and may coexist. `UNDETERMINED` is an epistemic decision region, not a biological process. V14c further separates:
+
+- `NO_SUPPORTED_EVIDENCE` — neither frozen observer supports a safe conclusion; this does **not** by itself prove true information absence;
+- overlap / attribution unresolved — evidence exists, but coexistence or attribution prevents a unique exclusive label.
+
+Observability remains a separate measurement axis and must not be equated with `1 - nuisance`.
+
+## Current frozen result
+
+V14b freezes both observers before measurement and evaluates 30,625 dimensionless coordinates × 6 latent regimes × 32 fresh seeds = **5,880,000 closed-world worlds**.
+
+Equal-grid/equal-regime output rates:
+
+| State | Rate |
+|---|---:|
+| baseline | 0.2302328231 |
+| target | 0.4287333333 |
+| nuisance | 0.0876976190 |
+| undetermined | 0.2533362245 |
+
+About 89.4% of U is overlap/attribution rather than the historical no-support counter. The proposed dominant `Pi2 ~= 1` ambiguity ridge is not supported. The strongest visible boundary is `Pi3 = 0` versus `Pi3 > 0`, but V14c explicitly bounds that conclusion to the frozen structural rule `direct_target_signal_fraction > 0 -> target_supported`; it is not a field SNR threshold.
+
+Key files:
+
+- `benchmarks/v14b_frozen_ternary_phase_surface_result.json`
+- `benchmarks/v14b_frozen_ternary_phase_figure_data.json`
+- `benchmarks/v14c_semantic_clarification_result.json`
+- `docs/V14C_SEMANTIC_CLARIFICATION.md`
+- `src/interaction_sensing/target_observer_v14b.py`
+- `src/interaction_sensing/nuisance_observer_v14b.py`
+- `src/interaction_sensing/ternary_decision_v14b.py`
+- `src/interaction_sensing/ternary_semantics_v14c.py`
+
+## Identification boundary
+
+The current target observer is positive-only. Therefore non-target outputs do not certify biological target absence. The old `baseline + U` summary remains only as a legacy non-target-decision width.
+
+Without an independent absence-certifying channel, output-implied target-prevalence bounds are `[P(TARGET), 1]`. Empirical tightening belongs to a later observability/absence-certification or sampling/missingness model, not to post-hoc V14b threshold tuning.
+
+## Cross-repository architecture
+
+PolliPi now exports target evidence only. It does not export nuisance truth, observability truth, confirmed visitation, or biological absence.
+
+PolliPi ordinal evidence `0 / 0.5 / 1` is not V14b `Pi3`. The current V14b phase surface is a synthetic InsePi result; empirical transfer requires later measurement/calibration.
+
+## Development history
+
+The repository intentionally preserves failed and superseded generations as evidence:
+
+- V5/V7: fixed disagreement/allocation ideas fail their frozen gates;
+- V8: generality is conditional rather than universal;
+- V9: protected probability sampling preserves inferential denominators;
+- V10: real-pixel transfer is partial;
+- V11: static contradiction localization fails;
+- V12: controlled interventions recover conditional causal discrimination;
+- V13: physical intervention protocol is frozen but result-pending;
+- V14a/V14a2: dimensionless closed-world development rejects the simple dominant `Pi2 ~= 1` ridge;
+- V14b: alternating target/nuisance development freezes by contradiction-type saturation and risk contracts;
+- V14c: post-freeze semantic clarification weakens unsupported overclaims without rerunning the surface.
 
 ## Directory map
 
-| Path | Contents |
+| Path | Role |
 |---|---|
-| `src/interaction_sensing/` | The current package: noise/observability contracts, NoiseBench protocol generator, target/event/audit/ledger contracts, simulation and evaluation utilities, CLI entry points, optional IMX500 plugin. |
-| `tests/` | pytest suite covering the package above (37 tests as of this writing). |
-| `configs/` | Named `.toml` pipeline configurations for baselines and NoiseBench. |
-| `analysis/` | Post-hoc scripts that turn a recorded event ledger + audit annotations into observability/error estimates. See `analysis/README.md`. |
-| `docs/` | Design and methodology documents (index below). |
-| `legacy/` | Original prototype scripts (runtime cascades, target detection training/export, classifier training, data prep), preserved as baselines — not the public API. See `legacy/README.md`. |
-| `models/` | Trained weights (`best.pt`, `last.pt`, `best.onnx`) for the legacy Cirsium YOLO target-detection baseline. See `models/README.md`. |
+| `src/interaction_sensing/` | Current and historical sensing contracts, target/nuisance observers, ternary decision logic, simulations, intervention logic, and evaluation utilities. |
+| `benchmarks/` | Frozen protocols, receipts, result summaries, thresholds, seed registries, and claim boundaries. |
+| `docs/` | Current interpretation plus the full negative-result/development record. |
+| `scripts/` | Reproducible protocol-specific runners and audits. |
+| `tests/` | Unit tests and scientific-contract tests. |
+| `analysis/` | Post-hoc analysis utilities retained from earlier observation-process work. |
+| `configs/` | Earlier runtime/NoiseBench configuration material. |
+| `models/` | Legacy trained target-detection weights. |
+| `legacy/` | Earlier prototypes and baselines, not the current scientific ontology. |
+| `provenance/frozen_github_workflows/` | Original generation-specific GitHub Actions YAML retained byte-for-byte but removed from active automatic execution after freeze. |
 
-## Entry points
+## Active execution surface
 
-- Install: `python -m pip install -e ".[runtime,analysis,dev]"`
-- Test: `pytest`
-- CLI scripts (registered in `pyproject.toml`): `interaction-motion-baseline`,
-  `interaction-sim-benchmark`, `interaction-imx500-probe`,
-  `interaction-noisebench-plan`, `interaction-latent-benchmark`,
-  `interaction-visual-benchmark`, `interaction-temporal-risk-benchmark`.
+Generic PRs should automatically run only:
 
-## Docs index
+- `.github/workflows/test.yml`
 
-| Doc | Covers |
-|---|---|
-| `NOISE_FIRST_METHOD.md` | The core noise-first conceptual framework and inversion from target-first pipelines. |
-| `NOISEBENCH_PROTOCOL.md` | Controlled-perturbation recording protocol and evaluation endpoints. |
-| `IMX500_DEPLOYMENT.md` | Using the Raspberry Pi AI Camera (IMX500) as a scene-observability sensor. |
-| `TARGET_ARCHITECTURE.md` | Refactor goal: from experiment-named scripts to a reusable target-actor interaction package. |
-| `FUNCTION_INVENTORY.md` | Component-by-component inventory of what each part of the system does, which legacy script it came from, and its future role. |
-| `ERROR_TAXONOMY.md` | Taxonomy distinguishing visual detection errors from interaction-attribution errors. |
-| `CAUSAL_ATTRIBUTION_CONTRACT.md` | Shared-cause causal attribution contract for the sensing pipeline. |
-| `TEMPORAL_NUISANCE_RISK_MODEL.md` | The N1 temporal nuisance-risk learned model. |
-| `TEMPORAL_RISK_EVALUATION.md` | Evaluation contract for whether N1 adds information over the baseline. |
-| `LATENT_DISTURBANCE_METHOD.md` | Latent-disturbance causal inference benchmark methodology. |
-| `LATENT_BENCHMARK_EVALUATION.md` | Evaluation contract for the latent-disturbance benchmark. |
-| `VISUAL_DISTURBANCE_BENCHMARK.md` | Rendered visual-disturbance benchmark, extending the scalar latent benchmark. |
-| `PREFIELD_VALIDATION.md` | Validation strategy to run before collecting biological field data. |
-| `REVIEW_RESILIENT_VALIDATION.md` | Standard for a review-resilient validation without requiring field observations. |
-| `FIVE_RIG_DEPLOYMENT_DESIGN.md` | Deployment design across the five physical Raspberry Pi field rigs. |
-| `METHODOLOGY_CONTRIBUTION.md` | Statement of the project's methodological contribution vs. prior flower-visitor systems. |
-| `LITERATURE_POSITION.md` | Working literature map situating NoiseBench and noise-first sensing. |
+V13 remains result-pending and has one explicit manual-only preflight:
 
-## Current status
+- `.github/workflows/v13-manual-preflight.yml`
 
-- Implemented: target-agnostic noise/observability contracts and risk policy,
-  the IMX500 hardware adapter, the NoiseBench protocol generator, motion
-  primitives, event/audit/ledger contracts, and error-evaluation utilities.
-- Retained as explicit baselines, not the public API: the legacy
-  motion/detector/classifier scripts and the Cirsium YOLO weights in `models/`.
-- The earlier interaction-level synthetic benchmark is now a downstream stress
-  test rather than the primary method.
+Historical V6–V14b scientific workflows are provenance, not active CI. This prevents a repository-integration PR from accidentally rerunning frozen experiments.
+
+## Empirical next step
+
+The next scientific problem is not to force U lower. It is to determine whether real-camera observation support and target absence can be certified independently from biological event truth and nuisance labels. V13/V15 provide the physical and real-visit bridge for that question.
+
+## Claim boundary
+
+V14b/V14c are closed-world frozen-observer results. They do not establish field visitation accuracy, field prevalence, calibrated PolliPi probabilities, universal physical transition points, or universal irrelevance of positive direct-signal magnitude.

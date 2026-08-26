@@ -1,92 +1,132 @@
-# interaction-sensing
+# interaction-sensing / InsePi
 
-## Purpose
+## Current purpose
 
-`interaction-sensing` is an experimental codebase for **noise-first, error-aware ecological sensing**.
+`interaction-sensing` develops an error-aware ecological observation framework that asks a stricter question than ordinary target classification:
 
-The central question is not merely whether a camera can identify a flower, insect, animal, or other focal object. In natural scenes, camera motion, coherent foreground sway, shadows, illumination transients, occlusion, blur, lens contamination, and object clutter can create or hide observations before a target detector ever makes a decision.
+> Given a dynamic observation, when is there enough evidence to support a target process, a nuisance process, or neither uniquely enough to justify a forced label?
 
-This repository therefore asks:
-
-> Can an autonomous edge camera recognise when and why its own observations are unreliable, preserve that uncertainty as data, and use it to adapt auditing and downstream ecological inference?
-
-## Central inversion
+The current scientific architecture is **baseline + ternary deviation-side inference**:
 
 ```text
-Conventional target-first pipeline
-  detect target -> detect organism -> count event -> treat noise as nuisance
-
-Noise-first pipeline
-  characterise scene disturbance -> estimate observation risks
-  -> preserve uncertainty / prioritise audit -> optionally interpret targets
+baseline / no dynamic query
+        |
+        +-- target supported
+        +-- nuisance supported
+        +-- undetermined
+              |-- no supported evidence
+              +-- overlap / attribution unresolved
 ```
 
-Flowers, insects, nests, fruits, leaves, camera-trap animals, and other focal entities are downstream applications. They are not the core methodological object.
+Target and nuisance are defined positively and are **not complements**. They may coexist. Observability is a separate measurement question; high nuisance is not the same thing as low observability.
 
-## Core outputs
+## Current design principles
 
-The primary output is an **observability record** for each frame or time window:
+1. **Baseline is outside the ternary question.** A resting state is not treated as an undecidable dynamic event.
+2. **Target and nuisance are independently positive.** `not target` does not define nuisance, and `not nuisance` does not certify target.
+3. **Superposition is legitimate.** Simultaneous target+nuisance evidence is preserved rather than tuned away.
+4. **Undetermined is an epistemic output.** It is not a third biological process and is not forced into absence.
+5. **No support is weaker than information absence.** V14c calls this `NO_SUPPORTED_EVIDENCE`; proving true information absence requires an independent identifiability/observability test.
+6. **Operational boundaries are risk contracts, not inherited raw scores.** The frozen V14b nuisance decision uses a family-wise false-certainty budget `alpha = 0.05`.
+7. **Development freezes before measurement.** Failed hypotheses and failed generations remain in history rather than being post-hoc repaired.
+8. **Dimensionless ratios define the closed-world phase space.** The current V14b surface uses `Pi1`–`Pi6` rather than field-specific pixel/time constants.
+
+## Locked V14b result
+
+The frozen target and nuisance observers were measured over:
 
 ```text
-noise source
-noise confidence
-false-event risk
-missed-event risk
-attribution-risk
-observability state
-whether high-resolution context should be retained
-whether an independent audit clip should be captured
+30,625 Pi coordinates x 6 latent regimes x 32 fresh seeds
+= 5,880,000 truth-known closed-world worlds
 ```
 
-A noisy interval is never silently dropped:
+Locked equal-grid/equal-regime state rates:
 
 ```text
-clean          -> ordinary low-cost monitoring
-confounded     -> retain noise metadata
-high risk      -> prioritise audit and high-resolution context
-unobservable   -> retain the condition; do not force a biological conclusion
-unknown        -> preserve uncertainty and audit
+baseline      0.2302328231
+target        0.4287333333
+nuisance      0.0876976190
+undetermined  0.2533362245
 ```
 
-## Function-first architecture
+Historical V14b U counters were `0.0267528912` for the branch then named `information_absence` and `0.2265833333` for overlap/attribution. V14c weakens the first term to **no supported evidence** because an observer failing to support T or N does not prove that discriminating information was absent from the world.
+
+The main closed-world findings are:
+
+- about 89.4% of U is overlap/attribution rather than no-supported-evidence under the frozen design weighting;
+- the originally predicted dominant `Pi2 ~= 1` timescale-collision ridge was **not supported** and remains retired;
+- longer `Pi1` does not monotonically erase U because additional observation can reveal coexistence/attribution conflict;
+- `Pi3 = 0` versus `Pi3 > 0` is a strong boundary **under the frozen structural target rule** `direct_target_signal_fraction > 0 -> target_supported`; it is not evidence for a universal field SNR discontinuity.
+
+Forcing all non-target outputs to target absence yields zero target false positives in this closed generator but a target false-negative rate of `0.3569` among latent target-present worlds under the frozen uniform weighting.
+
+See:
+
+- `benchmarks/v14b_frozen_ternary_phase_surface_result.json`
+- `benchmarks/v14c_semantic_clarification_result.json`
+- `docs/V14C_SEMANTIC_CLARIFICATION.md`
+
+## Identification boundary
+
+The frozen target observer is **positive-only**. Therefore `NUISANCE`, `BASELINE`, and `UNDETERMINED` do not certify target absence.
+
+The historical `baseline + U` quantity is retained only as `legacy_non_target_decision_width`, not as strict visit-presence partial identification.
+
+Without an independently validated target-absence channel, the safe output-implied global bounds are:
 
 ```text
-1. scene-noise / observability measurement
-2. temporal motion and photometric features
-3. false-event / missed-event / attribution-risk estimation
-4. adaptive context and independent-audit recording
-5. noise-aware error modelling and calibration
-6. optional target specification and localisation
-7. optional event segmentation and interaction-zone states
-8. optional actor guild or taxon recognition
+p(target) in [P(TARGET), 1]
+          = [0.4287333333, 1]
 ```
 
-Target and organism models are retained as optional ablations and applications. They must never turn a detection directly into an ecological claim.
+A later empirical generation may tighten the upper bound only through an independently validated observability/absence-certification channel or an explicit sampling/missingness model.
 
-## What is implemented now
+## PolliPi relationship
 
-- target-agnostic `NoiseObservation`, `NoiseSource`, `ObservabilityState`, and transparent risk policy;
-- IMX500 hardware adapter that records model role, ROI, outputs, and KPI metadata;
-- target-agnostic **NoiseBench** protocol generator for controlled perturbations;
-- target-relative motion primitives, event data contracts, audit sampling, SQLite ledger, and error-evaluation utilities;
-- legacy motion / detector / classifier scripts retained as explicit ablation baselines;
-- a previous interaction-level synthetic benchmark, now treated as a downstream stress test rather than the primary method.
+PolliPi is the target-evidence side of the cross-repository architecture. Its current main branch exports an ordinal target-evidence adapter without asserting nuisance truth, observability, confirmed visitation, or biological absence.
 
-## Repository map
+Important boundary:
 
-- `src/interaction_sensing/noise.py` — noise source, observability record, and transparent risk policy.
-- `src/interaction_sensing/noisebench/` — pre-recording manifest generation for target-agnostic controlled perturbation experiments.
-- `src/interaction_sensing/plugins/imx500.py` — optional IMX500 hardware / metadata adapter.
-- `src/interaction_sensing/` — reusable contracts for targets, candidates, events, audits, ledgers, simulation, and evaluation.
-- `docs/NOISE_FIRST_METHOD.md` — the conceptual framework.
-- `docs/NOISEBENCH_PROTOCOL.md` — controlled perturbation protocol and endpoints.
-- `docs/IMX500_DEPLOYMENT.md` — IMX500 as a scene-observability sensor.
-- `docs/REPOSITORY_OVERVIEW.md` — index of every doc in `docs/`, plus a one-page map of the whole repository.
-- `analysis/` — scripts that turn a recorded event ledger and audit annotations into observability/error estimates; see `analysis/README.md`.
-- `configs/` — named baseline and NoiseBench pipeline configurations (`.toml`).
-- `models/` — trained weights for the legacy Cirsium YOLO target-detection baseline; see `models/README.md`.
-- `legacy/` — original prototype scripts, organised as runtime, target detection, recognition, and data utilities; see `legacy/README.md`.
-- `tests/` — pytest suite for the `interaction_sensing` package.
+- PolliPi evidence `0 / 0.5 / 1` is **not** V14b `Pi3`;
+- PolliPi `environmental_noise` means target evidence was not retained strongly enough by that observer, not that nuisance truth was established;
+- the 5.88M-world V14b result is a synthetic closed-world InsePi result, not a field validation of the current PolliPi classifier.
+
+## Empirical bridge: V13 and V15
+
+The closed-world V14b/V14c result is not a field accuracy claim.
+
+- **V13** remains a result-pending physical intervention protocol. Its active GitHub Action is manual-only; historical V13 workflow YAML is preserved as provenance.
+- **V15** is the later real visit-observation validation programme, separating biological event truth, target-coupled response truth, exogenous nuisance truth, and primary-stream observation-support truth.
+
+The next empirical question is not how to tune U away. It is whether observation support and target absence can be certified independently from real camera measurements.
+
+## Repository structure
+
+- `src/interaction_sensing/` — current and historical sensing contracts, observers, decision layers, simulations, and evaluation utilities.
+- `benchmarks/` — frozen protocols, receipts, result summaries, and claim boundaries across generations.
+- `docs/` — method development, negative results, frozen-generation reports, and current V14/V14c interpretation.
+- `scripts/` — reproducible generation/evaluation helpers for the corresponding protocols.
+- `tests/` — normal package and scientific-contract tests.
+- `provenance/frozen_github_workflows/` — byte-preserved generation-specific workflow YAML removed from active GitHub Actions after its scientific generation was frozen.
+- `legacy/` — earlier prototype/runtime material retained for provenance and baselines.
+
+Earlier NoiseBench, noise-source, portfolio, design-inference, real-pixel, causal-intervention, and physical-validation generations remain part of the evidence history. They should not be mistaken for the current V14b ontology simply because their code remains importable.
+
+## Active CI
+
+Generic pull requests run only the normal unit/contract test workflow:
+
+```text
+.github/workflows/test.yml
+```
+
+The only active generation-specific workflow is:
+
+```text
+.github/workflows/v13-manual-preflight.yml
+```
+
+and it is `workflow_dispatch` only. Frozen V6–V14b scientific workflows are preserved under `provenance/frozen_github_workflows/` and cannot re-run merely because a future PR touches historical files.
 
 ## Quick start
 
@@ -95,59 +135,6 @@ python -m pip install -e ".[runtime,analysis,dev]"
 pytest
 ```
 
-## Build a NoiseBench recording plan
+## Claim boundary
 
-NoiseBench needs no organism data. It creates a randomised, reproducible schedule for stable controls, camera shake, foreground/background motion, lighting changes, shadows, occlusion, blur, lens contamination, clutter, and mixed disturbances.
-
-```bash
-interaction-noisebench-plan \
-  --replicates 3 \
-  --duration-seconds 30 \
-  --frame-rate 15 \
-  --output-dir runs/noisebench_plan
-```
-
-The output is created **before recording**:
-
-```text
-noisebench_manifest.csv  randomised recording order and perturbation truth
-noisebench_windows.csv   one-second truth windows for later matching
-noisebench_config.json   design assumptions and seed
-noisebench_protocol.md   operator-facing protocol
-```
-
-See `docs/NOISEBENCH_PROTOCOL.md` for the experimental matrix and endpoints.
-
-## IMX500 role
-
-The Raspberry Pi AI Camera is intended first as a low-power scene-noise / image-quality sensor:
-
-```text
-stable scene
-photometric disturbance
-occlusion
-blur or focus loss
-lens contamination
-clutter / overlap
-unknown condition
-```
-
-The Pi supplements that with temporal features that one frame cannot resolve, such as global camera displacement and coherent foreground motion. Generic SSD models are only hardware/metadata smoke tests, not ecological detectors.
-
-## Downstream applications
-
-After NoiseBench establishes the observation process, target-specific tasks can test whether noise-aware sensing changes conclusions:
-
-```text
-object-zone entry
-flower--visitor recording
-nest entrance activity
-fruit or leaf use
-camera-trap species observations
-```
-
-The key endpoint is not classifier F1 alone. It is whether a noise-aware system better predicts and corrects false events, missed events, and attribution errors under finite storage and power.
-
-## Status
-
-This is an active research prototype. The next empirical milestone is a hardware-in-the-loop NoiseBench dataset and a lightweight IMX500 noise-state model; no field ecological claim should be made before that calibration exists.
+Current V14b/V14c conclusions are **closed-world, frozen-observer statements**. They do not establish field visitation accuracy, field prevalence, a calibrated PolliPi probability, a universal physical transition point, or a universal claim that direct-signal amplitude is irrelevant once positive.

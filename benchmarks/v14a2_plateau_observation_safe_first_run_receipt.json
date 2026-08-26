@@ -1,0 +1,20 @@
+{
+  "claim_boundary": "corrected post-result information-presence audit only; V14a2 remains immutable",
+  "execution_commit": "74eb7aadc2d4b84b771baf9e4ed5a540da94cf47",
+  "file_sha256": {
+    "coordinates": "f80dcffbda57748685f03ad4857a967663c83cece99190f92121e3196a1472ae",
+    "protocol": "ff46ac54216933e89d0fece83f817635e7a5a0edac9394eca9ec6dd3b00de815",
+    "runner": "084c6c623dc57789afe4c5bb55550459d73c2c9b7bebb6ef2a8f6cb1cedbb02a",
+    "statistics": "1f06db5be9114736e5a23d6af9c95ef3ed56b22031607379f38df2d600a1aa0d",
+    "summary": "324317edbe9be11e8e0f0792768fd3a50e0ec81d5e844466369083da5367babf"
+  },
+  "runtime": {
+    "numpy": "2.4.6",
+    "python": "3.11.16"
+  },
+  "schema": "insepi-v14a2-plateau-observation-safe-first-run-receipt-v1",
+  "status": "immutable-first-corrected-diagnostic-run",
+  "workflow_run_id": 32926639089,
+  "artifact_id": 9591792694,
+  "artifact_digest": "sha256:52d7c2602db0eecf826d760cf760ac868c86e02032fbbfe53b469d217fb48075"
+}
