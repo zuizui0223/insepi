@@ -13,6 +13,18 @@ from .support_estimation import (
     SupportMeasurementProvenance,
     evaluate_support_estimates,
 )
+from .v15_prefreeze import (
+    A_MINUS_VALIDATION_ITEM,
+    CORE_FREEZE_ITEMS,
+    AbsenceStrategy,
+    FreezeItem,
+    FreezeStatus,
+    PrefreezeGateState,
+    PrefreezeReadiness,
+    assert_ready_for_heldout,
+    evaluate_prefreeze_registry,
+    load_prefreeze_registry,
+)
 from .visit_systems import (
     VisitSystemInputs,
     VisitSystemThresholds,
@@ -33,7 +45,14 @@ from .visit_validation import (
 )
 
 __all__ = [
+    "A_MINUS_VALIDATION_ITEM",
+    "AbsenceStrategy",
+    "CORE_FREEZE_ITEMS",
     "CoupledResponseResolution",
+    "FreezeItem",
+    "FreezeStatus",
+    "PrefreezeGateState",
+    "PrefreezeReadiness",
     "PrimaryStreamSupportEstimate",
     "PrimaryStreamSupportEstimator",
     "PrimaryStreamSupportMeasurements",
@@ -49,9 +68,12 @@ __all__ = [
     "VisitTruthResolution",
     "VisitTruthState",
     "VisitValidationSummary",
+    "assert_ready_for_heldout",
+    "evaluate_prefreeze_registry",
     "evaluate_support_estimates",
     "evaluate_visit_predictions",
     "evaluate_visit_system_variants",
+    "load_prefreeze_registry",
     "predict_all_visit_variants",
     "predict_visit_variant",
     "prediction_from_triad",
