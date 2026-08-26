@@ -1,0 +1,88 @@
+{
+  "schema": "insepi-v15-primary-stream-observability-estimator-v1",
+  "generation": "V15",
+  "status": "pre-data-development-contract-not-yet-frozen",
+  "scientific_question": "Can observation support O be estimated from primary-stream measurement properties without access to biological-event truth, target-observer output, nuisance-observer output, or nuisance truth?",
+  "semantic_role": {
+    "T": "focal insect / visit process",
+    "N": "exogenous process that may mimic, mask or corrupt target inference",
+    "C": "target-coupled local response caused by the focal interaction",
+    "O": "measurement support: whether a focal visit opportunity was observable in the primary stream"
+  },
+  "hard_independence_rules": [
+    "O is not defined as 1 minus nuisance burden",
+    "the O estimator may not consume PolliPi/target evidence",
+    "the O estimator may not consume InsePi/nuisance risk",
+    "the O estimator may not consume biological-event truth",
+    "the O estimator may not consume exogenous nuisance labels",
+    "support truth may be used only for development calibration and held-out scoring, never as estimator input"
+  ],
+  "primary_stream_measurements": [
+    {
+      "name": "target_zone_coverage",
+      "meaning": "fraction/quality of the focal interaction zone retained inside the usable field of view",
+      "allowed_sources": ["camera_geometry", "other_primary_stream_measurement"]
+    },
+    {
+      "name": "target_zone_visibility",
+      "meaning": "primary-stream evidence that the relevant target zone is physically visible rather than hidden",
+      "allowed_sources": ["target_zone_visibility_audit", "other_primary_stream_measurement"]
+    },
+    {
+      "name": "spatial_resolution",
+      "meaning": "ability of the primary stream to resolve actor/contact scale required by the visit definition",
+      "allowed_sources": ["image_resolution_audit", "other_primary_stream_measurement"]
+    },
+    {
+      "name": "photometric_sufficiency",
+      "meaning": "usable exposure/contrast without information-destroying darkness, clipping or saturation",
+      "allowed_sources": ["photometric_audit", "other_primary_stream_measurement"]
+    },
+    {
+      "name": "temporal_continuity",
+      "meaning": "availability of enough of the relevant interval to observe the defined event rather than frame/dropout gaps",
+      "allowed_sources": ["frame_timing_audit", "other_primary_stream_measurement"]
+    }
+  ],
+  "reference_estimator": {
+    "support_ceiling": "minimum of the five normalised component measurements",
+    "development_thresholds": {
+      "observable": 0.70,
+      "unobservable": 0.30
+    },
+    "warning": "thresholds are transparent development defaults, not field-calibrated detection probabilities"
+  },
+  "truth_contract": {
+    "source": "PrimaryStreamSupportTruth annotated/measured independently of algorithm outputs",
+    "resolved_states": ["observable", "compromised", "unobservable"],
+    "unresolved_rule": "unresolved support truth is excluded from support-accuracy denominators and reported separately",
+    "cause_rule": "overall unobservability must not be back-filled into an invented nuisance cause or failed support component"
+  },
+  "development_then_validation": {
+    "development": "calibrate component measurement procedures and support thresholds using development days/scenes only",
+    "freeze_before_held_out": [
+      "measurement procedures",
+      "normalisation references",
+      "support thresholds",
+      "missing-data handling",
+      "held-out metrics"
+    ],
+    "held_out": "new recording days and focal scenes/flowers; no threshold or measurement-rule changes after support-estimator output inspection"
+  },
+  "primary_metrics": [
+    "exact_availability_accuracy_on_resolved_support_truth",
+    "unobservable_recall",
+    "observable_false_censor_rate",
+    "compromised_exact_recall",
+    "support_truth_unresolved_fraction"
+  ],
+  "claim_ceiling": {
+    "before_real_support_data": "software/semantic separation only",
+    "forbidden": [
+      "field-calibrated observability",
+      "detection probability",
+      "visit accuracy",
+      "universal support thresholds"
+    ]
+  }
+}
