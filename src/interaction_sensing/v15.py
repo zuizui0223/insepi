@@ -4,6 +4,13 @@ V14b/V14c remains the closed-world decision framework. This module exposes the
 real-data validation layer without rewriting the V14 package-level API.
 """
 from .absence_certification import TargetAbsenceEvidence
+from .coupled_field_measurement_v15 import (
+    CoupledAttributionSource,
+    CoupledResponseReferenceLayout,
+    FieldCoupledTargetMeasurement,
+    IndependentAttributionCue,
+    measure_field_coupled_response,
+)
 from .nuisance_field_measurement_v15 import (
     FieldNuisanceProcessMeasurement,
     NuisanceReferenceLayout,
@@ -84,12 +91,16 @@ __all__ = [
     "ClaimThreshold",
     "ClusterPlanningAssumptions",
     "ComparisonPowerPlan",
+    "CoupledAttributionSource",
+    "CoupledResponseReferenceLayout",
     "CoupledResponseResolution",
     "EffectDirection",
+    "FieldCoupledTargetMeasurement",
     "FieldNuisanceProcessMeasurement",
     "FreezeItem",
     "FreezeStatus",
     "HeldOutMetricInterval",
+    "IndependentAttributionCue",
     "NuisanceReferenceLayout",
     "POLLIPI_ORDINAL_TARGET_SCALE",
     "POLLIPI_TARGET_EVIDENCE_MAPPING",
@@ -121,6 +132,7 @@ __all__ = [
     "evaluate_visit_predictions",
     "evaluate_visit_system_variants",
     "load_prefreeze_registry",
+    "measure_field_coupled_response",
     "measure_field_nuisance_process",
     "plan_binary_metric_precision",
     "plan_binary_system_comparison",
