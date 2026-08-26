@@ -1,0 +1,42 @@
+{
+  "schema": "insepi-v15-v2-split-manifest-v1-contract",
+  "generation": "V15-v2",
+  "status": "development-validator-not-yet-frozen",
+  "validator": "src/interaction_sensing/v15_split_manifest.py",
+  "independent_cluster_boundary": "recording block represented by an explicit cluster_id; frames/windows are not independent replicates",
+  "held_out_requirements": [
+    "held-out recording days are disjoint from development recording days",
+    "held-out focal scenes/flowers are disjoint from development focal scenes/flowers",
+    "one cluster belongs to exactly one split",
+    "both development and held-out contain at least one cluster"
+  ],
+  "truth_annotation_sampling": {
+    "layers": [
+      "biological_event",
+      "target_coupled_response",
+      "nuisance",
+      "observation_support"
+    ],
+    "minimum_independent_double_annotation_fraction_within_each_realised_cluster": 0.20,
+    "selection_time": "manifested before model scoring"
+  },
+  "provenance": [
+    "unique window_id",
+    "cluster_id",
+    "recording_day",
+    "focal_scene_id",
+    "split",
+    "primary_clip_sha256",
+    "reference_clip_sha256",
+    "preselected double-annotation layers"
+  ],
+  "forbidden": [
+    "random frame-level split within a recording cluster",
+    "same recording day in development and held-out",
+    "same focal scene/flower in development and held-out",
+    "select double-annotation windows after model outputs are visible",
+    "use held-out data for calibration or threshold choice"
+  ],
+  "freeze_requirement_remaining": "Populate, validate, commit and SHA-register the realised dataset manifest after the sampling plan and actual field inventory exist; no placeholder allocation counts as frozen.",
+  "claim_boundary": "Validator implementation only; no realised split, sample size, field performance or held-out result."
+}
