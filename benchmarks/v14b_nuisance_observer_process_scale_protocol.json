@@ -1,0 +1,50 @@
+{
+  "schema": "insepi-v14b-nuisance-observer-process-scale-protocol-v1",
+  "generation": "V14b-nuisance-1",
+  "status": "nuisance-side-prefreeze-before-validation",
+  "parent_target_freeze": {
+    "validation_workflow_run": 32928566405,
+    "target_validation_artifact_digest": "sha256:7caade2a19b21d700cb21cb19b5955e611fcff6c984ecd44d72e9b2e322d0b6e",
+    "target_side_type_saturated": true
+  },
+  "alternating_freeze": {
+    "modifiable_observer": "nuisance",
+    "frozen_observer": "target",
+    "frozen_target_source": "src/interaction_sensing/target_observer_v14b.py",
+    "rule": "target observer code and target-side validation semantics may not change in this generation"
+  },
+  "problem": {
+    "prior_nuisance_auc": 1.0,
+    "prior_recall_at_0_55": 0.015625,
+    "diagnosis": "score-scale mismatch, not missing ranking information"
+  },
+  "representation": {
+    "spatial_positive_property": "spatial_coherence",
+    "temporal_positive_property": "max(restoration_score, spectral_concentration)",
+    "nuisance_process_support": "geometric mean of spatial and temporal positive process evidence",
+    "observation_support": "min(nuisance_sampling_support, nuisance_window_support) retained separately",
+    "reason": "process evidence and observability are orthogonal axes and must not be multiplied into one score"
+  },
+  "validation_source": "temporally resolved focused_collision_sweep coordinates",
+  "validation_rules": {
+    "validation_seeds": [91001,91002,91003,91004,91005,91006,91007,91008,91009,91010,91011,91012,91013,91014,91015,91016,91017,91018,91019,91020,91021,91022,91023,91024,91025,91026,91027,91028,91029,91030,91031,91032],
+    "no_training": true,
+    "frozen_operational_positive_threshold": 0.55,
+    "coherent_nuisance_stratum": "Pi5 >= 1",
+    "low_spatial_coherence_stratum": "Pi5 < 1 is allowed to remain unresolved"
+  },
+  "prefrozen_expected_invariants": {
+    "nuisance_vs_target_only_auc_min": 0.90,
+    "nuisance_vs_target_coupled_auc_min": 0.90,
+    "coherent_nuisance_recall_at_0_55_min": 0.80,
+    "target_only_false_positive_at_0_55_max": 0.05,
+    "target_coupled_false_positive_at_0_55_max": 0.05
+  },
+  "contradiction_types": [
+    "nuisance_false_positive_on_target_only",
+    "nuisance_false_positive_on_target_coupled",
+    "coherent_nuisance_missed_after_rescaling"
+  ],
+  "stop_rule": "freeze nuisance observer only if all prefrozen invariants hold and no new nuisance-side contradiction type appears; low-Pi5 residual ambiguity is not forced into nuisance",
+  "claim_boundary": "closed-world nuisance-side representation development only; 0.55 is inherited from the frozen development protocol, not a field-calibrated probability threshold"
+}
