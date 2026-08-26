@@ -1,12 +1,13 @@
 {
-  "schema": "insepi-v14b-target-observer-direct-first-protocol-v1",
-  "generation": "V14b-target-1",
-  "status": "target-side-prefreeze-before-development-validation",
-  "parent_corrected_audit": {
-    "workflow_run_id": 32926639089,
-    "artifact_digest": "sha256:52d7c2602db0eecf826d760cf760ac868c86e02032fbbfe53b469d217fb48075",
-    "direct_visible_classification": "representation_defect_candidate",
-    "indirect_only_classification": "essential_ambiguity_candidate under current observation-safe sufficient statistics"
+  "schema": "insepi-v14b-target-observer-direct-first-protocol-v2",
+  "generation": "V14b-target-1-validation-v2",
+  "status": "definition-corrected-before-second-validation",
+  "parent_validation_v1": {
+    "workflow_run_id": 32928088060,
+    "execution_commit": "4c0a583ef10e887aeb81b0bb73565fb525735ba7",
+    "result": "failed one observer-local unresolved flag invariant while all direct-positive/false-positive invariants held",
+    "failure_cause": "validation_definition_defect",
+    "observer_modified_after_v1": false
   },
   "alternating_freeze": {
     "modifiable_observer": "target",
@@ -18,7 +19,8 @@
     "direct_positive_evidence": "direct_target_signal_fraction > 0 under the frozen exact-zero direct channel",
     "indirect_local_response": "local_excess_motion_fraction is retained as unattributed context only",
     "target_supported": "direct positive evidence only",
-    "indirect_only": "retain unresolved; never promote to target without an independent link/attribution channel",
+    "observer_local_indirect_flag": "true only when local response is observed without direct target evidence; false does not imply safe absence",
+    "inference_level_indirect_only": "for truth-known validation, a target-present Pi3=0 world with target_supported=false remains UNDETERMINED whether local response was detected or not",
     "no_lda_import": true,
     "no_latent_topology_features": true
   },
@@ -26,21 +28,22 @@
   "validation_rules": {
     "temporally_resolved_required": true,
     "target_observation_support_minimum": 0.20,
-    "validation_seeds": [71001,71002,71003,71004,71005,71006,71007,71008,71009,71010,71011,71012,71013,71014,71015,71016,71017,71018,71019,71020,71021,71022,71023,71024,71025,71026,71027,71028,71029,71030,71031,71032],
-    "no_training": true
+    "validation_seeds": [81001,81002,81003,81004,81005,81006,81007,81008,81009,81010,81011,81012,81013,81014,81015,81016,81017,81018,81019,81020,81021,81022,81023,81024,81025,81026,81027,81028,81029,81030,81031,81032],
+    "no_training": true,
+    "fresh_after_definition_fix": true
   },
   "prefrozen_expected_invariants": {
     "nuisance_only_target_support_rate": 0.0,
     "direct_visible_superposed_target_support_rate": 1.0,
     "direct_visible_coupled_target_support_rate": 1.0,
     "indirect_only_coupled_target_support_rate": 0.0,
-    "indirect_only_coupled_unresolved_rate": 1.0
+    "indirect_only_coupled_inference_undetermined_rate": 1.0
   },
   "contradiction_types": [
     "direct_false_positive_without_direct_signal",
     "direct_missed_despite_direct_signal",
     "indirect_only_forced_positive"
   ],
-  "stop_rule": "target-side generation may freeze only if no new target-side contradiction type appears across all required validation strata; residual indirect-only ambiguity is not an optimization target",
+  "stop_rule": "target-side generation may freeze only if all corrected invariants hold and no target-side contradiction type appears across all required validation strata; residual indirect-only ambiguity is not an optimization target",
   "claim_boundary": "closed-world target-side representation development only; exact-zero direct rule is not a field threshold"
 }
