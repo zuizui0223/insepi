@@ -1,0 +1,95 @@
+{
+  "schema": "insepi-v15-v2-claim-threshold-template-v1",
+  "generation": "V15-v2",
+  "status": "development-template-no-numerical-thresholds",
+  "decision_policy": {
+    "point_estimate_alone_can_authorize_claim": false,
+    "supported_rule": "the predeclared held-out confidence bound must cross the frozen threshold in the favorable direction",
+    "inconclusive_rule": "if the held-out interval overlaps the frozen threshold, the claim is inconclusive rather than repaired or re-thresholded",
+    "not_supported_rule": "if the entire held-out interval lies on the unfavorable side, the corresponding claim is not supported",
+    "threshold_selection_timing": "all numerical thresholds must be committed and hashed before held-out scoring",
+    "universal_superiority_claim": "forbidden; claims are endpoint- and estimand-specific"
+  },
+  "claim_slots": [
+    {
+      "claim_id": "observable_visit_recall_adequate",
+      "family": "target_presence",
+      "metric": "visit_recall_on_observable_truth",
+      "direction": "at_least",
+      "threshold": null,
+      "requires_A_minus": false,
+      "note": "Numerical lower-bound threshold must be justified against the frozen MESI/power plan before held-out scoring."
+    },
+    {
+      "claim_id": "candidate_false_positive_controlled",
+      "family": "target_presence",
+      "metric": "candidate_false_positive_rate",
+      "direction": "at_most",
+      "threshold": null,
+      "requires_A_minus": false,
+      "note": "Upper-bound threshold is not inherited from V14 synthetic results."
+    },
+    {
+      "claim_id": "unobservable_detection_adequate",
+      "family": "observation_support",
+      "metric": "unobservable_recall",
+      "direction": "at_least",
+      "threshold": null,
+      "requires_A_minus": false,
+      "note": "O validation remains independent of biological target truth."
+    },
+    {
+      "claim_id": "observable_false_censor_controlled",
+      "family": "observation_support",
+      "metric": "observable_false_censor_rate",
+      "direction": "at_most",
+      "threshold": null,
+      "requires_A_minus": false,
+      "note": "Threshold must be frozen before held-out O scoring."
+    },
+    {
+      "claim_id": "indirect_coupled_rescue_useful",
+      "family": "coupled_rescue",
+      "metric": "indirect_target_rescue_rate",
+      "direction": "at_least",
+      "threshold": null,
+      "requires_A_minus": false,
+      "note": "Must be paired with the spurious-coupled guardrail; a rescue claim cannot stand alone."
+    },
+    {
+      "claim_id": "spurious_coupled_rescue_controlled",
+      "family": "coupled_rescue",
+      "metric": "spurious_coupled_candidate_rate",
+      "direction": "at_most",
+      "threshold": null,
+      "requires_A_minus": false,
+      "note": "Guardrail against treating arbitrary local flower motion as target evidence."
+    },
+    {
+      "claim_id": "forced_binary_false_absence_cost_detected",
+      "family": "system_comparison",
+      "metric": "forced_false_absence_rate_difference_vs_safe_system",
+      "direction": "at_least",
+      "threshold": null,
+      "requires_A_minus": false,
+      "note": "Difference threshold must equal or exceed the predeclared MESI for the comparison."
+    },
+    {
+      "claim_id": "certified_absence_error_controlled",
+      "family": "target_absence",
+      "metric": "false_certified_absence_rate",
+      "direction": "at_most",
+      "threshold": null,
+      "requires_A_minus": true,
+      "note": "Not evaluable at all unless an independent A_minus channel has been validated and frozen."
+    }
+  ],
+  "freeze_requirements": [
+    "replace every threshold needed for a planned primary claim with a justified numeric value",
+    "tie comparative thresholds to the frozen MESI and power plan",
+    "freeze the confidence-interval/cluster uncertainty procedure used for each metric",
+    "hash this completed threshold registry before held-out scoring",
+    "do not add a new primary claim after held-out output inspection"
+  ],
+  "current_interpretation": "This file defines claim structure only. Null thresholds authorize no scientific claim and cannot satisfy the V15 held-out readiness gate."
+}
