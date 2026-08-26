@@ -1,16 +1,17 @@
-"""Independent primary-stream observability estimation for V15.
+"""Independent primary-stream observation-support estimation for V15.
 
 The estimator deliberately cannot consume biological target evidence, nuisance
-scores, biological truth, or nuisance labels.  It receives five positively
-defined measurements of the measurement channel itself and answers a narrower
-question:
+scores, biological truth, or nuisance labels. It receives five positively
+defined measurements of the measurement channel itself and answers a narrow
+counterfactual question:
 
     If a focal visit opportunity occurred, did the primary stream preserve enough
-    information for presence/absence interpretation?
+    of the relevant zone, scale and interval to attempt biological inference?
 
-This keeps observation support O distinct from both target process T and exogenous
-nuisance process N.  A nuisance process may *cause* support loss, but O is not
-computed as ``1 - nuisance``.
+This keeps observation support O distinct from target process T, exogenous
+nuisance process N, and the V15-v2 target-absence evidence interface A-. O is a
+necessary gate for safe absence certification but is never sufficient evidence of
+biological absence by itself.
 """
 from __future__ import annotations
 
@@ -74,9 +75,7 @@ class PrimaryStreamSupportMeasurements:
             spatial_resolution=self.spatial_resolution.score,
             photometric_sufficiency=self.photometric_sufficiency.score,
             temporal_continuity=self.temporal_continuity.score,
-            reasons=tuple(
-                f"{name}:{value:.6f}" for name, value in self.component_scores
-            ),
+            reasons=tuple(f"{name}:{value:.6f}" for name, value in self.component_scores),
         )
 
 
@@ -92,9 +91,9 @@ class PrimaryStreamSupportEstimate:
 class PrimaryStreamSupportEstimator:
     """Transparent estimator of O from primary-stream measurements only.
 
-    Thresholds are development defaults and are *not* field-calibrated detection
-    probabilities.  They must be calibrated on development support truth and
-    frozen before held-out V15 scoring.
+    Thresholds are development defaults, not field-calibrated detection or
+    absence probabilities. They must be calibrated on development support truth
+    and frozen before held-out V15 scoring.
     """
 
     observable_threshold: float = 0.70
@@ -151,10 +150,9 @@ def evaluate_support_estimates(
 ) -> SupportEstimatorValidationSummary:
     """Evaluate O without biological-event or nuisance truth.
 
-    The lists are deliberately only support truth and support estimates.  This
-    prevents a support-validation result from depending on visit labels or
-    nuisance labels.  Unresolved support truth remains outside accuracy
-    denominators.
+    Unresolved support truth remains outside support-accuracy denominators. These
+    metrics validate the measurement-support estimator only; they cannot validate
+    target absence.
     """
 
     if len(truth) != len(estimates):
