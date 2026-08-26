@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import argparse, itertools, json
-from collections import Counter, defaultdict
+from collections import Counter
 from pathlib import Path
 from typing import Any
 
@@ -30,17 +30,15 @@ def run(protocol_path: Path, output_path: Path) -> dict[str, Any]:
     min_obs = float(p["minimum_nuisance_observation_support"])
     seeds = [int(x) for x in p["measurement_seeds"]]
     regimes = [LatentRegime(x) for x in p["latent_regimes"]]
+    points = _points(world)
 
     rows: list[dict[str, Any]] = []
     global_counts = Counter()
-    global_n = 0
-    global_fp = global_fn = 0
-    global_target_false = global_target_true = 0
+    global_n = global_fp = global_fn = global_target_false = global_target_true = 0
 
-    for point in _points(world):
+    for point in points:
         for regime in regimes:
-            counts = Counter()
-            fp = fn = target_false = target_true = 0
+            counts = Counter(); fp = fn = target_false = target_true = 0
             for seed in seeds:
                 sig = signature_for(point, regime, seed=seed)
                 tobs = observe_target_v14b(sig)
@@ -54,11 +52,9 @@ def run(protocol_path: Path, output_path: Path) -> dict[str, Any]:
                 t_truth, _, _ = truth(regime)
                 forced_positive = d.state is TernaryState.TARGET
                 if t_truth:
-                    target_true += 1
-                    fn += int(not forced_positive)
+                    target_true += 1; fn += int(not forced_positive)
                 else:
-                    target_false += 1
-                    fp += int(forced_positive)
+                    target_false += 1; fp += int(forced_positive)
 
             n = len(seeds)
             row = {
@@ -76,14 +72,12 @@ def run(protocol_path: Path, output_path: Path) -> dict[str, Any]:
             }
             row["visit_presence_partial_identification_width"] = row["baseline_rate"] + row["undetermined_total_rate"]
             rows.append(row)
-            global_counts.update(counts)
-            global_n += n
-            global_fp += fp; global_fn += fn
-            global_target_false += target_false; global_target_true += target_true
+            global_counts.update(counts); global_n += n
+            global_fp += fp; global_fn += fn; global_target_false += target_false; global_target_true += target_true
 
     summary = {
         "schema": "insepi-v14b-frozen-ternary-phase-surface-result-v1",
-        "coordinate_count": len(_points(world)),
+        "coordinate_count": len(points),
         "row_count": len(rows),
         "world_count": global_n,
         "rates": {
@@ -97,7 +91,7 @@ def run(protocol_path: Path, output_path: Path) -> dict[str, Any]:
         "forced_binary_false_positive_rate": global_fp / global_target_false,
         "forced_binary_false_negative_rate": global_fn / global_target_true,
         "mean_partial_identification_width": sum(r["visit_presence_partial_identification_width"] for r in rows) / len(rows),
-        "observer_retuned": false if False else False,
+        "observer_retuned": False,
         "claim_boundary": p["claim_boundary"],
         "rows": rows,
     }
@@ -107,11 +101,8 @@ def run(protocol_path: Path, output_path: Path) -> dict[str, Any]:
 
 
 def main() -> None:
-    ap = argparse.ArgumentParser()
-    ap.add_argument("--protocol", default=str(DEFAULT_PROTOCOL))
-    ap.add_argument("--output", default="v14b_ternary_output/phase_surface.json")
-    args = ap.parse_args()
-    result = run(Path(args.protocol), Path(args.output))
+    ap = argparse.ArgumentParser(); ap.add_argument("--protocol", default=str(DEFAULT_PROTOCOL)); ap.add_argument("--output", default="v14b_ternary_output/phase_surface.json")
+    args = ap.parse_args(); result = run(Path(args.protocol), Path(args.output))
     print(json.dumps({k:v for k,v in result.items() if k != "rows"}, indent=2, sort_keys=True))
 
 if __name__ == "__main__":
