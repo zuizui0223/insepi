@@ -84,10 +84,10 @@
     },
     {
       "name": "claim_thresholds",
-      "status": "unset",
-      "evidence_path": null,
+      "status": "development_defined",
+      "evidence_path": "benchmarks/v15_claim_thresholds_v1_template.json",
       "sha256": null,
-      "note": "No numerical held-out claim thresholds have been frozen."
+      "note": "Claim families, directions and confidence-bound decision semantics are defined. Numerical thresholds remain intentionally null and must be justified, completed and hashed before held-out scoring."
     }
   ]
 }
