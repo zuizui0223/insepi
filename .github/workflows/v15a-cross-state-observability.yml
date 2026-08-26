@@ -31,3 +31,25 @@ jobs:
         run: |
           pytest -q tests/test_v15a_cross_state_observability_prefreeze.py
           python scripts/run_v15a_cross_state_observability.py --validate-only
+      - name: Verify the retained first result
+        run: |
+          pytest -q tests/test_v15a_cross_state_observability_result.py
+          python scripts/run_v15a_cross_state_observability.py \
+            --prefreeze-commit 5e8163891cd5f358f522cc0f9e99c6ff3c1318b4 \
+            --output /tmp/v15a_cross_state_observability_result.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          committed = json.loads(
+              Path("benchmarks/v15a_cross_state_observability_result.json").read_text()
+          )
+          rebuilt = json.loads(
+              Path("/tmp/v15a_cross_state_observability_result.json").read_text()
+          )
+          assert committed == rebuilt
+          assert committed["status"] == "locked-first-deterministic-expansion"
+          assert committed["provenance"]["observer_retuned"] is False
+          assert committed["provenance"]["parent_worlds_regenerated"] is False
+          print("V15A_CROSS_STATE_RESULT PASS")
+          PY

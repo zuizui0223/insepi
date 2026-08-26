@@ -1,0 +1,797 @@
+{
+  "claim_ceiling": "Deterministic closed-world expansion of already locked V14b counts under prefrozen synthetic V15 support profiles; software-semantic evidence only, with no new pixels, field calibration, or observer performance claim.",
+  "estimand": "final epistemic state conditional on frozen physical regime and independently assigned primary-stream observation support",
+  "locked_interpretation": {
+    "forced_binary_result": "coercing U and censored cases to absence makes false-negative risk a direct function of the designed observation condition",
+    "not_supported": "field prevalence, calibrated field observability, animal intent, or superiority over every possible binary classifier",
+    "supported": "across every frozen physical regime, including quiet baseline, observation compromise creates reason-tagged U and unavailable observation creates censorship rather than target absence",
+    "third_world": "censored observation is an epistemic state of the same universe, not a third physical cause and not evidence of biological absence"
+  },
+  "measurement": {
+    "expanded_global": {
+      "availability_profile_counts": {
+        "compromised": 5,
+        "observable": 1,
+        "unobservable": 5
+      },
+      "base_world_count": 5880000,
+      "expanded_world_count": 64680000,
+      "final_state_counts": {
+        "baseline": 1353769,
+        "censored": 29400000,
+        "nuisance": 515662,
+        "target": 2520952,
+        "undetermined": 30889617
+      },
+      "final_state_rates": {
+        "baseline": 0.02093025664811379,
+        "censored": 0.45454545454545453,
+        "nuisance": 0.007972510822510822,
+        "target": 0.03897575757575757,
+        "undetermined": 0.47757602040816327
+      },
+      "reason_counts": {
+        "information_absent": 157307,
+        "observation_compromised": 29400000,
+        "observation_unavailable": 29400000,
+        "overlap_or_attribution": 1332310
+      },
+      "reason_rates": {
+        "information_absent": 0.002432081014223871,
+        "observation_compromised": 0.45454545454545453,
+        "observation_unavailable": 0.45454545454545453,
+        "overlap_or_attribution": 0.02059848484848485
+      },
+      "support_profile_count": 11
+    },
+    "forced_binary_comparator": {
+      "by_availability": {
+        "compromised": {
+          "false_negative_count": 19600000,
+          "false_negative_rate": 1.0,
+          "profile_count": 5,
+          "target_present_worlds": 19600000
+        },
+        "observable": {
+          "false_negative_count": 1399048,
+          "false_negative_rate": 0.3569,
+          "profile_count": 1,
+          "target_present_worlds": 3920000
+        },
+        "unobservable": {
+          "false_negative_count": 19600000,
+          "false_negative_rate": 1.0,
+          "profile_count": 5,
+          "target_present_worlds": 19600000
+        }
+      },
+      "false_positive_rate": 0.0,
+      "lattice_weighted_false_negative_count": 40599048,
+      "lattice_weighted_false_negative_rate": 0.9415363636363636,
+      "lattice_weighted_target_present_worlds": 43120000,
+      "target_present_regimes": [
+        "target_only",
+        "target_coupled",
+        "target_nuisance_superposed",
+        "target_nuisance_coupled"
+      ],
+      "unsafe_mapping": "target=>present; baseline/nuisance/undetermined/censored=>absent",
+      "warning": "the lattice weighting is a designed factorial weighting, not field prevalence; the comparator is deliberately unsafe"
+    },
+    "parent_summary_consistency": {
+      "equal_mean_of_locked_regime_rates": {
+        "baseline": 0.23023273809523812,
+        "nuisance": 0.08769761904761904,
+        "target": 0.42873333333333336,
+        "undetermined": 0.2533362244897959
+      },
+      "global_minus_equal_regime_mean": {
+        "baseline": 8.503401358050944e-08,
+        "nuisance": 1.3877787807814457e-17,
+        "target": 0.0,
+        "undetermined": 0.0
+      },
+      "global_rates": {
+        "baseline": 0.2302328231292517,
+        "nuisance": 0.08769761904761905,
+        "target": 0.42873333333333336,
+        "undetermined": 0.2533362244897959
+      },
+      "interpretation": "locked global counts are authoritative for global expansion; locked regime means are retained as rates and any discrepancy is reported without repair",
+      "regime_rates_coerced_to_integer_counts": false,
+      "regime_rates_normalised_or_repaired": false,
+      "within_regime_rate_sum_audit": {
+        "baseline": {
+          "normalised_or_repaired": false,
+          "one_minus_state_rate_sum": 0.0,
+          "state_rate_sum": 1.0,
+          "undetermined_reason_rate_sum": 0.0
+        },
+        "nuisance_only": {
+          "normalised_or_repaired": false,
+          "one_minus_state_rate_sum": 0.0,
+          "state_rate_sum": 1.0,
+          "undetermined_reason_rate_sum": 0.5294387755102041
+        },
+        "target_coupled": {
+          "normalised_or_repaired": false,
+          "one_minus_state_rate_sum": -2.220446049250313e-16,
+          "state_rate_sum": 1.0000000000000002,
+          "undetermined_reason_rate_sum": 0.1888
+        },
+        "target_nuisance_coupled": {
+          "normalised_or_repaired": false,
+          "one_minus_state_rate_sum": 5.102040816495901e-07,
+          "state_rate_sum": 0.9999994897959184,
+          "undetermined_reason_rate_sum": 0.4004622448979592
+        },
+        "target_nuisance_superposed": {
+          "normalised_or_repaired": false,
+          "one_minus_state_rate_sum": 0.0,
+          "state_rate_sum": 1.0,
+          "undetermined_reason_rate_sum": 0.4013163265306123
+        },
+        "target_only": {
+          "normalised_or_repaired": false,
+          "one_minus_state_rate_sum": 0.0,
+          "state_rate_sum": 1.0,
+          "undetermined_reason_rate_sum": 0.0
+        }
+      }
+    },
+    "partial_identification": {
+      "compromised_width": 1.0,
+      "lattice_weighted_width": 0.9530517316017316,
+      "observable_width": 0.4835690476190476,
+      "unobservable_width": 1.0,
+      "width_definition": "baseline + undetermined + censored probability under each prefrozen support profile"
+    },
+    "physical_regime_by_observation_availability": {
+      "baseline": {
+        "by_availability": {
+          "compromised": {
+            "final_state_rates": {
+              "baseline": 0.0,
+              "censored": 0.0,
+              "nuisance": 0.0,
+              "target": 0.0,
+              "undetermined": 1.0
+            },
+            "profile_count": 5,
+            "reason_rates": {
+              "information_absent": 0.0,
+              "observation_compromised": 1.0,
+              "observation_unavailable": 0.0,
+              "overlap_or_attribution": 0.0
+            }
+          },
+          "observable": {
+            "final_state_rates": {
+              "baseline": 1.0,
+              "censored": 0.0,
+              "nuisance": 0.0,
+              "target": 0.0,
+              "undetermined": 0.0
+            },
+            "profile_count": 1,
+            "reason_rates": {
+              "information_absent": 0.0,
+              "observation_compromised": 0.0,
+              "observation_unavailable": 0.0,
+              "overlap_or_attribution": 0.0
+            }
+          },
+          "unobservable": {
+            "final_state_rates": {
+              "baseline": 0.0,
+              "censored": 1.0,
+              "nuisance": 0.0,
+              "target": 0.0,
+              "undetermined": 0.0
+            },
+            "profile_count": 5,
+            "reason_rates": {
+              "information_absent": 0.0,
+              "observation_compromised": 0.0,
+              "observation_unavailable": 1.0,
+              "overlap_or_attribution": 0.0
+            }
+          }
+        },
+        "locked_regime_mean_rates": {
+          "baseline": 1.0,
+          "nuisance": 0.0,
+          "target": 0.0,
+          "undetermined": 0.0
+        },
+        "locked_state_rate_sum": 1.0,
+        "one_minus_locked_state_rate_sum": 0.0
+      },
+      "nuisance_only": {
+        "by_availability": {
+          "compromised": {
+            "final_state_rates": {
+              "baseline": 0.0,
+              "censored": 0.0,
+              "nuisance": 0.0,
+              "target": 0.0,
+              "undetermined": 1.0
+            },
+            "profile_count": 5,
+            "reason_rates": {
+              "information_absent": 0.0,
+              "observation_compromised": 1.0,
+              "observation_unavailable": 0.0,
+              "overlap_or_attribution": 0.0
+            }
+          },
+          "observable": {
+            "final_state_rates": {
+              "baseline": 0.10127551020408163,
+              "censored": 0.0,
+              "nuisance": 0.3692857142857143,
+              "target": 0.0,
+              "undetermined": 0.5294387755102041
+            },
+            "profile_count": 1,
+            "reason_rates": {
+              "information_absent": 0.11528061224489795,
+              "observation_compromised": 0.0,
+              "observation_unavailable": 0.0,
+              "overlap_or_attribution": 0.41415816326530613
+            }
+          },
+          "unobservable": {
+            "final_state_rates": {
+              "baseline": 0.0,
+              "censored": 1.0,
+              "nuisance": 0.0,
+              "target": 0.0,
+              "undetermined": 0.0
+            },
+            "profile_count": 5,
+            "reason_rates": {
+              "information_absent": 0.0,
+              "observation_compromised": 0.0,
+              "observation_unavailable": 1.0,
+              "overlap_or_attribution": 0.0
+            }
+          }
+        },
+        "locked_regime_mean_rates": {
+          "baseline": 0.10127551020408163,
+          "nuisance": 0.3692857142857143,
+          "target": 0.0,
+          "undetermined": 0.5294387755102041
+        },
+        "locked_state_rate_sum": 1.0,
+        "one_minus_locked_state_rate_sum": 0.0
+      },
+      "target_coupled": {
+        "by_availability": {
+          "compromised": {
+            "final_state_rates": {
+              "baseline": 0.0,
+              "censored": 0.0,
+              "nuisance": 0.0,
+              "target": 0.0,
+              "undetermined": 1.0
+            },
+            "profile_count": 5,
+            "reason_rates": {
+              "information_absent": 0.0,
+              "observation_compromised": 1.0,
+              "observation_unavailable": 0.0,
+              "overlap_or_attribution": 0.0
+            }
+          },
+          "observable": {
+            "final_state_rates": {
+              "baseline": 0.04,
+              "censored": 0.0,
+              "nuisance": 0.0096,
+              "target": 0.7616,
+              "undetermined": 0.1888
+            },
+            "profile_count": 1,
+            "reason_rates": {
+              "information_absent": 0.0,
+              "observation_compromised": 0.0,
+              "observation_unavailable": 0.0,
+              "overlap_or_attribution": 0.1888
+            }
+          },
+          "unobservable": {
+            "final_state_rates": {
+              "baseline": 0.0,
+              "censored": 1.0,
+              "nuisance": 0.0,
+              "target": 0.0,
+              "undetermined": 0.0
+            },
+            "profile_count": 5,
+            "reason_rates": {
+              "information_absent": 0.0,
+              "observation_compromised": 0.0,
+              "observation_unavailable": 1.0,
+              "overlap_or_attribution": 0.0
+            }
+          }
+        },
+        "locked_regime_mean_rates": {
+          "baseline": 0.04,
+          "nuisance": 0.0096,
+          "target": 0.7616,
+          "undetermined": 0.1888
+        },
+        "locked_state_rate_sum": 1.0000000000000002,
+        "one_minus_locked_state_rate_sum": -2.220446049250313e-16
+      },
+      "target_nuisance_coupled": {
+        "by_availability": {
+          "compromised": {
+            "final_state_rates": {
+              "baseline": 0.0,
+              "censored": 0.0,
+              "nuisance": 0.0,
+              "target": 0.0,
+              "undetermined": 1.0
+            },
+            "profile_count": 5,
+            "reason_rates": {
+              "information_absent": 0.0,
+              "observation_compromised": 1.0,
+              "observation_unavailable": 0.0,
+              "overlap_or_attribution": 0.0
+            }
+          },
+          "observable": {
+            "final_state_rates": {
+              "baseline": 0.019865816326530613,
+              "censored": 0.0,
+              "nuisance": 0.07344285714285714,
+              "target": 0.5062285714285714,
+              "undetermined": 0.4004622448979592
+            },
+            "profile_count": 1,
+            "reason_rates": {
+              "information_absent": 0.02218061224489796,
+              "observation_compromised": 0.0,
+              "observation_unavailable": 0.0,
+              "overlap_or_attribution": 0.3782816326530612
+            }
+          },
+          "unobservable": {
+            "final_state_rates": {
+              "baseline": 0.0,
+              "censored": 1.0,
+              "nuisance": 0.0,
+              "target": 0.0,
+              "undetermined": 0.0
+            },
+            "profile_count": 5,
+            "reason_rates": {
+              "information_absent": 0.0,
+              "observation_compromised": 0.0,
+              "observation_unavailable": 1.0,
+              "overlap_or_attribution": 0.0
+            }
+          }
+        },
+        "locked_regime_mean_rates": {
+          "baseline": 0.019865816326530613,
+          "nuisance": 0.07344285714285714,
+          "target": 0.5062285714285714,
+          "undetermined": 0.4004622448979592
+        },
+        "locked_state_rate_sum": 0.9999994897959184,
+        "one_minus_locked_state_rate_sum": 5.102040816495901e-07
+      },
+      "target_nuisance_superposed": {
+        "by_availability": {
+          "compromised": {
+            "final_state_rates": {
+              "baseline": 0.0,
+              "censored": 0.0,
+              "nuisance": 0.0,
+              "target": 0.0,
+              "undetermined": 1.0
+            },
+            "profile_count": 5,
+            "reason_rates": {
+              "information_absent": 0.0,
+              "observation_compromised": 1.0,
+              "observation_unavailable": 0.0,
+              "overlap_or_attribution": 0.0
+            }
+          },
+          "observable": {
+            "final_state_rates": {
+              "baseline": 0.020255102040816327,
+              "censored": 0.0,
+              "nuisance": 0.07385714285714286,
+              "target": 0.5045714285714286,
+              "undetermined": 0.4013163265306122
+            },
+            "profile_count": 1,
+            "reason_rates": {
+              "information_absent": 0.02305612244897959,
+              "observation_compromised": 0.0,
+              "observation_unavailable": 0.0,
+              "overlap_or_attribution": 0.3782602040816327
+            }
+          },
+          "unobservable": {
+            "final_state_rates": {
+              "baseline": 0.0,
+              "censored": 1.0,
+              "nuisance": 0.0,
+              "target": 0.0,
+              "undetermined": 0.0
+            },
+            "profile_count": 5,
+            "reason_rates": {
+              "information_absent": 0.0,
+              "observation_compromised": 0.0,
+              "observation_unavailable": 1.0,
+              "overlap_or_attribution": 0.0
+            }
+          }
+        },
+        "locked_regime_mean_rates": {
+          "baseline": 0.020255102040816327,
+          "nuisance": 0.07385714285714286,
+          "target": 0.5045714285714286,
+          "undetermined": 0.4013163265306122
+        },
+        "locked_state_rate_sum": 1.0,
+        "one_minus_locked_state_rate_sum": 0.0
+      },
+      "target_only": {
+        "by_availability": {
+          "compromised": {
+            "final_state_rates": {
+              "baseline": 0.0,
+              "censored": 0.0,
+              "nuisance": 0.0,
+              "target": 0.0,
+              "undetermined": 1.0
+            },
+            "profile_count": 5,
+            "reason_rates": {
+              "information_absent": 0.0,
+              "observation_compromised": 1.0,
+              "observation_unavailable": 0.0,
+              "overlap_or_attribution": 0.0
+            }
+          },
+          "observable": {
+            "final_state_rates": {
+              "baseline": 0.2,
+              "censored": 0.0,
+              "nuisance": 0.0,
+              "target": 0.8,
+              "undetermined": 0.0
+            },
+            "profile_count": 1,
+            "reason_rates": {
+              "information_absent": 0.0,
+              "observation_compromised": 0.0,
+              "observation_unavailable": 0.0,
+              "overlap_or_attribution": 0.0
+            }
+          },
+          "unobservable": {
+            "final_state_rates": {
+              "baseline": 0.0,
+              "censored": 1.0,
+              "nuisance": 0.0,
+              "target": 0.0,
+              "undetermined": 0.0
+            },
+            "profile_count": 5,
+            "reason_rates": {
+              "information_absent": 0.0,
+              "observation_compromised": 0.0,
+              "observation_unavailable": 1.0,
+              "overlap_or_attribution": 0.0
+            }
+          }
+        },
+        "locked_regime_mean_rates": {
+          "baseline": 0.2,
+          "nuisance": 0.0,
+          "target": 0.8,
+          "undetermined": 0.0
+        },
+        "locked_state_rate_sum": 1.0,
+        "one_minus_locked_state_rate_sum": 0.0
+      }
+    },
+    "quiet_baseline_cross": {
+      "compromised": {
+        "final_state_rates": {
+          "baseline": 0.0,
+          "censored": 0.0,
+          "nuisance": 0.0,
+          "target": 0.0,
+          "undetermined": 1.0
+        },
+        "profile_count": 5,
+        "reason_rates": {
+          "information_absent": 0.0,
+          "observation_compromised": 1.0,
+          "observation_unavailable": 0.0,
+          "overlap_or_attribution": 0.0
+        }
+      },
+      "observable": {
+        "final_state_rates": {
+          "baseline": 1.0,
+          "censored": 0.0,
+          "nuisance": 0.0,
+          "target": 0.0,
+          "undetermined": 0.0
+        },
+        "profile_count": 1,
+        "reason_rates": {
+          "information_absent": 0.0,
+          "observation_compromised": 0.0,
+          "observation_unavailable": 0.0,
+          "overlap_or_attribution": 0.0
+        }
+      },
+      "physical_regime": "baseline",
+      "unobservable": {
+        "final_state_rates": {
+          "baseline": 0.0,
+          "censored": 1.0,
+          "nuisance": 0.0,
+          "target": 0.0,
+          "undetermined": 0.0
+        },
+        "profile_count": 5,
+        "reason_rates": {
+          "information_absent": 0.0,
+          "observation_compromised": 0.0,
+          "observation_unavailable": 1.0,
+          "overlap_or_attribution": 0.0
+        }
+      }
+    },
+    "support_profile_results": [
+      {
+        "availability": "observable",
+        "base_worlds": 5880000,
+        "final_state_counts": {
+          "baseline": 1353769,
+          "censored": 0,
+          "nuisance": 515662,
+          "target": 2520952,
+          "undetermined": 1489617
+        },
+        "limiting_component": "target_zone_coverage",
+        "name": "observable_all_adequate",
+        "reason_counts": {
+          "information_absent": 157307,
+          "observation_compromised": 0,
+          "observation_unavailable": 0,
+          "overlap_or_attribution": 1332310
+        },
+        "support_ceiling": 0.9
+      },
+      {
+        "availability": "compromised",
+        "base_worlds": 5880000,
+        "final_state_counts": {
+          "baseline": 0,
+          "censored": 0,
+          "nuisance": 0,
+          "target": 0,
+          "undetermined": 5880000
+        },
+        "limiting_component": "target_zone_coverage",
+        "name": "compromised_target_zone_coverage",
+        "reason_counts": {
+          "information_absent": 0,
+          "observation_compromised": 5880000,
+          "observation_unavailable": 0,
+          "overlap_or_attribution": 0
+        },
+        "support_ceiling": 0.5
+      },
+      {
+        "availability": "compromised",
+        "base_worlds": 5880000,
+        "final_state_counts": {
+          "baseline": 0,
+          "censored": 0,
+          "nuisance": 0,
+          "target": 0,
+          "undetermined": 5880000
+        },
+        "limiting_component": "target_zone_visibility",
+        "name": "compromised_target_zone_visibility",
+        "reason_counts": {
+          "information_absent": 0,
+          "observation_compromised": 5880000,
+          "observation_unavailable": 0,
+          "overlap_or_attribution": 0
+        },
+        "support_ceiling": 0.5
+      },
+      {
+        "availability": "compromised",
+        "base_worlds": 5880000,
+        "final_state_counts": {
+          "baseline": 0,
+          "censored": 0,
+          "nuisance": 0,
+          "target": 0,
+          "undetermined": 5880000
+        },
+        "limiting_component": "spatial_resolution",
+        "name": "compromised_spatial_resolution",
+        "reason_counts": {
+          "information_absent": 0,
+          "observation_compromised": 5880000,
+          "observation_unavailable": 0,
+          "overlap_or_attribution": 0
+        },
+        "support_ceiling": 0.5
+      },
+      {
+        "availability": "compromised",
+        "base_worlds": 5880000,
+        "final_state_counts": {
+          "baseline": 0,
+          "censored": 0,
+          "nuisance": 0,
+          "target": 0,
+          "undetermined": 5880000
+        },
+        "limiting_component": "photometric_sufficiency",
+        "name": "compromised_photometric_sufficiency",
+        "reason_counts": {
+          "information_absent": 0,
+          "observation_compromised": 5880000,
+          "observation_unavailable": 0,
+          "overlap_or_attribution": 0
+        },
+        "support_ceiling": 0.5
+      },
+      {
+        "availability": "compromised",
+        "base_worlds": 5880000,
+        "final_state_counts": {
+          "baseline": 0,
+          "censored": 0,
+          "nuisance": 0,
+          "target": 0,
+          "undetermined": 5880000
+        },
+        "limiting_component": "temporal_continuity",
+        "name": "compromised_temporal_continuity",
+        "reason_counts": {
+          "information_absent": 0,
+          "observation_compromised": 5880000,
+          "observation_unavailable": 0,
+          "overlap_or_attribution": 0
+        },
+        "support_ceiling": 0.5
+      },
+      {
+        "availability": "unobservable",
+        "base_worlds": 5880000,
+        "final_state_counts": {
+          "baseline": 0,
+          "censored": 5880000,
+          "nuisance": 0,
+          "target": 0,
+          "undetermined": 0
+        },
+        "limiting_component": "target_zone_coverage",
+        "name": "unobservable_target_zone_coverage",
+        "reason_counts": {
+          "information_absent": 0,
+          "observation_compromised": 0,
+          "observation_unavailable": 5880000,
+          "overlap_or_attribution": 0
+        },
+        "support_ceiling": 0.1
+      },
+      {
+        "availability": "unobservable",
+        "base_worlds": 5880000,
+        "final_state_counts": {
+          "baseline": 0,
+          "censored": 5880000,
+          "nuisance": 0,
+          "target": 0,
+          "undetermined": 0
+        },
+        "limiting_component": "target_zone_visibility",
+        "name": "unobservable_target_zone_visibility",
+        "reason_counts": {
+          "information_absent": 0,
+          "observation_compromised": 0,
+          "observation_unavailable": 5880000,
+          "overlap_or_attribution": 0
+        },
+        "support_ceiling": 0.1
+      },
+      {
+        "availability": "unobservable",
+        "base_worlds": 5880000,
+        "final_state_counts": {
+          "baseline": 0,
+          "censored": 5880000,
+          "nuisance": 0,
+          "target": 0,
+          "undetermined": 0
+        },
+        "limiting_component": "spatial_resolution",
+        "name": "unobservable_spatial_resolution",
+        "reason_counts": {
+          "information_absent": 0,
+          "observation_compromised": 0,
+          "observation_unavailable": 5880000,
+          "overlap_or_attribution": 0
+        },
+        "support_ceiling": 0.1
+      },
+      {
+        "availability": "unobservable",
+        "base_worlds": 5880000,
+        "final_state_counts": {
+          "baseline": 0,
+          "censored": 5880000,
+          "nuisance": 0,
+          "target": 0,
+          "undetermined": 0
+        },
+        "limiting_component": "photometric_sufficiency",
+        "name": "unobservable_photometric_sufficiency",
+        "reason_counts": {
+          "information_absent": 0,
+          "observation_compromised": 0,
+          "observation_unavailable": 5880000,
+          "overlap_or_attribution": 0
+        },
+        "support_ceiling": 0.1
+      },
+      {
+        "availability": "unobservable",
+        "base_worlds": 5880000,
+        "final_state_counts": {
+          "baseline": 0,
+          "censored": 5880000,
+          "nuisance": 0,
+          "target": 0,
+          "undetermined": 0
+        },
+        "limiting_component": "temporal_continuity",
+        "name": "unobservable_temporal_continuity",
+        "reason_counts": {
+          "information_absent": 0,
+          "observation_compromised": 0,
+          "observation_unavailable": 5880000,
+          "overlap_or_attribution": 0
+        },
+        "support_ceiling": 0.1
+      }
+    ]
+  },
+  "provenance": {
+    "measurement_payload_canonical_sha256": "4346304cbef50a0e68ed57c2ae45356ed118b7a8713d08bf557ce7e1f4f185a1",
+    "observer_retuned": false,
+    "parent_worlds_regenerated": false,
+    "prefreeze_commit": "5e8163891cd5f358f522cc0f9e99c6ff3c1318b4",
+    "protocol_canonical_sha256": "7a24df2016b54aaaf002414e86d7c51104104258f5541b73e2efca130fd8df1d",
+    "v14b_locked_summary_canonical_sha256": "14af819a27e78c4175e076d2ad27499c4cc35d7763babb615c26eef1327c1b45",
+    "v14b_phase_surface_sha256": "1d2c7c1f8f7370aad3cdde4d9d9d47bf318b2a057b6f788d3a48df9ea8d16c34",
+    "v15_observability_contract_canonical_sha256": "1c20e595af1ffc22ac2558d080e38390572cc32ca9ed91798b13624bd7d87248"
+  },
+  "schema": "insepi-v15a-cross-state-observability-result-v1",
+  "status": "locked-first-deterministic-expansion"
+}

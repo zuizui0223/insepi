@@ -52,6 +52,10 @@ def run(
     prefreeze_commit: str,
     output_path: Path,
 ) -> dict[str, object]:
+    if output_path.exists():
+        raise FileExistsError(
+            f"refusing to overwrite retained first result: {output_path}"
+        )
     inputs = sources(
         protocol_path=protocol_path,
         locked_summary_path=locked_summary_path,
@@ -62,10 +66,6 @@ def run(
         **inputs,
         prefreeze_commit=prefreeze_commit,
     )
-    if output_path.exists():
-        raise FileExistsError(
-            f"refusing to overwrite retained first result: {output_path}"
-        )
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(
         json.dumps(result, indent=2, sort_keys=True) + "\n",
