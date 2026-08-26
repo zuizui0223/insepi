@@ -54,6 +54,13 @@ from .v15_prefreeze import (
     evaluate_prefreeze_registry,
     load_prefreeze_registry,
 )
+from .v15_split_manifest import (
+    TRUTH_LAYERS,
+    V15ManifestWindow,
+    V15Split,
+    V15SplitManifestSummary,
+    validate_v15_split_manifest,
+)
 from .visit_systems import (
     VisitSystemInputs,
     VisitSystemThresholds,
@@ -103,8 +110,12 @@ __all__ = [
     "SupportComponentMeasurement",
     "SupportEstimatorValidationSummary",
     "SupportMeasurementProvenance",
+    "TRUTH_LAYERS",
     "TargetAbsenceEvidence",
     "V15DirectTargetFieldEvidence",
+    "V15ManifestWindow",
+    "V15Split",
+    "V15SplitManifestSummary",
     "VisitPredictionRecord",
     "VisitSystemInputs",
     "VisitSystemThresholds",
@@ -127,4 +138,5 @@ __all__ = [
     "predict_all_visit_variants",
     "predict_visit_variant",
     "prediction_from_triad",
+    "validate_v15_split_manifest",
 ]
