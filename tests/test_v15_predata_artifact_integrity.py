@@ -8,6 +8,7 @@ ABSENCE = Path("benchmarks/v15_absence_strategy_v1.json")
 CLAIMS = Path("benchmarks/v15_claim_thresholds_v1_template.json")
 ABSENCE_METRICS = Path("benchmarks/v15_absence_metric_freeze_v1.json")
 EXPOSURE_ESTIMAND = Path("benchmarks/v15_cluster_exposure_estimand_freeze_v1.json")
+TRUTH_ANNOTATION = Path("benchmarks/v15_truth_annotation_freeze_v1.json")
 
 
 def _registry_item(registry: dict, name: str) -> dict:
@@ -55,3 +56,30 @@ def test_frozen_cluster_exposure_estimand_matches_registry_sha256() -> None:
     assert item["sha256"] == digest
     assert payload["primary_estimand"] == "detected visit-event rate conditional on interpretable primary-stream exposure"
     assert payload["denominator"]["censored_time"] == "excluded from the rate denominator and retained separately"
+
+
+def test_four_truth_layers_share_one_frozen_annotation_artifact() -> None:
+    registry = json.loads(REGISTRY.read_text(encoding="utf-8"))
+    payload = json.loads(TRUTH_ANNOTATION.read_text(encoding="utf-8"))
+    digest = hashlib.sha256(TRUTH_ANNOTATION.read_bytes()).hexdigest()
+    frozen_names = (
+        "biological_truth_annotation",
+        "coupling_truth_annotation",
+        "nuisance_truth_annotation",
+        "support_truth_annotation",
+    )
+    for name in frozen_names:
+        item = _registry_item(registry, name)
+        assert item["status"] == "frozen"
+        assert item["evidence_path"] == str(TRUTH_ANNOTATION)
+        assert item["sha256"] == digest
+
+    assert payload["double_annotation"]["minimum_fraction"] == 0.2
+    assert payload["ledger_join"]["automatic_cross_layer_conflict_resolution"] is False
+    assert payload["support_truth_annotation"]["overall_rule"] == [
+        "any failed necessary component => resolved UNOBSERVABLE",
+        "else any unresolved component => overall support truth unresolved",
+        "else any compromised component => resolved COMPROMISED",
+        "else five adequate components => resolved OBSERVABLE",
+    ]
+    assert "final development/held-out block assignment" in payload["split_blinding_boundary"]["not_frozen_here"]
