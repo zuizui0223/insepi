@@ -5,6 +5,8 @@ def test_v15_facade_exposes_prefreeze_gate_without_polluting_root_api() -> None:
     assert v15.PrefreezeGateState.BLOCKED_SAFE.value == "blocked_safe"
     assert v15.AbsenceStrategy.RETAIN_UPPER_BOUND_1.value == "retain_upper_bound_1_without_A_minus"
     assert "sampling_power_plan" in v15.CORE_FREEZE_ITEMS
+    assert "coupled_field_adapter" in v15.CORE_FREEZE_ITEMS
+    assert "target_nuisance_decision_calibration" in v15.CORE_FREEZE_ITEMS
     assert callable(v15.evaluate_prefreeze_registry)
     assert callable(v15.assert_ready_for_heldout)
 
@@ -22,6 +24,14 @@ def test_v15_facade_exposes_frozen_positive_only_pollipi_target_adapter() -> Non
     adapted = v15.adapt_pollipi_target_evidence(record)
     assert adapted.direct_target_score == 1.0
     assert adapted.to_target_routes().coupled_target_score == 0.0
+
+
+def test_v15_facade_exposes_fail_closed_coupled_field_baseline() -> None:
+    assert v15.CoupledAttributionSource.CONTACT_GEOMETRY.value == "independent_contact_geometry"
+    assert v15.CoupledResponseReferenceLayout.__name__ == "CoupledResponseReferenceLayout"
+    assert v15.IndependentAttributionCue.__name__ == "IndependentAttributionCue"
+    assert v15.FieldCoupledTargetMeasurement.__name__ == "FieldCoupledTargetMeasurement"
+    assert callable(v15.measure_field_coupled_response)
 
 
 def test_v15_facade_exposes_parameterized_cluster_power_planner() -> None:
