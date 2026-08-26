@@ -20,3 +20,10 @@ def test_v15_facade_exposes_parameterized_cluster_power_planner() -> None:
     assert v15.ClusterPlanningAssumptions.__name__ == "ClusterPlanningAssumptions"
     assert callable(v15.plan_binary_metric_precision)
     assert callable(v15.plan_binary_system_comparison)
+
+
+def test_v15_facade_exposes_confidence_bound_claim_gate() -> None:
+    assert v15.ClaimDirection.AT_LEAST.value == "at_least"
+    assert v15.ClaimDecision.NOT_EVALUABLE.value == "not_evaluable"
+    assert v15.ClaimFamily.TARGET_ABSENCE.value == "target_absence"
+    assert callable(v15.evaluate_claim)
