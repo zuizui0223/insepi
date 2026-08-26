@@ -9,6 +9,10 @@ from .nuisance_field_measurement_v15 import (
     NuisanceReferenceLayout,
     measure_field_nuisance_process,
 )
+from .nuisance_reference_manifest_v15 import (
+    NuisanceReferenceManifestEntry,
+    validate_nuisance_reference_manifest,
+)
 from .support_estimation import (
     PrimaryStreamSupportEstimate,
     PrimaryStreamSupportEstimator,
@@ -91,6 +95,7 @@ __all__ = [
     "FreezeStatus",
     "HeldOutMetricInterval",
     "NuisanceReferenceLayout",
+    "NuisanceReferenceManifestEntry",
     "POLLIPI_ORDINAL_TARGET_SCALE",
     "POLLIPI_TARGET_EVIDENCE_MAPPING",
     "PolliPiTargetEvidenceInput",
@@ -127,4 +132,5 @@ __all__ = [
     "predict_all_visit_variants",
     "predict_visit_variant",
     "prediction_from_triad",
+    "validate_nuisance_reference_manifest",
 ]
