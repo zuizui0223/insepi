@@ -38,9 +38,9 @@
     {
       "name": "split_blinding_protocol",
       "status": "development_defined",
-      "evidence_path": "benchmarks/v15_visit_observation_validation_contract.json",
+      "evidence_path": "benchmarks/v15_split_manifest_v1_contract.json",
       "sha256": null,
-      "note": "Truth-layer blinding invariants and minimum double-annotation rules are frozen inside the truth artifact, but the realised development/held-out block allocation remains tied to the final sampling plan and dataset manifest."
+      "note": "A fail-closed realised-manifest validator now enforces cluster separation, new recording days and focal scenes, clip hashes and >=20% double annotation per truth layer within each realised cluster. The actual populated manifest and its SHA remain to be frozen."
     },
     {
       "name": "o_measurement_calibration",
