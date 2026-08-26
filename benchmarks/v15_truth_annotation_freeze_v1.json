@@ -1,0 +1,133 @@
+{
+  "schema": "insepi-v15-v2-truth-annotation-freeze-v1",
+  "generation": "V15-v2",
+  "status": "frozen-pre-heldout",
+  "scope": "four independent truth layers and annotation blinding invariants",
+  "common_rules": [
+    "algorithm predictions are hidden from every truth annotation pass",
+    "unresolved evidence remains unresolved and is never coerced to a negative label",
+    "raw annotator labels, disagreement indicators and adjudicated labels are retained",
+    "all sampled double-annotation disagreements are adjudicated before model scoring",
+    "no numerical agreement threshold is used to discard a truth layer or retune an observer",
+    "cross-layer conflicts are retained and never automatically reconciled"
+  ],
+  "biological_truth_annotation": {
+    "input": "synchronised independent reference stream only",
+    "hidden": [
+      "primary system-under-test stream",
+      "target algorithm output",
+      "nuisance algorithm output",
+      "observation-support estimate"
+    ],
+    "states": [
+      "no_insect",
+      "insect_in_context",
+      "target_contact",
+      "visit_event",
+      "unresolved"
+    ],
+    "event_rule": "visit_event truth carries a stable event_id; non-visit and unresolved truth do not",
+    "unresolved_rule": "if the reference stream cannot resolve the biological state, label unresolved rather than no_insect"
+  },
+  "coupling_truth_annotation": {
+    "input": "reference stream sufficient to assess whether local focal-target response was caused by the insect interaction",
+    "hidden": [
+      "primary-stream target output",
+      "nuisance output",
+      "support output"
+    ],
+    "states": [
+      "absent",
+      "present",
+      "unresolved"
+    ],
+    "positive_rule": "present requires independently adjudicated biological truth of target_contact or visit_event",
+    "attribution_rule": "if causal attribution to the insect is not supportable, label unresolved rather than present",
+    "consistency_use": "the completed biological ledger may be used only for the logical positive-coupling consistency check"
+  },
+  "nuisance_truth_annotation": {
+    "input": "primary system-under-test stream plus physical nuisance logs when available",
+    "hidden": [
+      "reference biological truth",
+      "coupling truth",
+      "target algorithm output",
+      "nuisance algorithm output",
+      "support output"
+    ],
+    "representation": "multi-label positive process-effect annotation",
+    "effects": [
+      "mimic_target",
+      "mask_target",
+      "corrupt_attribution",
+      "degrade_observation_support"
+    ],
+    "hard_rule": "target-driven local response is excluded from exogenous nuisance truth and belongs to the coupling layer when causally supported",
+    "cause_rule": "optional physical cause descriptions do not replace the finite process-effect labels"
+  },
+  "support_truth_annotation": {
+    "input": "primary system-under-test stream plus geometry, timing and photometric metadata needed for the five support requirements",
+    "hidden": [
+      "reference biological truth",
+      "coupling truth",
+      "nuisance truth",
+      "target algorithm output",
+      "nuisance algorithm output",
+      "support algorithm output"
+    ],
+    "components": [
+      "target_zone_coverage",
+      "target_zone_visibility",
+      "spatial_resolution",
+      "photometric_sufficiency",
+      "temporal_continuity"
+    ],
+    "component_states": [
+      "adequate",
+      "compromised",
+      "failed",
+      "unresolved"
+    ],
+    "overall_rule": [
+      "any failed necessary component => resolved UNOBSERVABLE",
+      "else any unresolved component => overall support truth unresolved",
+      "else any compromised component => resolved COMPROMISED",
+      "else five adequate components => resolved OBSERVABLE"
+    ],
+    "counterfactual_question": "if a focal visit opportunity occurred, did the primary stream preserve enough measurement support to attempt the operational visit inference",
+    "hard_rules": [
+      "low target evidence is not proof of poor support",
+      "known biological presence is not proof that support was adequate",
+      "support is not defined as one minus nuisance"
+    ]
+  },
+  "ledger_join": {
+    "keys": [
+      "window_id",
+      "reference clip SHA-256 for biological/coupling ledgers",
+      "primary clip SHA-256 for nuisance/support ledgers"
+    ],
+    "order": "each layer is annotated and internally adjudicated before the ledgers are joined",
+    "automatic_cross_layer_conflict_resolution": false
+  },
+  "double_annotation": {
+    "minimum_fraction": 0.2,
+    "selection_rule": "at least 20 percent within each truth layer and realised independent block are selected by a protected probability or deterministic hash sample fixed before model scoring",
+    "disagreement_rule": "all selected disagreements are adjudicated before scoring while raw labels and disagreement remain retained",
+    "agreement_reporting": "descriptive agreement is reported by layer; there is no post-result agreement threshold for dropping a layer"
+  },
+  "split_blinding_boundary": {
+    "frozen_here": [
+      "truth-layer input/output separation",
+      "algorithm-output hiding",
+      "no cross-layer automatic reconciliation",
+      "minimum double-annotation fraction and disagreement handling"
+    ],
+    "not_frozen_here": [
+      "final development/held-out block assignment",
+      "realised recording-day and focal-scene allocation",
+      "final cluster count or split proportion"
+    ],
+    "reason": "those realised allocation choices depend on the still-unfrozen sampling/power plan and dataset manifest"
+  },
+  "held_out_change_control": "these four truth definitions and blinding invariants cannot be changed after held-out model outputs are inspected"
+}
