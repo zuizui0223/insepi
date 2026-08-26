@@ -1,0 +1,56 @@
+{
+  "claim_boundary": "corrected post-result information-presence audit using observation-safe features only; no field-performance claim",
+  "coordinate_row_count": 1200,
+  "diagnostics": {
+    "nuisance_calibration": {
+      "false_positive_rate_at_frozen_0_55_threshold": 0.0,
+      "pooled_nuisance_support_auc": 1.0,
+      "prefrozen_nuisance_scale_mismatch": true,
+      "recall_at_frozen_0_55_threshold": 0.015625
+    },
+    "nuisance_vs_target_nuisance_coupled": {
+      "coordinate_count": 750,
+      "direct_signal_auc_q10": 0.5,
+      "direct_signal_auc_q90": 1.0,
+      "fraction_observation_safe_auc_ge_0_80": 0.8,
+      "median_direct_signal_auc": 1.0,
+      "median_observation_safe_lda_auc": 1.0,
+      "observation_safe_lda_auc_q10": 0.51171875,
+      "observation_safe_lda_auc_q90": 1.0,
+      "prefrozen_failure_source_classification": "representation_defect_candidate"
+    },
+    "nuisance_vs_target_nuisance_superposed": {
+      "coordinate_count": 450,
+      "direct_signal_auc_q10": 1.0,
+      "direct_signal_auc_q90": 1.0,
+      "fraction_observation_safe_auc_ge_0_80": 1.0,
+      "median_direct_signal_auc": 1.0,
+      "median_observation_safe_lda_auc": 1.0,
+      "observation_safe_lda_auc_q10": 1.0,
+      "observation_safe_lda_auc_q90": 1.0,
+      "prefrozen_failure_source_classification": "representation_defect_candidate"
+    }
+  },
+  "protocol_sha256": "ff46ac54216933e89d0fece83f817635e7a5a0edac9394eca9ec6dd3b00de815",
+  "safe_feature_names": [
+    "focal_reference_correlation",
+    "spatial_coherence",
+    "spatial_structure_function",
+    "restoration_score",
+    "spectral_concentration",
+    "local_excess_motion_fraction",
+    "direct_target_signal_fraction"
+  ],
+  "schema": "insepi-v14a2-plateau-diagnosis-observation-safe-result-v1",
+  "post_result_cell_diagnosis": {
+    "direct_visible_cells": "observation-safe representation defect candidate",
+    "indirect_only_definition": "pi3=0 and pi4=0.31622776601683794 in the eligible coupled slice",
+    "indirect_only_coordinate_count": 150,
+    "indirect_only_mean_observation_safe_auc": 0.508118,
+    "indirect_only_all_auc_le_0_60": true,
+    "indirect_only_interpretation": "essential-ambiguity candidate under the current observation-safe sufficient-statistic family; do not force rescue"
+  },
+  "workflow_run_id": 32926639089,
+  "artifact_id": 9591792694,
+  "artifact_digest": "sha256:52d7c2602db0eecf826d760cf760ac868c86e02032fbbfe53b469d217fb48075"
+}
