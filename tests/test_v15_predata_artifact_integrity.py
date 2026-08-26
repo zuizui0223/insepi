@@ -10,6 +10,7 @@ ABSENCE_METRICS = Path("benchmarks/v15_absence_metric_freeze_v1.json")
 EXPOSURE_ESTIMAND = Path("benchmarks/v15_cluster_exposure_estimand_freeze_v1.json")
 TRUTH_ANNOTATION = Path("benchmarks/v15_truth_annotation_freeze_v1.json")
 TARGET_ADAPTER = Path("benchmarks/v15_target_field_adapter_freeze_v1.json")
+NUISANCE_ADAPTER = Path("benchmarks/v15_nuisance_field_adapter_freeze_v1.json")
 
 
 def _registry_item(registry: dict, name: str) -> dict:
@@ -20,7 +21,6 @@ def test_absence_strategy_artifact_matches_registered_sha256() -> None:
     registry = json.loads(REGISTRY.read_text(encoding="utf-8"))
     strategy = json.loads(ABSENCE.read_text(encoding="utf-8"))
     digest = hashlib.sha256(ABSENCE.read_bytes()).hexdigest()
-
     assert registry["absence_strategy"] == "retain_upper_bound_1_without_A_minus"
     assert registry["absence_strategy_evidence_path"] == str(ABSENCE)
     assert registry["absence_strategy_sha256"] == digest
@@ -74,7 +74,6 @@ def test_four_truth_layers_share_one_frozen_annotation_artifact() -> None:
         assert item["status"] == "frozen"
         assert item["evidence_path"] == str(TRUTH_ANNOTATION)
         assert item["sha256"] == digest
-
     assert payload["double_annotation"]["minimum_fraction"] == 0.2
     assert payload["ledger_join"]["automatic_cross_layer_conflict_resolution"] is False
     assert payload["support_truth_annotation"]["overall_rule"] == [
@@ -91,7 +90,6 @@ def test_target_field_adapter_artifact_matches_registry_and_pollipi_provenance()
     payload = json.loads(TARGET_ADAPTER.read_text(encoding="utf-8"))
     digest = hashlib.sha256(TARGET_ADAPTER.read_bytes()).hexdigest()
     item = _registry_item(registry, "target_field_adapter")
-
     assert item["status"] == "frozen"
     assert item["evidence_path"] == str(TARGET_ADAPTER)
     assert item["sha256"] == digest
@@ -104,3 +102,17 @@ def test_target_field_adapter_artifact_matches_registry_and_pollipi_provenance()
         "uncertain_local_activity": 0.5,
         "strong_visitation_candidate": 1.0,
     }
+
+
+def test_nuisance_field_adapter_artifact_matches_registry_and_separates_calibration() -> None:
+    registry = json.loads(REGISTRY.read_text(encoding="utf-8"))
+    payload = json.loads(NUISANCE_ADAPTER.read_text(encoding="utf-8"))
+    digest = hashlib.sha256(NUISANCE_ADAPTER.read_bytes()).hexdigest()
+    item = _registry_item(registry, "nuisance_field_adapter")
+    assert item["status"] == "frozen"
+    assert item["evidence_path"] == str(NUISANCE_ADAPTER)
+    assert item["sha256"] == digest
+    assert payload["measurement_code"]["git_blob_sha1"] == "1e0498e853d79c1c9b3ee0b100e190e54e65ba7b"
+    assert payload["reference_manifest"]["must_be_selected_before_model_scoring"] is True
+    assert payload["remaining_calibration_blocker"] == "target_nuisance_decision_calibration"
+    assert "the nuisance_process_index is not a probability" in payload["hard_boundaries"]
