@@ -1,0 +1,25 @@
+{
+  "schema": "insepi-v15-v2-absence-strategy-v1",
+  "generation": "V15-v2",
+  "status": "pre-data-strategy-fixed",
+  "strategy": "retain_upper_bound_1_without_A_minus",
+  "safe_target_presence_upper_bound": 1.0,
+  "rationale": [
+    "the current target path is positive-only",
+    "observation support O is not biological absence evidence",
+    "low PolliPi or InsePi target evidence cannot be inverted into A_minus",
+    "no independently validated field A_minus channel currently exists",
+    "manufacturing an absence rule would violate the V14c/V15-v2 semantic boundary"
+  ],
+  "held_out_consequences": [
+    "O observable plus low or zero target evidence remains unresolved",
+    "no target-absence claim is evaluable in this V15-v2 held-out generation",
+    "target-presence upper bounds remain 1 unless an explicit sampling/missingness model provides a separate identified bound",
+    "forced_absence_call remains a comparator cost only and is never certified negative evidence"
+  ],
+  "change_control": {
+    "during_V15_v2_held_out": "forbidden",
+    "future_A_minus_validation": "requires a new pre-data generation/protocol and cannot retroactively alter V15-v2 held-out claims"
+  },
+  "claim_boundary": "V15-v2 may validate presence-side performance, nuisance/support measurement and the cost of forced binary decisions, but does not claim calibrated biological absence."
+}

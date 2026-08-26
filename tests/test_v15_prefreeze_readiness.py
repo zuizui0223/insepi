@@ -30,15 +30,28 @@ def frozen_item(name: str) -> dict:
     }
 
 
-def test_current_v15_prefreeze_registry_is_blocked_safe_with_explicit_missing_work() -> None:
+def strategy_fields(strategy: str) -> dict:
+    return {
+        "absence_strategy": strategy,
+        "absence_strategy_evidence_path": "freeze/absence-strategy.json",
+        "absence_strategy_sha256": HEX,
+    }
+
+
+def test_current_v15_prefreeze_registry_is_design_complete_but_heldout_blocked() -> None:
     readiness = evaluate_prefreeze_registry(current_registry())
     assert readiness.state is PrefreezeGateState.BLOCKED_SAFE
-    assert readiness.absence_strategy is AbsenceStrategy.UNDECIDED
+    assert readiness.design_complete is True
+    assert readiness.absence_strategy is AbsenceStrategy.RETAIN_UPPER_BOUND_1
     assert readiness.safe_target_presence_upper_bound == 1.0
-    assert "absence_strategy" in readiness.blockers
+    assert readiness.absence_strategy_evidence_path == "benchmarks/v15_absence_strategy_v1.json"
+    assert readiness.absence_strategy_sha256 == "5fd40b6b09753b11c62d4f20b8dedc061414d733c3fe1fc179089c98f468aaff"
     assert "nuisance_field_adapter" in readiness.development_defined_items
     assert "sampling_power_plan" in readiness.development_defined_items
-    assert "claim_thresholds" in readiness.unset_items
+    assert "claim_thresholds" in readiness.development_defined_items
+    assert readiness.unset_items == ()
+    assert "absence_strategy" not in readiness.blockers
+    assert set(readiness.blockers) == set(CORE_FREEZE_ITEMS)
     assert set(readiness.frozen_items) == set()
 
 
@@ -50,19 +63,20 @@ def test_current_registry_cannot_start_heldout() -> None:
 def test_ready_without_A_minus_requires_explicit_upper_bound_one_strategy() -> None:
     payload = {
         "generation": "V15-v2",
-        "absence_strategy": "retain_upper_bound_1_without_A_minus",
+        **strategy_fields("retain_upper_bound_1_without_A_minus"),
         "safe_target_presence_upper_bound": 1.0,
         "items": [frozen_item(name) for name in CORE_FREEZE_ITEMS],
     }
     readiness = assert_ready_for_heldout(payload)
     assert readiness.ready
+    assert readiness.design_complete
     assert readiness.state is PrefreezeGateState.READY
 
 
 def test_no_A_minus_strategy_cannot_silently_tighten_upper_bound() -> None:
     payload = {
         "generation": "V15-v2",
-        "absence_strategy": "retain_upper_bound_1_without_A_minus",
+        **strategy_fields("retain_upper_bound_1_without_A_minus"),
         "safe_target_presence_upper_bound": 0.9,
         "items": [frozen_item(name) for name in CORE_FREEZE_ITEMS],
     }
@@ -70,10 +84,25 @@ def test_no_A_minus_strategy_cannot_silently_tighten_upper_bound() -> None:
         evaluate_prefreeze_registry(payload)
 
 
+def test_decided_absence_strategy_requires_predata_provenance() -> None:
+    payload = {
+        "generation": "V15-v2",
+        "absence_strategy": "retain_upper_bound_1_without_A_minus",
+        "safe_target_presence_upper_bound": 1.0,
+        "items": [frozen_item(name) for name in CORE_FREEZE_ITEMS],
+    }
+    with pytest.raises(ValueError, match="evidence_path"):
+        evaluate_prefreeze_registry(payload)
+
+    payload["absence_strategy_evidence_path"] = "freeze/absence.json"
+    with pytest.raises(ValueError, match="64-hex"):
+        evaluate_prefreeze_registry(payload)
+
+
 def test_validated_A_minus_path_requires_its_own_frozen_protocol() -> None:
     payload = {
         "generation": "V15-v2",
-        "absence_strategy": "validated_independent_A_minus",
+        **strategy_fields("validated_independent_A_minus"),
         "safe_target_presence_upper_bound": 1.0,
         "items": [frozen_item(name) for name in CORE_FREEZE_ITEMS],
     }

@@ -18,6 +18,15 @@ from .support_estimation import (
     SupportMeasurementProvenance,
     evaluate_support_estimates,
 )
+from .v15_claims import (
+    ClaimDecision,
+    ClaimDirection,
+    ClaimEvaluation,
+    ClaimFamily,
+    ClaimThreshold,
+    HeldOutMetricInterval,
+    evaluate_claim,
+)
 from .v15_power import (
     ClusterPlanningAssumptions,
     ComparisonPowerPlan,
@@ -61,6 +70,11 @@ __all__ = [
     "A_MINUS_VALIDATION_ITEM",
     "AbsenceStrategy",
     "CORE_FREEZE_ITEMS",
+    "ClaimDecision",
+    "ClaimDirection",
+    "ClaimEvaluation",
+    "ClaimFamily",
+    "ClaimThreshold",
     "ClusterPlanningAssumptions",
     "ComparisonPowerPlan",
     "CoupledResponseResolution",
@@ -68,6 +82,7 @@ __all__ = [
     "FieldNuisanceProcessMeasurement",
     "FreezeItem",
     "FreezeStatus",
+    "HeldOutMetricInterval",
     "NuisanceReferenceLayout",
     "PrecisionPlan",
     "PrefreezeGateState",
@@ -88,6 +103,7 @@ __all__ = [
     "VisitTruthState",
     "VisitValidationSummary",
     "assert_ready_for_heldout",
+    "evaluate_claim",
     "evaluate_prefreeze_registry",
     "evaluate_support_estimates",
     "evaluate_visit_predictions",
