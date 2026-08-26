@@ -75,7 +75,7 @@
       "status": "development_defined",
       "evidence_path": "benchmarks/v15_target_nuisance_decision_calibration_v1_contract.json",
       "sha256": null,
-      "note": "Operational target high/low, nuisance high and the mapping from field nuisance measurements to false-event/missed-event/attribution risks must be frozen from development-only data before held-out decisions."
+      "note": "A no-default ordinal runtime schema now preserves PolliPi direct 0/0.5/1 structurally and requires development-frozen low/high boundaries for continuous C plus independent feature/boundary calibration for each nuisance effect. Final values and calibration provenance remain unfrozen."
     },
     {
       "name": "forced_vs_certified_absence_metrics",
