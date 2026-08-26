@@ -4,13 +4,16 @@ from interaction_sensing.observation_triad import (
     ObservationSupport,
 )
 from interaction_sensing.support_estimation import PrimaryStreamSupportEstimate
+from interaction_sensing.support_truth import PrimaryStreamSupportTruth, SupportComponentState
 from interaction_sensing.target_routes import TargetRouteEvidence
 from interaction_sensing.visit_systems import (
     VisitSystemInputs,
     VisitSystemVariant,
+    evaluate_visit_system_variants,
     predict_all_visit_variants,
     predict_visit_variant,
 )
+from interaction_sensing.visit_validation import VisitTruthRecord, VisitTruthState
 
 
 def support_estimate(availability: ObservationAvailability, ceiling: float) -> PrimaryStreamSupportEstimate:
@@ -23,6 +26,15 @@ def support_estimate(availability: ObservationAvailability, ceiling: float) -> P
     )
 
 
+def support_truth(availability: ObservationAvailability) -> PrimaryStreamSupportTruth:
+    adequate = SupportComponentState.ADEQUATE
+    if availability is ObservationAvailability.OBSERVABLE:
+        return PrimaryStreamSupportTruth(adequate, adequate, adequate, adequate, adequate, "system_test")
+    if availability is ObservationAvailability.COMPROMISED:
+        return PrimaryStreamSupportTruth(adequate, SupportComponentState.COMPROMISED, adequate, adequate, adequate, "system_test")
+    return PrimaryStreamSupportTruth(adequate, SupportComponentState.FAILED, adequate, adequate, adequate, "system_test")
+
+
 def inputs(
     *,
     direct: float,
@@ -31,9 +43,10 @@ def inputs(
     nuisance: float,
     availability: ObservationAvailability,
     ceiling: float,
+    window_id: str = "w1",
 ) -> VisitSystemInputs:
     return VisitSystemInputs(
-        window_id="w1",
+        window_id=window_id,
         target_routes=TargetRouteEvidence(direct, coupled_response, link),
         nuisance=NuisanceEvidence(nuisance, nuisance, nuisance),
         support=support_estimate(availability, ceiling),
@@ -133,3 +146,69 @@ def test_all_variants_emit_one_prediction_for_same_window() -> None:
     outputs = predict_all_visit_variants(row)
     assert set(outputs) == set(VisitSystemVariant)
     assert {prediction.window_id for prediction in outputs.values()} == {"w1"}
+
+
+def test_system_comparison_quantifies_false_absence_and_coupled_rescue_on_same_windows() -> None:
+    rows = [
+        inputs(
+            window_id="hidden-visit",
+            direct=0.05,
+            coupled_response=0.05,
+            link=0.1,
+            nuisance=0.05,
+            availability=ObservationAvailability.UNOBSERVABLE,
+            ceiling=0.10,
+        ),
+        inputs(
+            window_id="coupled-visit",
+            direct=0.10,
+            coupled_response=0.90,
+            link=0.90,
+            nuisance=0.05,
+            availability=ObservationAvailability.OBSERVABLE,
+            ceiling=0.90,
+        ),
+        inputs(
+            window_id="clean-absence",
+            direct=0.05,
+            coupled_response=0.05,
+            link=0.10,
+            nuisance=0.05,
+            availability=ObservationAvailability.OBSERVABLE,
+            ceiling=0.90,
+        ),
+    ]
+    truth = [
+        VisitTruthRecord(
+            "hidden-visit",
+            "b1",
+            VisitTruthState.VISIT_EVENT,
+            support_truth(ObservationAvailability.UNOBSERVABLE),
+            event_id="event-hidden",
+        ),
+        VisitTruthRecord(
+            "coupled-visit",
+            "b1",
+            VisitTruthState.VISIT_EVENT,
+            support_truth(ObservationAvailability.OBSERVABLE),
+            event_id="event-coupled",
+            target_coupled_response_present=True,
+        ),
+        VisitTruthRecord(
+            "clean-absence",
+            "b1",
+            VisitTruthState.NO_INSECT,
+            support_truth(ObservationAvailability.OBSERVABLE),
+        ),
+    ]
+    summaries = evaluate_visit_system_variants(truth, rows)
+
+    direct = summaries[VisitSystemVariant.DIRECT_TARGET_ONLY]
+    support = summaries[VisitSystemVariant.TARGET_PLUS_SUPPORT]
+    full = summaries[VisitSystemVariant.FULL_TRIAD]
+
+    assert direct.false_absence_count == 2  # hidden visit + weak-direct coupled visit
+    assert support.false_absence_count == 0
+    assert full.false_absence_count == 0
+    assert full.indirect_target_rescue_count == 1
+    assert full.indirect_target_rescue_rate == 1.0
