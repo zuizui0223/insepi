@@ -38,14 +38,14 @@ class ClusterPlanningAssumptions:
     cluster_unit: str
 
     def __post_init__(self) -> None:
-        if self.mean_windows_per_cluster <= 0:
-            raise ValueError("mean_windows_per_cluster must be positive")
+        if self.mean_windows_per_cluster < 1.0:
+            raise ValueError("mean_windows_per_cluster must be at least 1")
         if not 0.0 <= self.intracluster_correlation < 1.0:
             raise ValueError("intracluster_correlation must lie in [0, 1)")
         if not 0.0 < self.alpha < 1.0:
             raise ValueError("alpha must lie in (0, 1)")
-        if not 0.0 < self.target_power < 1.0:
-            raise ValueError("target_power must lie in (0, 1)")
+        if not 0.5 < self.target_power < 1.0:
+            raise ValueError("target_power must lie in (0.5, 1)")
         if not self.cluster_unit.strip():
             raise ValueError("cluster_unit cannot be empty")
 
