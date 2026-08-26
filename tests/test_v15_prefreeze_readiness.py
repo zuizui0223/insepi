@@ -38,7 +38,7 @@ def strategy_fields(strategy: str) -> dict:
     }
 
 
-def test_current_v15_prefreeze_registry_has_six_frozen_core_items() -> None:
+def test_current_v15_prefreeze_registry_has_seven_frozen_core_items() -> None:
     readiness = evaluate_prefreeze_registry(current_registry())
     assert readiness.state is PrefreezeGateState.BLOCKED_SAFE
     assert readiness.design_complete is True
@@ -50,13 +50,16 @@ def test_current_v15_prefreeze_registry_has_six_frozen_core_items() -> None:
         "coupling_truth_annotation",
         "nuisance_truth_annotation",
         "support_truth_annotation",
+        "target_field_adapter",
         "forced_vs_certified_absence_metrics",
         "cluster_exposure_estimand",
     }
-    assert len(readiness.frozen_items) == 6
-    assert len(readiness.development_defined_items) == 6
+    assert len(readiness.frozen_items) == 7
+    assert len(readiness.development_defined_items) == 5
     assert set(readiness.blockers) == set(CORE_FREEZE_ITEMS) - set(readiness.frozen_items)
     assert "split_blinding_protocol" in readiness.development_defined_items
+    assert "o_measurement_calibration" in readiness.development_defined_items
+    assert "nuisance_field_adapter" in readiness.development_defined_items
     assert "sampling_power_plan" in readiness.development_defined_items
     assert "claim_thresholds" in readiness.development_defined_items
 
