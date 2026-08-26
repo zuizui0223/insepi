@@ -10,6 +10,7 @@ from interaction_sensing.cross_state_observability_v15a import (
     CrossStateDecisionReason,
     CrossStateDecisionState,
     apply_observation_layer,
+    audit_locked_regime_rates,
     prefrozen_support_profiles,
     support_profile_specifications,
     validate_v15a_protocol,
@@ -41,6 +42,16 @@ def _sources() -> dict[str, dict[str, object]]:
 
 def test_protocol_and_all_parent_identities_are_prefrozen() -> None:
     validate_v15a_protocol(**_sources())
+
+
+def test_parent_regime_residual_is_exposed_without_normalisation() -> None:
+    audit = audit_locked_regime_rates(_sources()["locked_summary"])
+
+    assert audit["baseline"]["one_minus_state_rate_sum"] == 0.0
+    assert audit["target_nuisance_coupled"][
+        "one_minus_state_rate_sum"
+    ] == pytest.approx(5.102040816495901e-07)
+    assert audit["target_nuisance_coupled"]["normalised_or_repaired"] is False
 
 
 def test_support_lattice_crosses_every_component_without_physical_inputs() -> None:

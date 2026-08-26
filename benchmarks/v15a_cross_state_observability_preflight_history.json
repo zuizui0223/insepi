@@ -12,6 +12,18 @@
       "resolution": "retain locked regime means as rates, reconstruct integer counts only from the exactly resolving locked global rates, and report rather than repair parent-summary differences",
       "scientific_design_changed": false,
       "threshold_changed": false
+    },
+    {
+      "prefreeze_commit": "d3f2b0608c5b36af5e4208cc882ca6dfd0badba1",
+      "status": "stopped-before-result",
+      "stage": "regime-summary validation",
+      "failure": "one locked regime mean state-rate vector summed to 0.9999994897959184 rather than one",
+      "result_file_written": false,
+      "scientific_result_emitted": false,
+      "observer_output_regenerated": false,
+      "resolution": "retain and report the parent-summary residual without normalisation, repair, or conversion to an inferred state",
+      "scientific_design_changed": false,
+      "threshold_changed": false
     }
   ]
 }

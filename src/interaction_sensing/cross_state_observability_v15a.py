@@ -38,7 +38,7 @@ V14B_CLOSEOUT_SHA256 = (
     "ad5b3a60b2f82d1f079076a73acc7aa55a53dc33b9703a5a3625762c5e3646f6"
 )
 V15A_PROTOCOL_CANONICAL_SHA256 = (
-    "96e7dee85c3ff0cbea0498d0fce0298605223ae46db9c9d71bf9c25621b23594"
+    "7a24df2016b54aaaf002414e86d7c51104104258f5541b73e2efca130fd8df1d"
 )
 
 PHYSICAL_REGIMES = (
@@ -339,6 +339,7 @@ def validate_v15a_protocol(
     )
     if not all(rules.get(name) is True for name in required_true):
         raise ValueError("V15a freeze rules are incomplete")
+    audit_locked_regime_rates(locked_summary)
     if canonical_json_sha256(protocol) != V15A_PROTOCOL_CANONICAL_SHA256:
         raise ValueError("V15a protocol identity changed")
 
@@ -387,8 +388,6 @@ def _state_rates(section: Mapping[str, Any]) -> dict[str, float]:
     }
     if any(rate < 0.0 or rate > 1.0 for rate in rates.values()):
         raise ValueError("base state rate lies outside [0, 1]")
-    if abs(sum(rates.values()) - 1.0) > 1e-12:
-        raise ValueError("base state rates do not sum to one")
     return rates
 
 
@@ -402,6 +401,29 @@ def _reason_rates(
     if abs(sum(rates.values()) - undetermined_rate) > 1e-12:
         raise ValueError("base U reason rates do not sum to base U")
     return rates
+
+
+def audit_locked_regime_rates(
+    locked_summary: Mapping[str, Any],
+) -> dict[str, dict[str, Any]]:
+    """Expose parent regime-rate residuals without normalising or repairing them."""
+
+    regime_means = _mapping(locked_summary, "regime_means")
+    if set(regime_means) != set(PHYSICAL_REGIMES):
+        raise ValueError("locked physical regimes changed")
+    audit: dict[str, dict[str, Any]] = {}
+    for regime in PHYSICAL_REGIMES:
+        section = _mapping(regime_means, regime)
+        state_rates = _state_rates(section)
+        reason_rates = _reason_rates(section, state_rates["undetermined"])
+        state_rate_sum = sum(state_rates.values())
+        audit[regime] = {
+            "state_rate_sum": state_rate_sum,
+            "one_minus_state_rate_sum": 1.0 - state_rate_sum,
+            "undetermined_reason_rate_sum": sum(reason_rates.values()),
+            "normalised_or_repaired": False,
+        }
+    return audit
 
 
 def _zero_state_counts() -> dict[str, int]:
@@ -546,6 +568,7 @@ def build_v15a_cross_state_result(
     if base_world_count % len(PHYSICAL_REGIMES) != 0:
         raise ValueError("locked worlds are not balanced over physical regimes")
     worlds_per_regime = base_world_count // len(PHYSICAL_REGIMES)
+    regime_rate_audit = audit_locked_regime_rates(locked_summary)
     regime_matrix: dict[str, Any] = {}
     for regime in PHYSICAL_REGIMES:
         regime_section = _mapping(regime_means, regime)
@@ -568,6 +591,10 @@ def build_v15a_cross_state_result(
             }
         regime_matrix[regime] = {
             "locked_regime_mean_rates": regime_base_rates,
+            "locked_state_rate_sum": regime_rate_audit[regime]["state_rate_sum"],
+            "one_minus_locked_state_rate_sum": regime_rate_audit[regime][
+                "one_minus_state_rate_sum"
+            ],
             "by_availability": by_availability,
         }
 
@@ -587,7 +614,9 @@ def build_v15a_cross_state_result(
             state: global_rates[state] - equal_regime_mean_rates[state]
             for state in BASE_STATES
         },
+        "within_regime_rate_sum_audit": regime_rate_audit,
         "regime_rates_coerced_to_integer_counts": False,
+        "regime_rates_normalised_or_repaired": False,
         "interpretation": (
             "locked global counts are authoritative for global expansion; "
             "locked regime means are retained as rates and any discrepancy is "

@@ -72,8 +72,8 @@
     "support_profile_count": 11,
     "expected_expanded_world_count": 64680000,
     "global_representation": "integer counts reconstructed only where the locked global rates resolve exactly",
-    "regime_representation": "retain locked regime mean rates without coercing fractional weighted means to invented integer counts",
-    "parent_consistency_rule": "report rather than repair any difference between the locked global rate and the equal mean of locked regime rates",
+    "regime_representation": "retain locked regime mean rates without coercing fractional weighted means to invented integer counts and without renormalising a within-regime residual",
+    "parent_consistency_rule": "report rather than repair both within-regime rate-sum residuals and differences between the locked global rate and the equal mean of locked regime rates",
     "prefreeze_commit_required": true,
     "first_result_path": "benchmarks/v15a_cross_state_observability_result.json",
     "first_result_is_retained_without_post_result_tuning": true
