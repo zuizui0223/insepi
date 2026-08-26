@@ -1,0 +1,39 @@
+{
+  "claim_boundary": "post-result failure-source diagnosis only; cannot alter V14a2 Q1/Q3 results or establish field performance",
+  "coordinate_row_count": 2550,
+  "diagnostics": {
+    "nuisance_calibration": {
+      "false_positive_rate_at_frozen_0_55_threshold": 0.0,
+      "heldout_negative_worlds": 43200,
+      "heldout_positive_worlds": 43200,
+      "pooled_nuisance_support_auc": 1.0,
+      "prefrozen_nuisance_scale_mismatch": true,
+      "recall_at_frozen_0_55_threshold": 0.015625
+    },
+    "nuisance_vs_target_nuisance_coupled": {
+      "coordinate_count": 750,
+      "fraction_full_signature_auc_ge_0_80": 1.0,
+      "full_signature_lda_auc_q10": 1.0,
+      "full_signature_lda_auc_q90": 1.0,
+      "median_full_signature_lda_auc": 1.0,
+      "median_target_support_auc": 0.5869140625,
+      "prefrozen_failure_source_classification": "representation_defect_candidate",
+      "target_support_auc_q10": 0.5068359375,
+      "target_support_auc_q90": 0.77841796875
+    },
+    "nuisance_vs_target_nuisance_superposed": {
+      "coordinate_count": 450,
+      "fraction_full_signature_auc_ge_0_80": 1.0,
+      "full_signature_lda_auc_q10": 1.0,
+      "full_signature_lda_auc_q90": 1.0,
+      "median_full_signature_lda_auc": 1.0,
+      "median_target_support_auc": 0.649658203125,
+      "prefrozen_failure_source_classification": "representation_defect_candidate",
+      "target_support_auc_q10": 0.544873046875,
+      "target_support_auc_q90": 0.8275878906250005
+    }
+  },
+  "locked_v14a2_result_artifact_digest": "sha256:11c0409e163183395410271141928777310137711f74fee7e9e0f6e500e32b72",
+  "protocol_sha256": "e644c1aa59dc13a632e1f66487dd29a7f10182c0f3672940dca07ec68bfd9e05",
+  "schema": "insepi-v14a2-plateau-diagnosis-result-v1"
+}

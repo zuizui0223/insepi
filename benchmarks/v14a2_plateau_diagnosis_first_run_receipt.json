@@ -1,0 +1,21 @@
+{
+  "claim_boundary": "post-result failure-source audit only; V14a2 scientific result remains immutable",
+  "execution_commit": "e8541f39ff26d947bd4e54cb998418fc6deb36d8",
+  "file_sha256": {
+    "coordinates": "6c1151770dbac1dd9b06ac07cbf6c06d7cafc6be901f2636c99ac0e29f530d47",
+    "protocol": "e644c1aa59dc13a632e1f66487dd29a7f10182c0f3672940dca07ec68bfd9e05",
+    "runner": "f045a3480222ef2e8024182f11dc8567c4f3b37ab39713bf31b9ef063faa5738",
+    "statistics": "7e0f6f8d6694a4c91edf5b11385b302587458c8717b6e6bf541fdf9f4ae5bbfc",
+    "summary": "3cbb3feb1bfc38394fdb5fd2266b605ee0dc98d0c1fda7527fba1d32bf95a9f6"
+  },
+  "locked_v14a2_result_artifact_digest": "sha256:11c0409e163183395410271141928777310137711f74fee7e9e0f6e500e32b72",
+  "runtime": {
+    "numpy": "2.4.6",
+    "python": "3.11.16"
+  },
+  "schema": "insepi-v14a2-plateau-diagnosis-first-run-receipt-v1",
+  "status": "immutable-first-post-result-diagnostic-run",
+  "workflow_run_id": 32925820183,
+  "artifact_id": 9591515114,
+  "artifact_digest": "sha256:3a3db5ed530b67c947b9c63b8225d7874c39d3463ccf4cbc26b44df22c87e738"
+}
