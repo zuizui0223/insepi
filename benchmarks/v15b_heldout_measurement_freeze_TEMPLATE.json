@@ -1,0 +1,31 @@
+{
+  "schema": "insepi-v15b-heldout-measurement-freeze-v1",
+  "status": "TEMPLATE_NOT_EXECUTABLE",
+  "protocol_canonical_sha256": "156a505fe05279e9dbd4726eeb59082151fe54944f5cb7ea1a5eebcbe3bc9f8f",
+  "v14b_phase_surface_sha256": "1d2c7c1f8f7370aad3cdde4d9d9d47bf318b2a057b6f788d3a48df9ea8d16c34",
+  "development_complete": false,
+  "heldout_data_accessed_before_freeze": false,
+  "observer_identity": {
+    "target_observer_commit": "REPLACE_WITH_40_HEX",
+    "nuisance_observer_commit": "REPLACE_WITH_40_HEX",
+    "coupled_route_definition_sha256": "REPLACE_WITH_64_HEX",
+    "support_measurement_profile_sha256": "REPLACE_WITH_64_HEX"
+  },
+  "analysis_identity": {
+    "sample_size_plan_sha256": "REPLACE_WITH_64_HEX",
+    "cluster_analysis_plan_sha256": "REPLACE_WITH_64_HEX",
+    "cluster_identity": "recording_date_local_x_physical_scene_code",
+    "frame_is_independent_replicate": false,
+    "claim_mode": "descriptive_only_until_cluster_inference_generation",
+    "familywise_alpha": 0.05
+  },
+  "thresholds": {
+    "target_high": null,
+    "target_low": null,
+    "nuisance_high": null,
+    "support_observable": null,
+    "support_unobservable": null
+  },
+  "missing_data_rule": "REPLACE_AND_FREEZE_BEFORE_HELDOUT",
+  "post_truth_retuning_permitted": false
+}

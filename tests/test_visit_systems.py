@@ -19,7 +19,9 @@ from interaction_sensing.visit_systems import (
 from interaction_sensing.visit_validation import VisitTruthRecord, VisitTruthState
 
 
-def support_estimate(availability: ObservationAvailability, ceiling: float) -> PrimaryStreamSupportEstimate:
+def support_estimate(
+    availability: ObservationAvailability, ceiling: float
+) -> PrimaryStreamSupportEstimate:
     support = ObservationSupport(ceiling, ceiling, ceiling, ceiling, ceiling)
     return PrimaryStreamSupportEstimate(
         availability=availability,
@@ -32,10 +34,26 @@ def support_estimate(availability: ObservationAvailability, ceiling: float) -> P
 def support_truth(availability: ObservationAvailability) -> PrimaryStreamSupportTruth:
     adequate = SupportComponentState.ADEQUATE
     if availability is ObservationAvailability.OBSERVABLE:
-        return PrimaryStreamSupportTruth(adequate, adequate, adequate, adequate, adequate, "system_test")
+        return PrimaryStreamSupportTruth(
+            adequate, adequate, adequate, adequate, adequate, "system_test"
+        )
     if availability is ObservationAvailability.COMPROMISED:
-        return PrimaryStreamSupportTruth(adequate, SupportComponentState.COMPROMISED, adequate, adequate, adequate, "system_test")
-    return PrimaryStreamSupportTruth(adequate, SupportComponentState.FAILED, adequate, adequate, adequate, "system_test")
+        return PrimaryStreamSupportTruth(
+            adequate,
+            SupportComponentState.COMPROMISED,
+            adequate,
+            adequate,
+            adequate,
+            "system_test",
+        )
+    return PrimaryStreamSupportTruth(
+        adequate,
+        SupportComponentState.FAILED,
+        adequate,
+        adequate,
+        adequate,
+        "system_test",
+    )
 
 
 def inputs(
@@ -56,7 +74,9 @@ def inputs(
     )
 
 
-def test_explicit_support_prevents_false_absence_when_primary_stream_is_unobservable() -> None:
+def test_explicit_support_prevents_false_absence_when_primary_stream_is_unobservable() -> (
+    None
+):
     row = inputs(
         direct=0.05,
         coupled_response=0.05,
@@ -66,7 +86,9 @@ def test_explicit_support_prevents_false_absence_when_primary_stream_is_unobserv
         ceiling=0.10,
     )
     direct_only = predict_visit_variant(row, VisitSystemVariant.DIRECT_TARGET_ONLY)
-    target_nuisance = predict_visit_variant(row, VisitSystemVariant.TARGET_PLUS_NUISANCE)
+    target_nuisance = predict_visit_variant(
+        row, VisitSystemVariant.TARGET_PLUS_NUISANCE
+    )
     target_support = predict_visit_variant(row, VisitSystemVariant.TARGET_PLUS_SUPPORT)
     full = predict_visit_variant(row, VisitSystemVariant.FULL_TRIAD)
 
@@ -107,7 +129,9 @@ def test_full_triad_preserves_observable_target_nuisance_superposition() -> None
         ceiling=0.90,
     )
     coupled_only = predict_visit_variant(row, VisitSystemVariant.DIRECT_PLUS_COUPLED)
-    target_nuisance = predict_visit_variant(row, VisitSystemVariant.TARGET_PLUS_NUISANCE)
+    target_nuisance = predict_visit_variant(
+        row, VisitSystemVariant.TARGET_PLUS_NUISANCE
+    )
     full = predict_visit_variant(row, VisitSystemVariant.FULL_TRIAD)
 
     assert coupled_only.positive_evidence is True
@@ -152,7 +176,9 @@ def test_all_variants_emit_one_prediction_for_same_window() -> None:
     assert {prediction.window_id for prediction in outputs.values()} == {"w1"}
 
 
-def test_system_comparison_quantifies_false_absence_and_coupled_rescue_on_same_windows() -> None:
+def test_system_comparison_quantifies_false_absence_and_coupled_rescue_on_same_windows() -> (
+    None
+):
     rows = [
         inputs(
             window_id="hidden-visit",

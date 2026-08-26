@@ -12,6 +12,7 @@ apples held-out comparison of what each added layer contributes:
 The functions produce inference-safe ``VisitPredictionRecord`` values.  They do
 not consume biological truth, coupling truth, nuisance truth, or support truth.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -243,6 +244,8 @@ def evaluate_visit_system_variants(
 
     summaries: dict[VisitSystemVariant, VisitValidationSummary] = {}
     for variant in VisitSystemVariant:
-        predictions = [predict_visit_variant(row, variant, thresholds=thresholds) for row in inputs]
+        predictions = [
+            predict_visit_variant(row, variant, thresholds=thresholds) for row in inputs
+        ]
         summaries[variant] = evaluate_visit_predictions(truth, predictions)
     return summaries
