@@ -6,19 +6,17 @@
 
 > Given a dynamic observation, when is there enough evidence to support a target process, a nuisance process, or neither uniquely enough to justify a forced label?
 
-The current scientific architecture is **baseline + ternary deviation-side inference**:
+The current scientific programme has two layers:
 
 ```text
-baseline / no dynamic query
-        |
-        +-- target supported
-        +-- nuisance supported
-        +-- undetermined
-              |-- no supported evidence
-              +-- overlap / attribution unresolved
+V14b/V14c  frozen closed-world theory
+    baseline + TARGET / NUISANCE / UNDETERMINED
+
+V15-v2     active pre-data empirical bridge
+    T + C + N + O + optional independent A-
 ```
 
-Target and nuisance are defined positively and are **not complements**. They may coexist. Observability is a separate measurement question; high nuisance is not the same thing as low observability.
+Target and nuisance are defined positively and are **not complements**. They may coexist. Observability is a separate measurement question; high nuisance is not the same thing as low observability. V15-v2 further separates observation support from biological absence certification.
 
 ## Current design principles
 
@@ -27,9 +25,11 @@ Target and nuisance are defined positively and are **not complements**. They may
 3. **Superposition is legitimate.** Simultaneous target+nuisance evidence is preserved rather than tuned away.
 4. **Undetermined is an epistemic output.** It is not a third biological process and is not forced into absence.
 5. **No support is weaker than information absence.** V14c calls this `NO_SUPPORTED_EVIDENCE`; proving true information absence requires an independent identifiability/observability test.
-6. **Operational boundaries are risk contracts, not inherited raw scores.** The frozen V14b nuisance decision uses a family-wise false-certainty budget `alpha = 0.05`.
-7. **Development freezes before measurement.** Failed hypotheses and failed generations remain in history rather than being post-hoc repaired.
-8. **Dimensionless ratios define the closed-world phase space.** The current V14b surface uses `Pi1`–`Pi6` rather than field-specific pixel/time constants.
+6. **Observation support is not absence evidence.** In V15-v2, good `O` means the primary stream is measurable enough to attempt inference; it does not turn low target evidence into biological absence.
+7. **Certified target absence requires an independent channel.** V15-v2 represents this as optional `A-` (`TargetAbsenceEvidence`). Its default pre-data state is unavailable.
+8. **Operational boundaries are risk contracts, not inherited raw scores.** The frozen V14b nuisance decision uses a family-wise false-certainty budget `alpha = 0.05`.
+9. **Development freezes before measurement.** Failed hypotheses and failed generations remain in history rather than being post-hoc repaired.
+10. **Dimensionless ratios define the closed-world phase space.** The frozen V14b surface uses `Pi1`–`Pi6` rather than field-specific pixel/time constants.
 
 ## Locked V14b result
 
@@ -79,7 +79,15 @@ p(target) in [P(TARGET), 1]
           = [0.4287333333, 1]
 ```
 
-A later empirical generation may tighten the upper bound only through an independently validated observability/absence-certification channel or an explicit sampling/missingness model.
+V15-v2 does not silently tighten this bound. Its default `TargetAbsenceEvidence.unavailable()` means:
+
+```text
+O = observable + low/zero target evidence
+!= certified absence
+=> unresolved unless independent A- supports absence
+```
+
+A future empirical generation may tighten the upper bound only through a genuinely independent validated `A-` channel or an explicit sampling/missingness model.
 
 ## PolliPi relationship
 
@@ -89,28 +97,43 @@ Important boundary:
 
 - PolliPi evidence `0 / 0.5 / 1` is **not** V14b `Pi3`;
 - PolliPi `environmental_noise` means target evidence was not retained strongly enough by that observer, not that nuisance truth was established;
+- low PolliPi evidence is not an `A-` absence channel;
 - the 5.88M-world V14b result is a synthetic closed-world InsePi result, not a field validation of the current PolliPi classifier.
 
-## Empirical bridge: V13 and V15
+## Empirical bridge: V13 and V15-v2
 
 The closed-world V14b/V14c result is not a field accuracy claim.
 
 - **V13** remains a result-pending physical intervention protocol. Its active GitHub Action is manual-only; historical V13 workflow YAML is preserved as provenance.
-- **V15** is the later real visit-observation validation programme, separating biological event truth, target-coupled response truth, exogenous nuisance truth, and primary-stream observation-support truth.
+- **V15-v2** is the active pre-data real visit-observation bridge. It separates:
+  - `T`: positive direct target evidence;
+  - `C`: positive target-coupled response evidence;
+  - `N`: positive exogenous nuisance evidence;
+  - `O`: primary-stream observation support;
+  - `A-`: optional independently validated target-absence evidence.
 
-The next empirical question is not how to tune U away. It is whether observation support and target absence can be certified independently from real camera measurements.
+The full V15 system uses the process-preserving V14b policy, so observable high target + high nuisance evidence remains target-positive with nuisance audit rather than being forced into an exclusive conflict state.
+
+Naive binary comparators are retained only to measure the cost of forced decisions. Their low-score negatives are recorded as `forced_absence_call`, not certified negative evidence.
+
+Normative V15-v2 files:
+
+- `benchmarks/v15_empirical_bridge_v2_contract.json`
+- `docs/V15_EMPIRICAL_BRIDGE_V2.md`
+- `src/interaction_sensing/target_absence.py`
+- `src/interaction_sensing/v15.py`
 
 ## Repository structure
 
 - `src/interaction_sensing/` — current and historical sensing contracts, observers, decision layers, simulations, and evaluation utilities.
-- `benchmarks/` — frozen protocols, receipts, result summaries, and claim boundaries across generations.
-- `docs/` — method development, negative results, frozen-generation reports, and current V14/V14c interpretation.
+- `benchmarks/` — frozen protocols, receipts, result summaries, and current pre-data contracts.
+- `docs/` — method development, negative results, frozen-generation reports, and current V14/V15 interpretation.
 - `scripts/` — reproducible generation/evaluation helpers for the corresponding protocols.
 - `tests/` — normal package and scientific-contract tests.
 - `provenance/frozen_github_workflows/` — byte-preserved generation-specific workflow YAML removed from active GitHub Actions after its scientific generation was frozen.
 - `legacy/` — earlier prototype/runtime material retained for provenance and baselines.
 
-Earlier NoiseBench, noise-source, portfolio, design-inference, real-pixel, causal-intervention, and physical-validation generations remain part of the evidence history. They should not be mistaken for the current V14b ontology simply because their code remains importable.
+Earlier NoiseBench, noise-source, portfolio, design-inference, real-pixel, causal-intervention, and physical-validation generations remain part of the evidence history. They should not be mistaken for the current V14b ontology or V15-v2 empirical bridge simply because their code remains importable.
 
 ## Active CI
 
@@ -135,6 +158,12 @@ python -m pip install -e ".[runtime,analysis,dev]"
 pytest
 ```
 
+V15-v2 has a dedicated public facade:
+
+```python
+import interaction_sensing.v15 as v15
+```
+
 ## Claim boundary
 
-Current V14b/V14c conclusions are **closed-world, frozen-observer statements**. They do not establish field visitation accuracy, field prevalence, a calibrated PolliPi probability, a universal physical transition point, or a universal claim that direct-signal amplitude is irrelevant once positive.
+V14b/V14c conclusions are **closed-world, frozen-observer statements**. V15-v2 is **pre-data empirical design/software**, not a field result. The repository currently does not establish field visitation accuracy, calibrated field observability, a validated target-absence channel, field prevalence, a calibrated PolliPi probability, a universal physical transition point, or universal superiority of the full T/C/N/O/A- architecture.
