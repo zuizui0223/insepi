@@ -9,10 +9,11 @@ The rule is asymmetric and fail-closed:
 
 - choose the largest unobservable threshold whose false-censor rate on truly
   observable development windows does not exceed its declared budget;
-- choose the smallest observable threshold whose false-observable rate on truly
-  unobservable development windows does not exceed its declared budget;
-- if the two thresholds do not leave a strict compromised interval, calibration
-  fails rather than collapsing the middle state.
+- then choose the smallest observable threshold *strictly above that boundary*
+  whose false-observable rate on truly unobservable development windows does not
+  exceed its declared budget;
+- if no such ordered pair exists, calibration fails rather than collapsing the
+  compromised middle state.
 
 No default budgets are provided. They must be frozen before held-out scoring.
 """
@@ -114,18 +115,17 @@ def calibrate_support_thresholds(
 
     feasible_observable: list[tuple[float, float]] = []
     for threshold in candidates:
+        if threshold <= unobservable_threshold:
+            continue
         false_observable = _rate([score >= threshold for score in unobservable_scores])
         if false_observable <= budget.max_false_observable_on_unobservable + 1e-15:
             feasible_observable.append((threshold, false_observable))
     if not feasible_observable:
-        raise ValueError("no observable threshold satisfies the false-observable budget")
-    observable_threshold, false_observable = min(feasible_observable, key=lambda item: item[0])
-
-    if unobservable_threshold >= observable_threshold:
         raise ValueError(
-            "risk-budget calibration leaves no strict compromised interval; "
-            "do not collapse O into a binary state"
+            "no observable threshold above the calibrated unobservable boundary "
+            "satisfies the false-observable budget"
         )
+    observable_threshold, false_observable = min(feasible_observable, key=lambda item: item[0])
 
     return SupportCalibrationResult(
         unobservable_threshold=unobservable_threshold,
