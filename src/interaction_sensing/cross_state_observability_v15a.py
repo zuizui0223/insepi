@@ -1,9 +1,10 @@
 """Prefrozen V15a crossing of physical state and observation support.
 
 V15a does not regenerate or retune the frozen V14b observers.  It takes the
-locked V14b world counts and crosses each physical regime with an independent,
-synthetic primary-stream support lattice.  This isolates the epistemic effect
-of observation support from the physical target and nuisance processes.
+locked V14b global counts and retained regime rates, then crosses each physical
+regime with an independent, synthetic primary-stream support lattice.  This
+isolates the epistemic effect of observation support from the physical target
+and nuisance processes.
 """
 
 from __future__ import annotations
@@ -37,7 +38,7 @@ V14B_CLOSEOUT_SHA256 = (
     "ad5b3a60b2f82d1f079076a73acc7aa55a53dc33b9703a5a3625762c5e3646f6"
 )
 V15A_PROTOCOL_CANONICAL_SHA256 = (
-    "665fad8657b602d844413e72a8900c4f5e1ef522de73787009a2fd4648bd4cfe"
+    "96e7dee85c3ff0cbea0498d0fce0298605223ae46db9c9d71bf9c25621b23594"
 )
 
 PHYSICAL_REGIMES = (
@@ -373,6 +374,36 @@ def _reason_counts_from_rates(
     return counts
 
 
+def _state_rates(section: Mapping[str, Any]) -> dict[str, float]:
+    rates = {
+        state: float(
+            section[
+                "undetermined_total_rate"
+                if state == "undetermined"
+                else f"{state}_rate"
+            ]
+        )
+        for state in BASE_STATES
+    }
+    if any(rate < 0.0 or rate > 1.0 for rate in rates.values()):
+        raise ValueError("base state rate lies outside [0, 1]")
+    if abs(sum(rates.values()) - 1.0) > 1e-12:
+        raise ValueError("base state rates do not sum to one")
+    return rates
+
+
+def _reason_rates(
+    section: Mapping[str, Any], undetermined_rate: float
+) -> dict[str, float]:
+    rates = {
+        reason: float(section[f"undetermined_{reason}_rate"])
+        for reason in ("information_absent", "overlap_or_attribution")
+    }
+    if abs(sum(rates.values()) - undetermined_rate) > 1e-12:
+        raise ValueError("base U reason rates do not sum to base U")
+    return rates
+
+
 def _zero_state_counts() -> dict[str, int]:
     return {state.value: 0 for state in CrossStateDecisionState}
 
@@ -403,6 +434,32 @@ def _profile_counts(
     else:
         states[CrossStateDecisionState.CENSORED.value] = total
         reasons[CrossStateDecisionReason.OBSERVATION_UNAVAILABLE.value] = total
+    return states, reasons
+
+
+def _profile_rates(
+    *,
+    availability: ObservationAvailability,
+    base_rates: Mapping[str, float],
+    base_reason_rates: Mapping[str, float],
+) -> tuple[dict[str, float], dict[str, float]]:
+    states = {state.value: 0.0 for state in CrossStateDecisionState}
+    reasons = {
+        reason.value: 0.0
+        for reason in CrossStateDecisionReason
+        if reason.value != "none"
+    }
+    if availability is ObservationAvailability.OBSERVABLE:
+        for state, rate in base_rates.items():
+            states[state] = rate
+        for reason, rate in base_reason_rates.items():
+            reasons[reason] = rate
+    elif availability is ObservationAvailability.COMPROMISED:
+        states[CrossStateDecisionState.UNDETERMINED.value] = 1.0
+        reasons[CrossStateDecisionReason.OBSERVATION_COMPROMISED.value] = 1.0
+    else:
+        states[CrossStateDecisionState.CENSORED.value] = 1.0
+        reasons[CrossStateDecisionReason.OBSERVATION_UNAVAILABLE.value] = 1.0
     return states, reasons
 
 
@@ -492,38 +549,51 @@ def build_v15a_cross_state_result(
     regime_matrix: dict[str, Any] = {}
     for regime in PHYSICAL_REGIMES:
         regime_section = _mapping(regime_means, regime)
-        regime_base = _counts_from_rates(regime_section, worlds_per_regime)
-        regime_reasons = _reason_counts_from_rates(
-            regime_section,
-            worlds_per_regime,
-            regime_base["undetermined"],
+        regime_base_rates = _state_rates(regime_section)
+        regime_reason_rates = _reason_rates(
+            regime_section, regime_base_rates["undetermined"]
         )
         by_availability: dict[str, Any] = {}
         for availability in ObservationAvailability:
             multiplicity = availability_profile_counts[availability.value]
-            states, reasons = _profile_counts(
+            states, reasons = _profile_rates(
                 availability=availability,
-                base_counts=regime_base,
-                base_reason_counts=regime_reasons,
+                base_rates=regime_base_rates,
+                base_reason_rates=regime_reason_rates,
             )
-            multiplied_states = {
-                name: count * multiplicity for name, count in states.items()
-            }
-            multiplied_reasons = {
-                name: count * multiplicity for name, count in reasons.items()
-            }
-            class_worlds = worlds_per_regime * multiplicity
             by_availability[availability.value] = {
                 "profile_count": multiplicity,
-                "expanded_worlds": class_worlds,
-                "final_state_counts": multiplied_states,
-                "final_state_rates": _rates(multiplied_states, class_worlds),
-                "reason_counts": multiplied_reasons,
+                "final_state_rates": states,
+                "reason_rates": reasons,
             }
         regime_matrix[regime] = {
-            "base_worlds_per_profile": worlds_per_regime,
+            "locked_regime_mean_rates": regime_base_rates,
             "by_availability": by_availability,
         }
+
+    global_rates = _state_rates(global_summary)
+    equal_regime_mean_rates = {
+        state: sum(
+            regime_matrix[regime]["locked_regime_mean_rates"][state]
+            for regime in PHYSICAL_REGIMES
+        )
+        / len(PHYSICAL_REGIMES)
+        for state in BASE_STATES
+    }
+    parent_summary_consistency = {
+        "global_rates": global_rates,
+        "equal_mean_of_locked_regime_rates": equal_regime_mean_rates,
+        "global_minus_equal_regime_mean": {
+            state: global_rates[state] - equal_regime_mean_rates[state]
+            for state in BASE_STATES
+        },
+        "regime_rates_coerced_to_integer_counts": False,
+        "interpretation": (
+            "locked global counts are authoritative for global expansion; "
+            "locked regime means are retained as rates and any discrepancy is "
+            "reported without repair"
+        ),
+    }
 
     target_present_base_worlds = worlds_per_regime * len(TARGET_PRESENT_REGIMES)
     observable_false_negative_count = round(
@@ -574,6 +644,7 @@ def build_v15a_cross_state_result(
             "reason_rates": _rates(expanded_reasons, expanded_world_count),
         },
         "physical_regime_by_observation_availability": regime_matrix,
+        "parent_summary_consistency": parent_summary_consistency,
         "quiet_baseline_cross": {
             "physical_regime": "baseline",
             "observable": quiet_cross["observable"],

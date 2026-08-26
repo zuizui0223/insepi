@@ -6,6 +6,7 @@ on:
       - "src/interaction_sensing/cross_state_observability_v15a.py"
       - "scripts/run_v15a_cross_state_observability.py"
       - "benchmarks/v15a_cross_state_observability_protocol.json"
+      - "benchmarks/v15a_cross_state_observability_preflight_history.json"
       - "benchmarks/v15a_cross_state_observability_result.json"
       - "tests/test_v15a_cross_state_observability_prefreeze.py"
       - "tests/test_v15a_cross_state_observability_result.py"
