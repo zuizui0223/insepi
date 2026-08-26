@@ -1,0 +1,48 @@
+{
+  "schema": "insepi-v15-v2-target-field-adapter-freeze-v1",
+  "generation": "V15-v2",
+  "status": "frozen-pre-heldout-interface",
+  "purpose": "Freeze the cross-repository direct target-evidence interface from PolliPi into InsePi without interpreting low evidence as biological absence, nuisance truth, observability, or confirmed visitation.",
+  "pollipi_provenance": {
+    "repository": "zuizui0223/pollipi",
+    "main_commit": "f3b266897f3e9139e6c3fe9ce6b645e25371e092",
+    "adapter_path": "packages/analysis/src/pollipi_analysis/target_evidence.py",
+    "adapter_git_blob_sha1": "4be5f7c88edda1dda3b62e8a95529386d702bb47",
+    "scale": "ordinal-v14-reference"
+  },
+  "frozen_mapping": {
+    "no_activity": 0.0,
+    "environmental_noise": 0.0,
+    "uncertain_local_activity": 0.5,
+    "strong_visitation_candidate": 1.0
+  },
+  "insepi_adapter": {
+    "path": "src/interaction_sensing/target_field_adapter_v15.py",
+    "output": "direct positive target evidence only",
+    "coupled_route": "not inferred; separate V15 measurement/attribution path",
+    "forbidden_inferences": [
+      "score 0 implies target absence",
+      "environmental_noise implies nuisance truth",
+      "low target evidence implies poor observability",
+      "score 1 implies confirmed biological visitation",
+      "PolliPi ordinal score is V14b Pi3 or a calibrated probability"
+    ]
+  },
+  "freeze_boundary": {
+    "frozen_now": [
+      "accepted source states",
+      "exact 0/0.5/1 ordinal mapping",
+      "ordinal-v14-reference scale identifier",
+      "confirmed_visit must remain false",
+      "direct-only route construction with zero invented coupled evidence",
+      "positive-only semantics and no negative inversion"
+    ],
+    "not_frozen_or_claimed": [
+      "field target recall or precision",
+      "field-calibrated target probability",
+      "field target high/low thresholds",
+      "coupled-response measurement calibration",
+      "biological absence certification"
+    ]
+  }
+}
