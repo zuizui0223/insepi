@@ -1,0 +1,45 @@
+{
+  "schema": "insepi-v15-v2-cluster-exposure-estimand-freeze-v1",
+  "generation": "V15-v2",
+  "status": "frozen-pre-heldout",
+  "source_implementation": "src/interaction_sensing/visit_rate.py",
+  "primary_estimand": "detected visit-event rate conditional on interpretable primary-stream exposure",
+  "numerator": {
+    "unit": "unique stable event_id",
+    "rule": "count each detected event once within its block; one event_id cannot belong to multiple blocks"
+  },
+  "denominator": {
+    "unit": "hours",
+    "definition": "sum of interpretable primary-stream exposure seconds divided by 3600",
+    "censored_time": "excluded from the rate denominator and retained separately",
+    "zero_interpretable_exposure": "rate is null rather than zero"
+  },
+  "block_reporting": {
+    "required": true,
+    "fields": [
+      "detected_event_count",
+      "total_exposure_hours",
+      "interpretable_exposure_hours",
+      "censored_fraction",
+      "rate_per_interpretable_hour"
+    ]
+  },
+  "pooled_reporting": {
+    "rate": "unique detected events across registered blocks / pooled interpretable exposure hours",
+    "censored_fraction": "pooled censored seconds / pooled total seconds; 0 when total seconds is 0"
+  },
+  "hard_boundaries": [
+    "frames and windows are not biological visit replicates",
+    "censored exposure is never silently relabelled as no-visit exposure",
+    "this estimand is not the ecological visit rate over total deployment time",
+    "extrapolation to total deployment time requires a separately frozen sampling/missingness model or probability-sample estimator",
+    "held-out results cannot change the numerator or denominator"
+  ],
+  "not_frozen_here": [
+    "independent cluster unit for uncertainty estimation",
+    "ICC",
+    "sample size",
+    "paired system-comparison model",
+    "total-time extrapolation"
+  ]
+}
