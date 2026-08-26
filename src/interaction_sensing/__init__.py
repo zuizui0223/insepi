@@ -37,6 +37,11 @@ from .support_estimation import (
     SupportMeasurementProvenance,
     evaluate_support_estimates,
 )
+from .support_measurement import (
+    PrimaryStreamMeasurementConfig,
+    VisibilityMeasurement,
+    measure_primary_stream_support,
+)
 from .support_truth import (
     PrimaryStreamSupportTruth,
     SupportComponentState,
@@ -92,6 +97,7 @@ __all__ = [
     "ObservationTriadPolicy",
     "ObservabilityDecision",
     "ObservabilityState",
+    "PrimaryStreamMeasurementConfig",
     "PrimaryStreamSupportEstimate",
     "PrimaryStreamSupportEstimator",
     "PrimaryStreamSupportMeasurements",
@@ -108,6 +114,7 @@ __all__ = [
     "TargetRouteEvidence",
     "TargetSpec",
     "TriadState",
+    "VisibilityMeasurement",
     "VisitObservationRecord",
     "VisitObservationStatus",
     "VisitObservationSummary",
@@ -120,6 +127,7 @@ __all__ = [
     "diagnostic_actions",
     "evaluate_support_estimates",
     "evaluate_visit_predictions",
+    "measure_primary_stream_support",
     "prediction_from_triad",
     "profile_for",
     "summarise_visit_observations",
