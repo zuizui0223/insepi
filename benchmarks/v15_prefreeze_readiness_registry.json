@@ -45,9 +45,9 @@
     {
       "name": "o_measurement_calibration",
       "status": "development_defined",
-      "evidence_path": "src/interaction_sensing/support_estimation.py",
+      "evidence_path": "benchmarks/v15_support_calibration_v1_contract.json",
       "sha256": null,
-      "note": "Five-component O estimator exists; 0.30/0.70 remain development defaults, not field-calibrated thresholds."
+      "note": "A development-only asymmetric risk-budget calibration rule now exists; the two false-certainty budgets, calibrated thresholds and source development manifest remain unfrozen. Historical 0.30/0.70 are not field thresholds."
     },
     {
       "name": "target_field_adapter",
