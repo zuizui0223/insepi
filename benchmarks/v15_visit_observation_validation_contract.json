@@ -1,18 +1,18 @@
 {
-  "schema": "pollipi-insepi-v15-visit-observation-validation-v2",
+  "schema": "pollipi-insepi-v15-visit-observation-validation-v3",
   "generation": "V15",
   "status": "pre-data-protocol-draft-not-yet-frozen",
-  "purpose": "Validate whether explicit direct/coupled target evidence, exogenous nuisance risk, and observability censoring improve real insect-visit observation without conflating non-detection with biological absence.",
+  "purpose": "Validate whether explicit direct/coupled target evidence, exogenous nuisance diagnosis, independently estimated observation support, and protected random audit improve real insect-visit observation without conflating non-detection with biological absence.",
   "truth_layers": {
     "biological_event": {
-      "source": "synchronised independent reference observation (reference camera and/or direct observer), annotated without algorithm outputs",
+      "source": "synchronised independent reference observation, annotated without primary-stream algorithm outputs or primary-stream support labels",
       "states": ["no_insect", "insect_in_context", "target_contact", "visit_event"],
       "resolution": ["resolved", "unresolved"],
       "visit_definition": "operational interaction event at the focal floral target; does not imply pollination effectiveness",
       "hard_rule": "If the reference truth channel cannot resolve the biological state, the window is truth_unresolved and cannot be relabelled no_insect."
     },
     "target_coupled_response": {
-      "source": "synchronised reference annotation of target-linked local flower/target response, independent of algorithm outputs",
+      "source": "separate reference-channel causal-attribution pass after biological state annotation; primary-stream target/nuisance/support outputs hidden",
       "states": ["absent", "present"],
       "resolution": ["resolved", "unresolved"],
       "definition": "local response causally attributable to focal insect contact/visit; exogenous wind/background motion is excluded",
@@ -23,18 +23,35 @@
       ]
     },
     "nuisance": {
-      "source": "human/physical annotation independent of observer outputs",
+      "source": "separate primary-stream annotation/physical-log pass with reference biological truth and algorithm outputs hidden",
       "scope": "exogenous non-target processes only",
       "multi_label": true,
       "effects": ["mimic_target", "mask_target", "corrupt_attribution", "degrade_observation_support"],
       "hard_rule": "Target-driven local flower response is not nuisance merely because it is motion."
     },
     "observation_support": {
-      "source": "annotation/physical measurement of the primary system-under-test stream, independent of PolliPi/InsePi outputs",
+      "source": "separate primary-stream support pass with reference biological truth, nuisance labels, and algorithm outputs hidden",
+      "components": [
+        "target_zone_coverage",
+        "target_zone_visibility",
+        "spatial_resolution",
+        "photometric_sufficiency",
+        "temporal_continuity"
+      ],
       "states": ["observable", "compromised", "unobservable"],
+      "resolution": ["resolved", "unresolved"],
       "question": "If a visit occurred in the focal interaction zone, was the primary system-under-test stream sufficient to observe it?",
-      "independence_rule": "Primary-stream unobservability does not prevent biological truth from being resolved by the independent reference truth channel."
+      "independence_rule": "Primary-stream support is not derived from target score, nuisance score, biological truth or reference-channel visibility."
     }
+  },
+  "layer_blinding_contract": {
+    "biological_truth_ledger": "reference stream only",
+    "coupling_truth_ledger": "reference stream causal-attribution pass; target/nuisance/support algorithm outputs hidden",
+    "nuisance_truth_ledger": "primary stream only; biological reference truth hidden",
+    "support_truth_ledger": "primary stream only; biological reference truth and nuisance labels hidden",
+    "join_key": "window_id plus channel-specific clip SHA-256 provenance",
+    "join_after_layer_adjudication": true,
+    "automatic_cross_layer_conflict_resolution": false
   },
   "target_route_contract": {
     "direct_route": "evidence for the insect/actor itself",
@@ -42,15 +59,42 @@
     "aggregate_use": "an aggregate target score may be used operationally, but V15 evaluation preserves direct and coupled route scores",
     "nuisance_independence": "exogenous nuisance observer outputs are not inputs to the target-route calculation"
   },
+  "observability_estimator_contract": {
+    "O_is_not_one_minus_N": true,
+    "forbidden_inputs": [
+      "target evidence",
+      "nuisance risk",
+      "biological-event truth",
+      "nuisance truth"
+    ],
+    "allowed_primary_stream_measurements": [
+      "target-zone geometry/coverage",
+      "independent target-zone visibility measurement",
+      "spatial-resolution audit",
+      "photometric sufficiency audit",
+      "frame-timing/temporal-continuity audit"
+    ],
+    "development_only_reference_thresholds": {
+      "observable": 0.70,
+      "unobservable": 0.30
+    },
+    "freeze_before_held_out": [
+      "measurement methods",
+      "normalisation references",
+      "support thresholds",
+      "missing-data handling",
+      "support-validation metrics"
+    ]
+  },
   "reference_truth_contract": {
-    "primary_stream": "the camera stream evaluated by PolliPi/InsePi/V14",
-    "reference_stream": "a synchronised observation channel used only for truth annotation and not as model input",
+    "primary_stream": "the camera stream evaluated by the target/nuisance/support algorithms",
+    "reference_stream": "a synchronised observation channel used only for biological/coupling truth and never as model input",
     "required_for_false_absence_validation": true,
     "reference_stream_outputs_hidden_from_algorithms": true,
     "both_streams_unresolved": "biological truth is unresolved; exclude from biological accuracy denominators but retain for support/QC accounting"
   },
   "split_contract": {
-    "development": "threshold calibration and contradiction-guided failure diagnosis only",
+    "development": "measurement calibration and contradiction-guided failure diagnosis only",
     "held_out": "entirely new recording days and focal scenes/flowers",
     "forbidden": [
       "random frame split across the same recording block",
@@ -60,11 +104,13 @@
   },
   "annotation_contract": {
     "algorithm_outputs_hidden_from_annotators": true,
+    "truth_layers_use_separate_blinded_passes": true,
     "double_annotation_fraction_min": 0.20,
     "disagreements_adjudicated_before_model_scoring": true,
     "unobservable_is_not_relabelled_as_no_visit": true,
     "unresolved_reference_truth_is_not_relabelled_as_no_insect": true,
-    "unresolved_coupling_truth_is_not_relabelled_as_no_coupling": true
+    "unresolved_coupling_truth_is_not_relabelled_as_no_coupling": true,
+    "unresolved_support_truth_is_not_relabelled_observable_or_unobservable": true
   },
   "comparison_systems": [
     "direct_target_only_naive",
@@ -82,6 +128,7 @@
     "observable_false_censor_rate",
     "fraction_censored",
     "reference_truth_unresolved_fraction",
+    "support_truth_unresolved_fraction",
     "shared_blind_spot_discovery_rate",
     "review_or_capture_burden",
     "indirect_target_rescue_rate_on_weak_direct_coupled_visits",
@@ -90,22 +137,30 @@
     "block_level_visit_rate_rmse"
   ],
   "primary_questions": [
+    "Can O be estimated from primary-stream measurement properties without target/nuisance outputs or truth?",
     "Does explicit observability censoring reduce false absence compared with treating low target evidence as absence?",
     "Does exogenous nuisance information identify false-positive/miss-risk conditions that target evidence alone cannot diagnose?",
     "Can target-coupled local flower response rescue real visits when direct insect evidence is weak?",
     "Does preserving coupling separately avoid falsely relabelling exogenous flower/background motion as insect evidence?",
-    "Does the protected probability sample recover visits or observation failures missed by both targeted observers?",
-    "Does the full triad preserve a more defensible visit-rate denominator than targeted-only sampling?"
+    "Does the protected probability sample recover visits or observation failures missed by all targeted components?",
+    "Does the full system preserve a more defensible visit-rate denominator than targeted-only sampling?"
   ],
+  "development_contract": {
+    "method": "contradiction-guided alternating development",
+    "subsystems": ["target", "nuisance", "support"],
+    "rule": "after independent truth join, representation/model defects may modify exactly one subsystem while siblings remain frozen",
+    "stop": "contradiction-type saturation rather than zero disagreement"
+  },
   "claim_ceiling_before_data": {
     "allowed": "protocol and software readiness only",
     "forbidden": [
       "field visit accuracy",
       "calibrated detection probability",
+      "calibrated field observability",
       "pollination effectiveness",
-      "universal superiority of the triad",
+      "universal superiority of the full system",
       "universal validity of indirect flower-response evidence"
     ]
   },
-  "freeze_rule": "Before held-out scoring, sample-size/power plan, development calibration rule, final metric formulas, coupling annotation rule, and claim thresholds must be committed and hashed."
+  "freeze_rule": "Before held-out scoring, sample-size/power plan, O measurement/calibration rule, target/nuisance development calibration, final metric formulas, coupling annotation rule, cluster/exposure-time estimator and claim thresholds must be committed and hashed."
 }
