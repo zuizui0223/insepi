@@ -12,12 +12,12 @@ import csv
 import hashlib
 import itertools
 import json
-from dataclasses import asdict
 from pathlib import Path
 from typing import Any
 
 import numpy as np
 
+from interaction_sensing.evaluation.plateau_diagnosis import auc, fit_lda
 from interaction_sensing.simulation.dimensionless_observability_v14 import LatentRegime
 from interaction_sensing.simulation.dimensionless_observability_v14a2 import (
     SpatiotemporalPoint,
@@ -36,30 +36,6 @@ REGIME_BY_NAME = {item.value: item for item in LatentRegime}
 
 def sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
-
-
-def auc(pos: np.ndarray, neg: np.ndarray) -> float:
-    pos = np.asarray(pos, dtype=float)
-    neg = np.asarray(neg, dtype=float)
-    if pos.size == 0 or neg.size == 0:
-        return float("nan")
-    diff = pos[:, None] - neg[None, :]
-    return float(np.mean(diff > 0) + 0.5 * np.mean(diff == 0))
-
-
-def fit_lda(x0: np.ndarray, x1: np.ndarray, ridge_fraction: float) -> np.ndarray:
-    x0 = np.asarray(x0, dtype=float)
-    x1 = np.asarray(x1, dtype=float)
-    if x0.ndim != 2 or x1.ndim != 2 or x0.shape[1] != x1.shape[1]:
-        raise ValueError("LDA inputs must be two matrices with the same feature count")
-    pooled_rows = np.vstack([x0, x1])
-    mean_variance = float(np.mean(np.var(pooled_rows, axis=0, ddof=1)))
-    ridge = max(1e-12, ridge_fraction * mean_variance)
-    c0 = np.cov(x0, rowvar=False)
-    c1 = np.cov(x1, rowvar=False)
-    pooled = ((len(x0) - 1) * c0 + (len(x1) - 1) * c1) / max(1, len(x0) + len(x1) - 2)
-    pooled = np.atleast_2d(pooled) + ridge * np.eye(x0.shape[1])
-    return np.linalg.pinv(pooled) @ (np.mean(x1, axis=0) - np.mean(x0, axis=0))
 
 
 def _coordinates(world_protocol: dict[str, Any]) -> list[SpatiotemporalPoint]:
