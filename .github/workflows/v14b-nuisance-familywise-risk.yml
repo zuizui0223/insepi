@@ -1,0 +1,61 @@
+name: V14b nuisance family-wise risk locked run
+
+on:
+  push:
+    branches:
+      - feature/v14b-nuisance-familywise-risk
+    paths:
+      - '.github/v14b_nuisance_familywise_risk_once'
+      - '.github/workflows/v14b-nuisance-familywise-risk.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  calibrate-validate:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11.16'
+          check-latest: false
+      - name: Install frozen runtime
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install "numpy==2.4.6" -e ".[dev]"
+      - name: Verify marker and contract
+        run: |
+          test "$(cat .github/v14b_nuisance_familywise_risk_once)" = "RUN_ONCE_V14B_NUISANCE_FAMILYWISE_RISK"
+          pytest -q tests/test_v14b_nuisance_familywise_risk.py tests/test_v14b_nuisance_risk_calibration.py
+      - name: Run family-wise calibration and held-out validation exactly once
+        run: |
+          python scripts/run_v14b_nuisance_familywise_risk.py --output v14b_nuisance_familywise_output/result.json
+      - name: Build immutable receipt
+        run: |
+          python - <<'PY'
+          import hashlib, json, os, platform
+          from pathlib import Path
+          import numpy as np
+          out=Path('v14b_nuisance_familywise_output/result.json')
+          payload=json.loads(out.read_text())
+          receipt={
+            'schema':'insepi-v14b-nuisance-familywise-risk-receipt-v1',
+            'execution_commit':os.environ['GITHUB_SHA'],
+            'runtime':{'python':platform.python_version(),'numpy':np.__version__},
+            'result_sha256':hashlib.sha256(out.read_bytes()).hexdigest(),
+            'alpha':payload['alpha'],
+            'family_calibration_thresholds':payload['family_calibration_thresholds'],
+            'operational_threshold':payload['operational_threshold'],
+            'heldout_family_fpr':payload['heldout_family_fpr'],
+            'heldout_nuisance_coverage':payload['heldout_nuisance_coverage'],
+            'new_contradiction_type_count':payload['new_contradiction_type_count'],
+            'nuisance_decision_contract_freezable':payload['nuisance_decision_contract_freezable'],
+          }
+          Path('v14b_nuisance_familywise_output/receipt.json').write_text(json.dumps(receipt,indent=2,sort_keys=True)+'\n')
+          PY
+      - name: Upload immutable family-wise result
+        uses: actions/upload-artifact@v4
+        with:
+          name: v14b-nuisance-familywise-risk-first-run
+          path: v14b_nuisance_familywise_output/
