@@ -65,10 +65,10 @@
     },
     {
       "name": "nuisance_field_adapter",
-      "status": "development_defined",
-      "evidence_path": "src/interaction_sensing/nuisance_field_measurement_v15.py",
-      "sha256": null,
-      "note": "Primary-stream continuous process measurement baseline exists. It is uncalibrated and must not be treated as nuisance probability or held-out-frozen risk mapping."
+      "status": "frozen",
+      "evidence_path": "benchmarks/v15_nuisance_field_adapter_freeze_v1.json",
+      "sha256": "0636b33b9e2fc2b85480b169804fe4441622b3363f25ea63a2bfd8c1f9a15b30",
+      "note": "The primary-stream nuisance measurement formula and pre-scoring reference-zone manifest schema are frozen. Effect-specific risk calibration and operational nuisance thresholds remain separately blocked by target_nuisance_decision_calibration."
     },
     {
       "name": "target_nuisance_decision_calibration",
