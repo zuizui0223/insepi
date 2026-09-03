@@ -84,11 +84,14 @@ private randomisation
 → frozen cluster-level evaluator
 ```
 
-The active manual preflight is:
+Active manual-only V13 checks are:
 
 ```text
 .github/workflows/v13-manual-preflight.yml
+.github/workflows/v13-manual-observer-smoke.yml
 ```
+
+The first verifies the V13 execution digest/contracts and confirms that no scientific V13 result has been materialised. The second clones the exact frozen PolliPi/InsePi commits, audits software-level separation and smoke-tests both APIs before real V13 pixels are used.
 
 Frozen historical scientific workflows remain under `provenance/frozen_github_workflows/` and are not rerun automatically.
 
