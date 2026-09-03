@@ -4,7 +4,6 @@ import argparse
 import json
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Callable
 
 
 EXPECTED_CLIP_COUNT = 720
@@ -118,6 +117,9 @@ STAGES = (
 )
 
 
+STAGE_BY_FLAG = {f"stage_{stage.number}_{stage.name}": stage for stage in STAGES}
+
+
 def _path_state(root: Path, stage: Stage) -> tuple[int, int]:
     present = sum((root / rel).exists() for rel in stage.required_paths)
     return present, len(stage.required_paths)
@@ -166,11 +168,20 @@ def inspect_workspace(root: Path) -> dict[str, object]:
     acquisition_started = clips > 0
 
     ordered_flags: list[tuple[str, bool]] = []
-    ordered_flags.extend((f"stage_{stage.number}_{stage.name}", complete) for stage, complete in zip(STAGES[:2], stage_complete[:2]))
+    ordered_flags.extend(
+        (f"stage_{stage.number}_{stage.name}", complete)
+        for stage, complete in zip(STAGES[:2], stage_complete[:2])
+    )
     ordered_flags.append(("stage_3_physical_acquisition", acquisition_complete))
-    ordered_flags.extend((f"stage_{stage.number}_{stage.name}", complete) for stage, complete in zip(STAGES[2:], stage_complete[2:]))
+    ordered_flags.extend(
+        (f"stage_{stage.number}_{stage.name}", complete)
+        for stage, complete in zip(STAGES[2:], stage_complete[2:])
+    )
 
-    first_incomplete_index = next((i for i, (_, complete) in enumerate(ordered_flags) if not complete), len(ordered_flags))
+    first_incomplete_index = next(
+        (i for i, (_, complete) in enumerate(ordered_flags) if not complete),
+        len(ordered_flags),
+    )
     for later_name, later_complete in ordered_flags[first_incomplete_index + 1 :]:
         if later_complete:
             violations.append(
@@ -188,13 +199,13 @@ def inspect_workspace(root: Path) -> dict[str, object]:
     else:
         missing_name = ordered_flags[first_incomplete_index][0]
         if missing_name == "stage_3_physical_acquisition":
-            next_stage = "stage_3_physical_acquisition"
+            next_stage = missing_name
             if clips == 0:
                 next_action = "Acquire the frozen 180 blocks / 720 phase clips while completing capture logs."
             else:
                 next_action = f"Continue frozen physical acquisition: {clips}/{EXPECTED_CLIP_COUNT} MP4 clips are present."
         else:
-            stage = next(stage for stage in STAGES if missing_name.startswith(f"stage_{stage.number}_"))
+            stage = STAGE_BY_FLAG[missing_name]
             next_stage = missing_name
             next_action = stage.next_action
 
