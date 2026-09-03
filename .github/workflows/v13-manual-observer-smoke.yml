@@ -1,0 +1,109 @@
+name: V13 manual exact frozen observer smoke
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  exact-observer-smoke:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      POLLIPI_SHA: d58d0a86034a6c2d53f90efbe4245370fd7cd2e9
+      INSEPI_SHA: 980813bab996909020140fad5bd83b055eb3db9c
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11.16"
+
+      - name: Verify V13 execution and observer runtime freeze
+        run: |
+          python -m pip install "numpy==2.4.6"
+          python -m pip install -e ".[dev]"
+          python - <<'PY'
+          import json, platform, subprocess
+          from pathlib import Path
+          import numpy as np
+          freeze=json.loads(Path('benchmarks/v13_execution_freeze.json').read_text())
+          expected=freeze['scientific_execution_digest_sha256']
+          subprocess.run(['python','scripts/v13_execution_digest.py','--expect',expected],check=True)
+          assert platform.python_version()==freeze['runtime']['python']=='3.11.16'
+          assert np.__version__==freeze['runtime']['numpy']=='2.4.6'
+          assert freeze['observers']['pollipi_commit']=='d58d0a86034a6c2d53f90efbe4245370fd7cd2e9'
+          assert freeze['observers']['insepi_commit']=='980813bab996909020140fad5bd83b055eb3db9c'
+          print('V13_OBSERVER_RUNTIME_FREEZE PASS')
+          PY
+
+      - name: Clone and verify exact frozen observers
+        run: |
+          set -euo pipefail
+          mkdir -p .v13/smoke
+          git clone --depth=1 --branch frozen/v5-method https://github.com/zuizui0223/pollipi.git .v13/smoke/pollipi
+          git clone --depth=1 --branch frozen/v5-method https://github.com/zuizui0223/insepi.git .v13/smoke/insepi
+          test "$(git -C .v13/smoke/pollipi rev-parse HEAD)" = "$POLLIPI_SHA"
+          test "$(git -C .v13/smoke/insepi rev-parse HEAD)" = "$INSEPI_SHA"
+          echo "V13_EXACT_OBSERVER_REACHABILITY PASS"
+
+      - name: Audit software-level observer separation before any V13 pixels
+        run: |
+          python - <<'PY'
+          import ast
+          from pathlib import Path
+
+          def violations(root: Path, forbidden: str):
+              out=[]
+              for path in sorted(root.rglob('*.py')):
+                  try:
+                      tree=ast.parse(path.read_text(encoding='utf-8'))
+                  except (UnicodeDecodeError, SyntaxError) as exc:
+                      raise SystemExit(f'cannot audit {path}: {exc}')
+                  for node in ast.walk(tree):
+                      if isinstance(node, ast.Import):
+                          for alias in node.names:
+                              if alias.name == forbidden or alias.name.startswith(forbidden + '.'):
+                                  out.append((str(path), node.lineno, alias.name))
+                      elif isinstance(node, ast.ImportFrom):
+                          module=node.module or ''
+                          if module == forbidden or module.startswith(forbidden + '.'):
+                              out.append((str(path), node.lineno, module))
+                      elif isinstance(node, ast.Call) and node.args:
+                          fn=node.func
+                          dynamic=False
+                          if isinstance(fn, ast.Attribute) and fn.attr == 'import_module':
+                              dynamic=True
+                          elif isinstance(fn, ast.Name) and fn.id == '__import__':
+                              dynamic=True
+                          if dynamic and isinstance(node.args[0], ast.Constant) and isinstance(node.args[0].value, str):
+                              name=node.args[0].value
+                              if name == forbidden or name.startswith(forbidden + '.'):
+                                  out.append((str(path), node.lineno, name))
+              return out
+
+          pollipi_root=Path('.v13/smoke/pollipi/packages/analysis/src')
+          insepi_root=Path('.v13/smoke/insepi/src')
+          p=violations(pollipi_root, 'interaction_sensing')
+          i=violations(insepi_root, 'pollipi_analysis')
+          if p or i:
+              raise SystemExit(f'V13 frozen observer cross-import violation: pollipi={p} insepi={i}')
+          print('V13_FROZEN_OBSERVER_SOFTWARE_SEPARATION PASS')
+          print('V13_STATISTICAL_ERROR_INDEPENDENCE_CLAIM false')
+          PY
+
+      - name: Smoke exact frozen observer APIs before any V13 pixels
+        run: |
+          python scripts/v13_run_pollipi_frozen.py \
+            --source-root .v13/smoke/pollipi \
+            --smoke-test
+          python scripts/v13_run_insepi_frozen.py \
+            --source-root .v13/smoke/insepi \
+            --smoke-test
+          test ! -e .v13/v13_frames.npy
+          test ! -e .v13/pollipi_v13_trace.jsonl
+          test ! -e .v13/insepi_v13_trace.jsonl
+          echo "V13_EXACT_OBSERVER_SMOKE_PRE_PIXEL PASS"
