@@ -9,9 +9,11 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def _load_status_module():
-    spec = importlib.util.spec_from_file_location("v13_pipeline_status_test", ROOT / "scripts/v13_pipeline_status.py")
+    name = "v13_pipeline_status_test"
+    spec = importlib.util.spec_from_file_location(name, ROOT / "scripts/v13_pipeline_status.py")
     assert spec is not None and spec.loader is not None
     module = importlib.util.module_from_spec(spec)
+    sys.modules[name] = module
     spec.loader.exec_module(module)
     return module
 
