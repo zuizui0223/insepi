@@ -1,169 +1,142 @@
 # interaction-sensing / InsePi
 
-## Current purpose
+## Active mainline
 
-`interaction-sensing` develops an error-aware ecological observation framework that asks a stricter question than ordinary target classification:
-
-> Given a dynamic observation, when is there enough evidence to support a target process, a nuisance process, or neither uniquely enough to justify a forced label?
-
-The current scientific programme has two layers:
+InsePi is again centred on the original observation-system development sequence:
 
 ```text
-V14b/V14c  frozen closed-world theory
-    baseline + TARGET / NUISANCE / UNDETERMINED
-
-V15-v2     active pre-data empirical bridge
-    T + C + N + O + optional independent A-
+V7   frozen allocation validation                 FAIL / C
+V10  locked real-pixel perturbation transfer      partial / C
+V11  static contradiction localisation            FAIL / D
+V12  controlled causal intervention diagnosis     B
+V13  blinded same-stream physical validation      RESULT PENDING
 ```
 
-Target and nuisance are defined positively and are **not complements**. They may coexist. Observability is a separate measurement question; high nuisance is not the same thing as low observability. V15-v2 further separates observation support from biological absence certification.
+**V13 is the active scientific mainline.** The immediate goal is to execute the already-frozen physical intervention experiment without retuning it, then accept the preregistered A/B/C/D outcome.
 
-## Current design principles
+Later V14/V15 target–nuisance/observability work remains in the repository for provenance and as a separate experimental side line. It does not define the current InsePi execution path.
 
-1. **Baseline is outside the ternary question.** A resting state is not treated as an undecidable dynamic event.
-2. **Target and nuisance are independently positive.** `not target` does not define nuisance, and `not nuisance` does not certify target.
-3. **Superposition is legitimate.** Simultaneous target+nuisance evidence is preserved rather than tuned away.
-4. **Undetermined is an epistemic output.** It is not a third biological process and is not forced into absence.
-5. **No support is weaker than information absence.** V14c calls this `NO_SUPPORTED_EVIDENCE`; proving true information absence requires an independent identifiability/observability test.
-6. **Observation support is not absence evidence.** In V15-v2, good `O` means the primary stream is measurable enough to attempt inference; it does not turn low target evidence into biological absence.
-7. **Certified target absence requires an independent channel.** V15-v2 represents this as optional `A-` (`TargetAbsenceEvidence`). Its default pre-data state is unavailable.
-8. **Operational boundaries are risk contracts, not inherited raw scores.** The frozen V14b nuisance decision uses a family-wise false-certainty budget `alpha = 0.05`.
-9. **Development freezes before measurement.** Failed hypotheses and failed generations remain in history rather than being post-hoc repaired.
-10. **Dimensionless ratios define the closed-world phase space.** The frozen V14b surface uses `Pi1`–`Pi6` rather than field-specific pixel/time constants.
+## Current scientific question
 
-## Locked V14b result
+V12 showed in a synthetic setting that controlled interventions can make otherwise non-identifying observer failures causally distinguishable. V13 asks whether that diagnostic structure survives a physical camera system across **new recording days and new physical scenes**.
 
-The frozen target and nuisance observers were measured over:
+The physical treatment classes are:
+
+- `event_side`;
+- `nuisance_side`;
+- `shared_optical`;
+- `no_fault`.
+
+Every independent block records the same-stream battery:
+
+1. placebo;
+2. `event_restore`;
+3. `observability_restore`;
+4. `shared_restore`;
+
+with the three active phases in a private-salt randomised order and with baseline restoration between phases. Frames are repeated measurements, not replicates. The inferential unit is the physical block, and held-out uncertainty is clustered by actual `recording_date_local × physical_scene_code`.
+
+## Frozen V13 scale
+
+Development:
+
+- 3 days × 3 scenes × 4 treatment classes × 3 replicates = **108 blocks**.
+
+Held-out:
+
+- 2 new days × 3 new scenes × 4 treatment classes × 3 replicates = **72 blocks**.
+
+Total:
+
+- **180 blocks**;
+- 4 phase clips per block;
+- **720 ten-second clips**.
+
+The quantitative apparatus tolerances, measurement path, blinding rules, prediction commitment, QC gate and A/B/C/D evaluation contract are already frozen. See:
+
+- `docs/V13_PHYSICAL_INTERVENTION_PROTOCOL.md`;
+- `docs/V13_EXECUTION_ORDER.md`;
+- `docs/V13_FIELD_RUN_CHECKLIST.md`;
+- `benchmarks/v13_physical_intervention_protocol.json`;
+- `benchmarks/v13_physical_apparatus_freeze.json`;
+- `benchmarks/v13_observer_measurement_freeze.json`;
+- `benchmarks/v13_execution_freeze.json`.
+
+## Fail-closed execution surface
+
+The repository already contains the complete no-peek path:
 
 ```text
-30,625 Pi coordinates x 6 latent regimes x 32 fresh seeds
-= 5,880,000 truth-known closed-world worlds
+private randomisation
+→ capture templates
+→ physical acquisition
+→ capture-log validation
+→ byte-level field bundle validation
+→ truth-free canonical pixels
+→ exact frozen PolliPi/InsePi smoke gates
+→ truth-free observer traces
+→ block response table
+→ development labels only
+→ blinded held-out predictions
+→ prediction SHA commitment
+→ protected QC
+→ held-out truth unseal
+→ frozen cluster-level evaluator
 ```
 
-Locked equal-grid/equal-regime state rates:
-
-```text
-baseline      0.2302328231
-target        0.4287333333
-nuisance      0.0876976190
-undetermined  0.2533362245
-```
-
-Historical V14b U counters were `0.0267528912` for the branch then named `information_absence` and `0.2265833333` for overlap/attribution. V14c weakens the first term to **no supported evidence** because an observer failing to support T or N does not prove that discriminating information was absent from the world.
-
-The main closed-world findings are:
-
-- about 89.4% of U is overlap/attribution rather than no-supported-evidence under the frozen design weighting;
-- the originally predicted dominant `Pi2 ~= 1` timescale-collision ridge was **not supported** and remains retired;
-- longer `Pi1` does not monotonically erase U because additional observation can reveal coexistence/attribution conflict;
-- `Pi3 = 0` versus `Pi3 > 0` is a strong boundary **under the frozen structural target rule** `direct_target_signal_fraction > 0 -> target_supported`; it is not evidence for a universal field SNR discontinuity.
-
-Forcing all non-target outputs to target absence yields zero target false positives in this closed generator but a target false-negative rate of `0.3569` among latent target-present worlds under the frozen uniform weighting.
-
-See:
-
-- `benchmarks/v14b_frozen_ternary_phase_surface_result.json`
-- `benchmarks/v14c_semantic_clarification_result.json`
-- `docs/V14C_SEMANTIC_CLARIFICATION.md`
-
-## Identification boundary
-
-The frozen target observer is **positive-only**. Therefore `NUISANCE`, `BASELINE`, and `UNDETERMINED` do not certify target absence.
-
-The historical `baseline + U` quantity is retained only as `legacy_non_target_decision_width`, not as strict visit-presence partial identification.
-
-Without an independently validated target-absence channel, the safe output-implied global bounds are:
-
-```text
-p(target) in [P(TARGET), 1]
-          = [0.4287333333, 1]
-```
-
-V15-v2 does not silently tighten this bound. Its default `TargetAbsenceEvidence.unavailable()` means:
-
-```text
-O = observable + low/zero target evidence
-!= certified absence
-=> unresolved unless independent A- supports absence
-```
-
-A future empirical generation may tighten the upper bound only through a genuinely independent validated `A-` channel or an explicit sampling/missingness model.
-
-## PolliPi relationship
-
-PolliPi is the target-evidence side of the cross-repository architecture. Its current main branch exports an ordinal target-evidence adapter without asserting nuisance truth, observability, confirmed visitation, or biological absence.
-
-Important boundary:
-
-- PolliPi evidence `0 / 0.5 / 1` is **not** V14b `Pi3`;
-- PolliPi `environmental_noise` means target evidence was not retained strongly enough by that observer, not that nuisance truth was established;
-- low PolliPi evidence is not an `A-` absence channel;
-- the 5.88M-world V14b result is a synthetic closed-world InsePi result, not a field validation of the current PolliPi classifier.
-
-## Empirical bridge: V13 and V15-v2
-
-The closed-world V14b/V14c result is not a field accuracy claim.
-
-- **V13** remains a result-pending physical intervention protocol. Its active GitHub Action is manual-only; historical V13 workflow YAML is preserved as provenance.
-- **V15-v2** is the active pre-data real visit-observation bridge. It separates:
-  - `T`: positive direct target evidence;
-  - `C`: positive target-coupled response evidence;
-  - `N`: positive exogenous nuisance evidence;
-  - `O`: primary-stream observation support;
-  - `A-`: optional independently validated target-absence evidence.
-
-The full V15 system uses the process-preserving V14b policy, so observable high target + high nuisance evidence remains target-positive with nuisance audit rather than being forced into an exclusive conflict state.
-
-Naive binary comparators are retained only to measure the cost of forced decisions. Their low-score negatives are recorded as `forced_absence_call`, not certified negative evidence.
-
-Normative V15-v2 files:
-
-- `benchmarks/v15_empirical_bridge_v2_contract.json`
-- `docs/V15_EMPIRICAL_BRIDGE_V2.md`
-- `src/interaction_sensing/absence_certification.py`
-- `src/interaction_sensing/v15.py`
-
-## Repository structure
-
-- `src/interaction_sensing/` — current and historical sensing contracts, observers, decision layers, simulations, and evaluation utilities.
-- `benchmarks/` — frozen protocols, receipts, result summaries, and current pre-data contracts.
-- `docs/` — method development, negative results, frozen-generation reports, and current V14/V15 interpretation.
-- `scripts/` — reproducible generation/evaluation helpers for the corresponding protocols.
-- `tests/` — normal package and scientific-contract tests.
-- `provenance/frozen_github_workflows/` — byte-preserved generation-specific workflow YAML removed from active GitHub Actions after its scientific generation was frozen.
-- `legacy/` — earlier prototype/runtime material retained for provenance and baselines.
-
-Earlier NoiseBench, noise-source, portfolio, design-inference, real-pixel, causal-intervention, and physical-validation generations remain part of the evidence history. They should not be mistaken for the current V14b ontology or V15-v2 empirical bridge simply because their code remains importable.
-
-## Active CI
-
-Generic pull requests run only the normal unit/contract test workflow:
-
-```text
-.github/workflows/test.yml
-```
-
-The only active generation-specific workflow is:
+The active manual preflight is:
 
 ```text
 .github/workflows/v13-manual-preflight.yml
 ```
 
-and it is `workflow_dispatch` only. Frozen V6–V14b scientific workflows are preserved under `provenance/frozen_github_workflows/` and cannot re-run merely because a future PR touches historical files.
+Frozen historical scientific workflows remain under `provenance/frozen_github_workflows/` and are not rerun automatically.
+
+## Pipeline status auditor
+
+The V13 mainline restart adds a non-scientific convenience auditor that reports the next executable stage and blocks obvious order violations without reading private truth contents:
+
+```bash
+python scripts/v13_pipeline_status.py --workspace /path/to/private/v13
+```
+
+JSON output is available with `--json`.
+
+The auditor only checks artifact presence and clip cardinality. It does **not** alter the V13 execution digest, infer treatment truth, validate scientific results, or replace any frozen gate.
+
+## Exact observer boundary
+
+V13 uses the exact frozen observer commits already specified by the protocol:
+
+- PolliPi: `d58d0a86034a6c2d53f90efbe4245370fd7cd2e9`;
+- InsePi: `980813bab996909020140fad5bd83b055eb3db9c`.
+
+Observer execution receives canonical pixels/backgrounds only. Held-out treatment truth is unavailable to the prediction environment until predictions have been committed.
+
+## Current next action
+
+Before any physical acquisition, generate the private randomisation locally using a fresh 64-hex salt and preserve the commitment. **Do not place the salt or private truth ledger in GitHub, chat, observer logs, or manuscript materials.**
+
+The authoritative command sequence is in `docs/V13_EXECUTION_ORDER.md`.
+
+## Repository structure
+
+- `src/interaction_sensing/` — current and historical observation, causal-diagnostic and evaluation code.
+- `benchmarks/` — frozen protocols, result receipts and scientific contracts.
+- `docs/` — V13 execution protocol plus historical development records.
+- `scripts/` — reproducible generation, validation, observer and evaluation runners.
+- `tests/` — unit tests and frozen scientific-contract tests.
+- `provenance/frozen_github_workflows/` — byte-preserved historical generation workflows.
+- `legacy/` — earlier prototypes and baselines retained for provenance.
 
 ## Quick start
 
 ```bash
 python -m pip install -e ".[runtime,analysis,dev]"
 pytest
-```
-
-V15-v2 has a dedicated public facade:
-
-```python
-import interaction_sensing.v15 as v15
+python scripts/v13_pipeline_status.py --workspace /path/to/private/v13
 ```
 
 ## Claim boundary
 
-V14b/V14c conclusions are **closed-world, frozen-observer statements**. V15-v2 is **pre-data empirical design/software**, not a field result. The repository currently does not establish field visitation accuracy, calibrated field observability, a validated target-absence channel, field prevalence, a calibrated PolliPi probability, a universal physical transition point, or universal superiority of the full T/C/N/O/A- architecture.
+V13 is a blinded physical **observation-system intervention** experiment. It is not natural pollinator detection validation and does not by itself establish field visitation accuracy, species accuracy, occupancy validity, ecological prevalence, or universal observer superiority. Those claims require separate biological field validation after the physical diagnostic boundary is resolved.
