@@ -36,6 +36,7 @@ jobs:
             tests/test_v13_physical_protocol.py \
             tests/test_v13_phase_contract.py \
             tests/test_v13_capture_logs.py \
+            tests/test_v13_pipeline_status.py \
             tests/test_physical_measurement_v13.py \
             tests/test_physical_artifact_v13.py \
             tests/test_physical_evaluation_v13.py \
