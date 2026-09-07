@@ -6,12 +6,12 @@
     "private_blocks": 180,
     "protected_qc_blocks": 39
   },
-  "observer_plan_sha256": "REDACTED_IN_CHAT_OUTPUT_PLACEHOLDER",
+  "observer_plan_sha256": "629d03e161c678a07edaf33d8f2d5827363a4ab0ec88ed6f0d21ba905e88ca1a",
   "private_material_warning": "Do not expose the salt or v13_private_truth_ledger.csv to observer execution or heldout diagnosis before predictions are frozen.",
-  "private_truth_ledger_sha256": "REDACTED_IN_CHAT_OUTPUT_PLACEHOLDER",
-  "protected_qc_plan_sha256": "REDACTED_IN_CHAT_OUTPUT_PLACEHOLDER",
+  "private_truth_ledger_sha256": "1b61f888ca5cbd3b4968f1192f0b740733835ba9e72b0d6052f165c9c6317d0e",
+  "protected_qc_plan_sha256": "4ba3ac353407f27409c1f25b218196faf416e003dd2342a36bb719cfd3f49ff4",
   "protocol_sha256": "fa8b0d2dfdd6334f34a2e687f63443df8115c7662e2778bae311a06db7c56b99",
-  "salt_sha256": "REDACTED_IN_CHAT_OUTPUT_PLACEHOLDER",
+  "salt_sha256": "fb026be9ddf6a23a98a3fbc8850a8bcd31d2dfb8dfeb6408c1bb641257a4a7cb",
   "schema": "interaction-sensing-v13-randomisation-commitment-v1",
   "status": "pre-field-plan-not-data"
 }
